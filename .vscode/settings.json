@@ -1,0 +1,11 @@
+{
+  "workbench.colorTheme": "Default Light+",
+  "git.autofetch": true,
+  "editor.wordWrap": "on",
+  "git.openRepositoryInParentFolders": "never",
+  "workbench.settings.applyToAllProfiles": [],
+
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.fontLigatures": false
+}

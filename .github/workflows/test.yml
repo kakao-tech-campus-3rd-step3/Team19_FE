@@ -1,27 +1,27 @@
-name: Test
+name: CI/CD Pipeline
 
 on:
   push:
-    # branches: [main, develop]
+    branches: [main]
   pull_request:
-    # branches: [main]
+    branches: [main]
 
 jobs:
-  test:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [22]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: pnpm
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -39,3 +39,11 @@ jobs:
 
       - name: Build packages
         run: pnpm build
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./

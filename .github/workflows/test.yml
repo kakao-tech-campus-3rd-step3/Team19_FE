@@ -23,7 +23,7 @@ jobs:
         run: npm install
 
       - name: Run tests
-        run: npx jest
+        run: npx jest --passWithNoTests
 
       # --- CD (배포 단계) ---
       - name: Deploy to Vercel

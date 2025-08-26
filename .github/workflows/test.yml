@@ -24,21 +24,21 @@ jobs:
           cache: npm
 
       - name: Setup pnpm
-        uses: npm/action-setup@v4
+        uses: pnpm/action-setup@v4
         with:
           version: 8
 
       - name: Install dependencies
-        run: npm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: npm test
+        run: pnpm test
 
       - name: Run lint
-        run: npm lint
+        run: pnpm lint
 
       - name: Build packages
-        run: npm build
+        run: pnpm build
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25

@@ -1,62 +1,24 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { IoCaretBack } from 'react-icons/io5';
-import { FaUser } from 'react-icons/fa';
-import theme from '../../styles/theme';
-import logo from '../../assets/images/logo.png';
+import NavBar from './components/NavBar';
 
-const NavBar = () => {
+const HomePage = () => {
   return (
-    <nav css={navStyle}>
-      <button css={iconButtonStyle}>
-        <IoCaretBack size={50} color="#ffffffff" />
-      </button>
-      <button css={titleButtonStyle}>
-        <img src={logo} alt="무쉼사 로고" css={logoStyle} />
-      </button>
-      <button css={iconButtonStyle}>
-        <FaUser size={50} color="#ffffffff" />
-      </button>
-    </nav>
+    <div>
+      <NavBar />
+      {/* 여기에 지도 및 다른 UI 컴포넌트가 추가될 예정 */}
+      <div id="map" css={mapStyle}></div>
+      <div css={otherContentStyle}>{/* '내위치 & 가까운 쉼터 찾기' 버튼 등 */}</div>
+    </div>
   );
 };
 
-export default NavBar;
+export default HomePage;
 
-const navStyle = css`
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 720px;
-  height: ${theme.spacing.spacing16};
-  padding: 0 ${theme.spacing.spacing4};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid ${theme.colors.gray200};
-  background-color: #000000ff;
-  z-index: 1000;
+const mapStyle = css`
+  /* 지도 스타일 */
 `;
 
-const iconButtonStyle = css`
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-`;
-
-const titleButtonStyle = css`
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-`;
-
-const logoStyle = css`
-  height: 67px;
+const otherContentStyle = css`
+  /* 하단 슬라이드 정보 등 */
 `;

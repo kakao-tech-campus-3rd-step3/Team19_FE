@@ -7,7 +7,6 @@ function App() {
       <div>
         <HomePage />
       </div>
-      <p className="read-the-docs">무쉼사</p>
     </>
   );
 }

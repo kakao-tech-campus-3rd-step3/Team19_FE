@@ -9,7 +9,7 @@ const HomePage = () => {
       {/* 여기에 지도 및 다른 UI 컴포넌트가 추가될 예정 */}
       <div id="map" css={mapStyle}></div>
       <div css={otherContentStyle}>
-        {/* '내위치 & 가까운 쉼터 찾기' 버튼 등 */}
+        <button css={myLocationButtonStyle}>내위치</button>
         <button css={findShelterButtonStyle}>가까운 쉼터 찾기</button>
       </div>
     </div>
@@ -25,7 +25,28 @@ const mapStyle = css`
 `;
 
 const otherContentStyle = css`
-  /* 하단 슬라이드 정보 등 */
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* 모든 버튼을 오른쪽으로 정렬 */
+`;
+
+// 내 위치 버튼 스타일
+const myLocationButtonStyle = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: 8rem;
+  padding: 0.5rem 0.5rem;
+  background-color: #337afdff;
+  color: white;
+  border: 1px solid #ccccccff;
+  border-radius: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 0.75rem; /* 아래 버튼과 간격 */
 `;
 
 const findShelterButtonStyle = css`

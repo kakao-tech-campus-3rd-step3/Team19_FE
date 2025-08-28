@@ -17,4 +17,5 @@ export const spacing = {
   spacing14: '56px',
   spacing15: '60px',
   spacing16: '64px',
+  maxwith720: '720px',
 } as const;

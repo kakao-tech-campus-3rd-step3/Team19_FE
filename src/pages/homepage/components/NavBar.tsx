@@ -28,14 +28,14 @@ const navStyle = css`
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 720px;
+  max-width: ${theme.spacing.maxwith720};
   height: ${theme.spacing.spacing16};
   padding: 0 ${theme.spacing.spacing4};
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid ${theme.colors.gray200};
-  background-color: #000000ff;
+  border-bottom: 1px solid ${theme.colors.button.black};
+  background-color: ${theme.colors.button.black};
   z-index: 1000;
 `;
 

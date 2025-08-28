@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
+import theme from '../../../styles/theme';
 
 interface Shelter {
   shelterId: number;
@@ -37,9 +38,9 @@ const ShelterInfoCard = ({ shelter, onStart }: Props) => {
           css={thumbnail}
         />
         <div css={infoText}>
-          <p className="name">{shelter.name}</p>
-          <p>거리: {shelter.distance}</p>
-          <p>
+          <p css={shelterName}>{shelter.name}</p>
+          <p css={infoParagraph}>거리: {shelter.distance}</p>
+          <p css={infoParagraph}>
             별점: <span css={ratingNumber}>{shelter.averageRating.toFixed(1)}</span>{' '}
             <span css={starsWrapper}>
               {Array.from({ length: 5 }, (_, i) => (
@@ -49,7 +50,7 @@ const ShelterInfoCard = ({ shelter, onStart }: Props) => {
               ))}
             </span>
           </p>
-          <p>
+          <p css={infoParagraph}>
             운영시간: 평일 {shelter.operatingHours.weekday}
             <br />
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 주말{' '}
@@ -75,7 +76,7 @@ const infoCardStyle = css`
   width: 95%;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px ${theme.colors.button.white};
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -101,31 +102,35 @@ const thumbnail = css`
 const infoText = css`
   flex: 1;
   text-align: left;
+`;
 
-  p {
-    margin: 2px 0;
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #555;
-  }
+const infoParagraph = css`
+  margin: 2px 0;
+  font-size: ${theme.typography.body2Bold.fontSize};
+  font-weight: ${theme.typography.body2Bold.fontWeight};
+  line-height: ${theme.typography.body2Bold.lineHeight};
+  color: ${theme.colors.text.gray500};
+`;
 
-  .name {
-    font-size: 2.2rem;
-    color: #337afdff;
-    margin-bottom: 6px;
-  }
+const shelterName = css`
+  font-size: ${theme.typography.title1Bold.fontSize};
+  font-weight: ${theme.typography.title1Bold.fontWeight};
+  line-height: ${theme.typography.title1Bold.lineHeight};
+  color: ${theme.colors.button.bule};
+  margin-bottom: 6px;
 `;
 
 const startButton = css`
   margin-top: 10px;
   width: 100%;
-  background: #e53935;
+  background: ${theme.colors.button.red};
   color: white;
   border: none;
   padding: 10px;
   border-radius: 8px;
-  font-size: 2.6rem;
-  font-weight: bold;
+  font-size: ${theme.typography.button2Bold.fontSize};
+  font-weight: ${theme.typography.button2Bold.fontWeight};
+  line-height: ${theme.typography.button2Bold.lineHeight};
   cursor: pointer;
 `;
 
@@ -137,17 +142,18 @@ const starsWrapper = css`
 `;
 
 const ratingNumber = css`
-  color: #e53935;
-  font-size: 2rem;
-  font-weight: bold;
+  color: ${theme.colors.button.red};
+  font-size: ${theme.typography.highlight1Bold.fontSize};
+  font-weight: ${theme.typography.highlight1Bold.fontWeight};
+  line-height: ${theme.typography.highlight1Bold.lineHeight};
 `;
 
 const filledStar = css`
-  color: #ffd700;
-  font-size: 2rem;
+  color: ${theme.colors.text.yellow};
+  font-size: ${theme.typography.highlight1Bold.fontSize};
 `;
 
 const emptyStar = css`
-  color: #ddd;
-  font-size: 2rem;
+  color: ${theme.colors.text.gray100};
+  font-size: ${theme.typography.highlight1Bold.fontSize};
 `;

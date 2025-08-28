@@ -1,5 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
+import theme from '../../../styles/theme';
+import { typography } from '../../../styles/typography';
 
 interface Props {
   onMyLocation: () => void;
@@ -16,7 +18,6 @@ const MapOverlayButtons = ({ onMyLocation }: Props) => (
 
 export default MapOverlayButtons;
 
-// 버튼 오버레이 스타일
 const overlayButtonStyle = css`
   position: absolute;
   left: 50%;
@@ -26,6 +27,8 @@ const overlayButtonStyle = css`
   flex-direction: column;
   align-items: stretch;
   z-index: 10;
+  width: 90%;
+  max-width: 650px;
 `;
 
 // 내 위치 버튼 스타일
@@ -38,32 +41,37 @@ const myLocationButtonStyle = css`
   width: 8rem;
   min-width: 7rem;
   padding: 0.5rem 0.5rem;
-  background-color: #337afdff;
+  background-color: ${theme.colors.button.bule};
   color: white;
-  border: 1px solid #ccccccff;
+  border: 1px solid ${theme.colors.text.gray100};
   border-radius: 20px;
-  font-size: 2rem;
-  font-weight: bold;
   cursor: pointer;
   margin-bottom: 0.75rem;
+
+  ${typography.button1Bold};
 `;
 
 // 쉼터 찾기 버튼 스타일
 const findShelterButtonStyle = css`
   width: 100%;
-  min-width: 425px;
-  padding: 1.25rem 1rem;
+  padding: 1rem 1rem;
   background-color: black;
   color: white;
   border: none;
   border-radius: 12px;
-  font-size: 2.6rem;
-  font-weight: bold;
   cursor: pointer;
 
+  ${typography.button2Bold};
+
+  // 모바일에서는 max-width 제한 제거
+  @media (max-width: 720px) {
+    max-width: none;
+    ${typography.button4Bold};
+  }
+
+  // 720px 이상일 때 스타일
   @media (min-width: 720px) {
-    width: 650px;
     padding: 1rem 1rem;
-    font-size: 4rem;
+    ${typography.button3Bold};
   }
 `;

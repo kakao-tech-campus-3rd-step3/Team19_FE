@@ -2,6 +2,8 @@
 import { css } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
 import ShelterInfoCard from './ShelterInfoCard';
+import theme from '../../../styles/theme';
+import { typography } from '../../../styles/typography';
 
 interface Shelter {
   shelterId: number;
@@ -146,8 +148,9 @@ const deniedStyle = css`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  color: #333;
-  background: #fff;
   text-align: center;
+  color: ${theme.colors.button.black};
+  background: ${theme.colors.button.white};
+
+  ${typography.body1Regular};
 `;

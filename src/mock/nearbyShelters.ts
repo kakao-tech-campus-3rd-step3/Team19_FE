@@ -16,7 +16,7 @@ export const nearbyShelters = [
     photoUrl: '',
   },
   {
-    shelterId: 1,
+    shelterId: 2,
     name: '어덕마을경로당',
     address: '대전 중구 어덕마을로 9-16 (용두동)',
     latitude: 36.33317887602899,
@@ -32,7 +32,7 @@ export const nearbyShelters = [
     photoUrl: 'https://example.com/yongdu_community_center.jpg',
   },
   {
-    shelterId: 1,
+    shelterId: 3,
     name: '용두2경로당',
     address: '대전 중구 어덕마을로10번길 79-16 (용두동)',
     latitude: 36.33025198676287,

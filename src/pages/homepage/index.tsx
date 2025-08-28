@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import NavBar from './components/NavBar';
 import MapOverlayButtons from './components/MapOverlayButtons';
 import MapView from './components/MapView';
+import { nearbyShelters } from '../../mock/nearbyShelters';
 
 const HomePage = () => {
   const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
@@ -15,30 +16,13 @@ const HomePage = () => {
   const handleMyLocation = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
-
-    if (!navigator.geolocation) {
-      alert('이 브라우저에서는 위치 기능을 지원하지 않아요.');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const here = new window.kakao.maps.LatLng(latitude, longitude);
-        map.setCenter(here);
-        const marker = new window.kakao.maps.Marker({ position: here });
-        marker.setMap(map);
-      },
-      () => alert('위치 권한을 허용해 주세요. (HTTPS 환경 권장)'),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   };
 
   return (
     <div>
       <NavBar />
       <div css={mapWrapperStyle}>
-        <MapView onMapReady={handleMapReady} />
+        <MapView onMapReady={handleMapReady} shelters={nearbyShelters} />
         <MapOverlayButtons onMyLocation={handleMyLocation} />
       </div>
     </div>

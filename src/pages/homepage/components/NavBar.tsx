@@ -4,6 +4,7 @@ import { IoCaretBack } from 'react-icons/io5';
 import { FaUser } from 'react-icons/fa';
 import theme from '../../../styles/theme';
 import logo from '../../../assets/images/logo.png';
+
 const NavBar = () => {
   return (
     <nav css={navStyle}>
@@ -27,10 +28,13 @@ const navStyle = css`
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 100%;
+
+  width: 80%;
   max-width: ${theme.spacing.maxwith720};
+
   height: ${theme.spacing.spacing16};
   padding: 0 ${theme.spacing.spacing4};
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -54,6 +58,9 @@ const titleButtonStyle = css`
   border: none;
   padding: 0;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  height: 100%;
 `;
 
 const logoStyle = css`

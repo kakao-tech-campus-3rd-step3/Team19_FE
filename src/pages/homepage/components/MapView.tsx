@@ -11,6 +11,10 @@ interface Shelter {
   distance: string;
   isOpened: boolean;
   isOutdoors: boolean;
+  operatingHours: {
+    weekday: string;
+    weekend: string;
+  };
   averageRating: number;
   photoUrl: string;
 }
@@ -123,8 +127,25 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
             <div css={infoText}>
               <p className="name">{selectedShelter.name}</p>
               <p>거리: {selectedShelter.distance}</p>
-              <p>별점: {selectedShelter.averageRating} ⭐</p>
-              <p>운영시간: 08:00 ~ 21:00</p>
+              <p>
+                별점: <span css={ratingNumber}>{selectedShelter.averageRating.toFixed(1)}</span>{' '}
+                <span css={starsWrapper}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <span
+                      key={i}
+                      css={i < Math.round(selectedShelter.averageRating) ? filledStar : emptyStar}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </span>
+              </p>
+              <p>
+                운영시간: 평일 {selectedShelter.operatingHours.weekday}
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 주말{' '}
+                {selectedShelter.operatingHours.weekend}
+              </p>
             </div>
           </div>
           <button css={startButton}>안내 시작</button>
@@ -199,7 +220,7 @@ const infoText = css`
 
   p {
     margin: 2px 0;
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: bold;
     color: #555;
   }
@@ -222,4 +243,27 @@ const startButton = css`
   font-size: 2.6rem;
   font-weight: bold;
   cursor: pointer;
+`;
+
+/*별점 스타일*/
+const starsWrapper = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+`;
+
+const ratingNumber = css`
+  color: #e53935;
+  font-size: 2rem;
+  font-weight: bold;
+`;
+
+const filledStar = css`
+  color: #ffd700;
+  font-size: 2rem;
+`;
+
+const emptyStar = css`
+  color: #ddd;
+  font-size: 2rem;
 `;

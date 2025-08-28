@@ -8,6 +8,10 @@ export const nearbyShelters = [
     distance: '232m',
     isOpened: true,
     isOutdoors: false,
+    operatingHours: {
+      weekday: '09:00~18:00',
+      weekend: '10:00~20:00',
+    },
     averageRating: 4.6,
     photoUrl: '',
   },
@@ -20,6 +24,10 @@ export const nearbyShelters = [
     distance: '258m',
     isOpened: true,
     isOutdoors: false,
+    operatingHours: {
+      weekday: '09:00~17:00',
+      weekend: '10:00~16:00',
+    },
     averageRating: 4.2,
     photoUrl: 'https://example.com/yongdu_community_center.jpg',
   },
@@ -32,6 +40,10 @@ export const nearbyShelters = [
     distance: '331m',
     isOpened: true,
     isOutdoors: false,
+    operatingHours: {
+      weekday: '10:00~18:00',
+      weekend: '07:00~22:00',
+    },
     averageRating: 3.9,
     photoUrl: 'https://example.com/seodaejeon_station_shelter.jpg',
   },

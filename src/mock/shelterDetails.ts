@@ -1,38 +1,68 @@
-export const nearbyShelters = [
-  {
+export const shelterDetails = {
+  1: {
     shelterId: 1,
     name: '목양마을아파트경로당',
     address: '대전 중구 목동로 37 (목동, 목양마을아파트)',
     latitude: 36.334785105916545,
     longitude: 127.4056469012105,
-    distance: '232m',
+    operatingHours: {
+      weekday: '09:00~18:00',
+      weekend: '10:00~16:00',
+    },
+    capacity: 50,
     isOpened: true,
     isOutdoors: false,
+    coolingEquipment: {
+      fanCount: 3,
+      acCount: 1,
+    },
+    totalRating: 14,
+    reviewCount: 5,
     averageRating: 4.6,
-    photoUrl: '',
+    photoUrl: 'https://example.com/yongdu_park.jpg',
   },
-  {
-    shelterId: 1,
+  2: {
+    shelterId: 2,
     name: '어덕마을경로당',
     address: '대전 중구 어덕마을로 9-16 (용두동)',
     latitude: 36.33317887602899,
     longitude: 127.4009383819605,
-    distance: '258m',
+    operatingHours: {
+      weekday: '09:00~18:00',
+      weekend: '10:00~16:00',
+    },
+    capacity: 40,
     isOpened: true,
     isOutdoors: false,
+    coolingEquipment: {
+      fanCount: 2,
+      acCount: 2,
+    },
+    totalRating: 10,
+    reviewCount: 3,
     averageRating: 4.2,
     photoUrl: 'https://example.com/yongdu_community_center.jpg',
   },
-  {
-    shelterId: 1,
+  3: {
+    shelterId: 3,
     name: '용두2경로당',
     address: '대전 중구 어덕마을로10번길 79-16 (용두동)',
     latitude: 36.33025198676287,
     longitude: 127.40504146769761,
-    distance: '331m',
+    operatingHours: {
+      weekday: '09:00~18:00',
+      weekend: '10:00~16:00',
+    },
+    capacity: 35,
     isOpened: true,
     isOutdoors: false,
+    coolingEquipment: {
+      fanCount: 1,
+      acCount: 1,
+    },
+    totalRating: 8,
+    reviewCount: 2,
     averageRating: 3.9,
     photoUrl: 'https://example.com/seodaejeon_station_shelter.jpg',
   },
-];
+};

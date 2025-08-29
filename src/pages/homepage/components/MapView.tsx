@@ -129,12 +129,13 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
 
 export default MapView;
 
-/* 스타일 */
+/* 스타일*/
 const mapStyle = css`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   margin: 0;
   position: relative;
+  overflow: hidden;
 `;
 
 const mapCanvas = css`
@@ -144,13 +145,12 @@ const mapCanvas = css`
 
 const deniedStyle = css`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   color: ${theme.colors.button.black};
   background: ${theme.colors.button.white};
-
   ${typography.body1Regular};
 `;

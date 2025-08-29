@@ -61,7 +61,7 @@ const mapWrapperStyle = css`
   position: relative;
   width: 100vw;
   max-width: ${theme.spacing.maxwith720};
-  height: 100vh;
+  height: calc(100vh - ${theme.spacing.spacing16});
   margin: 0 auto;
   background: #fff;
 `;

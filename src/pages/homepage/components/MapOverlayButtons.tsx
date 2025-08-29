@@ -62,16 +62,4 @@ const findShelterButtonStyle = css`
   cursor: pointer;
 
   ${typography.button2Bold};
-
-  // 모바일에서는 max-width 제한 제거
-  @media (max-width: 720px) {
-    max-width: none;
-    ${typography.button4Bold};
-  }
-
-  // 720px 이상일 때 스타일
-  @media (min-width: 720px) {
-    padding: 1rem 1rem;
-    ${typography.button3Bold};
-  }
 `;

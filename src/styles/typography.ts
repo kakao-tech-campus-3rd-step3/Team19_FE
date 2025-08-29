@@ -36,4 +36,9 @@ export const typography = {
     fontWeight: 700,
     lineHeight: '1.7rem',
   },
+  highlight2Bold: {
+    fontSize: '1rem', // 운영중, 야외 태그
+    fontWeight: 700,
+    lineHeight: '1.5rem',
+  },
 } as const;

@@ -54,6 +54,10 @@ const ShelterInfoCard = ({ shelter, onStart }: Props) => {
 
   return (
     <div css={infoCardStyle}>
+      <div css={statusWrapper}>
+        {shelter.isOpened && <span css={[statusTag, operatingTag]}>운영중</span>}
+        {shelter.isOutdoors && <span css={[statusTag, outdoorsTag]}>야외</span>}
+      </div>
       {/* 1. 이름 */}
       <p css={shelterName}>{shelter.name}</p>
 
@@ -145,7 +149,7 @@ const shelterName = css`
   font-weight: ${theme.typography.title1Bold.fontWeight};
   line-height: ${theme.typography.title1Bold.lineHeight};
   color: ${theme.colors.button.bule};
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   width: 100%;
   text-align: center;
 `;
@@ -186,4 +190,32 @@ const filledStar = css`
 const emptyStar = css`
   color: ${theme.colors.text.gray100};
   font-size: ${theme.typography.highlight1Bold.fontSize};
+`;
+
+/* 상태 태그 스타일 */
+const statusWrapper = css`
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 0px;
+`;
+
+const statusTag = css`
+  padding: 4px 8px;
+  border-radius: 16px;
+  color: white;
+  white-space: nowrap;
+
+  ${theme.typography.highlight2Bold}
+`;
+
+const operatingTag = css`
+  background-color: ${theme.colors.button.green};
+  color: ${theme.colors.button.white};
+`;
+
+const outdoorsTag = css`
+  background-color: ${theme.colors.button.red};
+  color: ${theme.colors.button.white};
 `;

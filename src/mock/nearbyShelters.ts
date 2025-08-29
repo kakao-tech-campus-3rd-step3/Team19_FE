@@ -7,7 +7,7 @@ export const nearbyShelters = [
     longitude: 127.4056469012105,
     distance: '232m',
     isOpened: true,
-    isOutdoors: false,
+    isOutdoors: true,
     operatingHours: {
       weekday: '09:00~18:00',
       weekend: '10:00~20:00',
@@ -22,7 +22,7 @@ export const nearbyShelters = [
     latitude: 36.33317887602899,
     longitude: 127.4009383819605,
     distance: '258m',
-    isOpened: true,
+    isOpened: false,
     isOutdoors: false,
     operatingHours: {
       weekday: '09:00~17:00',

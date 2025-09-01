@@ -44,7 +44,7 @@ const HomePage = () => {
   };
 
   return (
-    <div>
+    <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
       <NavBar />
       <div css={mapWrapperStyle}>
         <MapView onMapReady={handleMapReady} shelters={nearbyShelters} />
@@ -59,8 +59,6 @@ export default HomePage;
 // 지도와 버튼을 감싸는 래퍼
 const mapWrapperStyle = css`
   position: relative;
-  width: 100vw;
-  max-width: ${theme.spacing.maxwith720};
   height: calc(100vh - ${theme.spacing.spacing16});
   margin: 0 auto;
   background: #fff;

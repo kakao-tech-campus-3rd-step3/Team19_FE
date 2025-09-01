@@ -24,16 +24,7 @@ const NavBar = () => {
 export default NavBar;
 
 const navStyle = css`
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-
-  width: 80%;
-  max-width: ${theme.spacing.maxwith720};
-
   height: ${theme.spacing.spacing16};
-  padding: 0 ${theme.spacing.spacing4};
 
   display: flex;
   align-items: center;

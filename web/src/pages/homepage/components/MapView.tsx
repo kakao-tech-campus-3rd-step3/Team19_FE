@@ -150,7 +150,7 @@ const deniedStyle = css`
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: ${theme.colors.button.black};
+  color: ${theme.colors.text.black};
   background: ${theme.colors.button.white};
   ${typography.body1Regular};
 `;

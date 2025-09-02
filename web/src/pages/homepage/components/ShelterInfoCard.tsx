@@ -55,8 +55,14 @@ const ShelterInfoCard = ({ shelter, onStart }: Props) => {
   return (
     <div css={infoCardStyle}>
       <div css={statusWrapper}>
-        {shelter.isOpened && <span css={[statusTag, operatingTag]}>운영중</span>}
-        {shelter.isOutdoors && <span css={[statusTag, outdoorsTag]}>야외</span>}
+        {/* 운영 여부 태그 */}
+        <span css={[statusTag, shelter.isOpened ? operatingOnTag : operatingOffTag]}>
+          {shelter.isOpened ? '운영중' : '휴무'}
+        </span>
+        {/* 야외 여부 태그 (야외 쉼터일 경우에만 표시, 운영상태에 따라 색 변경) */}
+        {shelter.isOutdoors && (
+          <span css={[statusTag, shelter.isOpened ? outdoorsOnTag : outdoorsOffTag]}>야외</span>
+        )}
       </div>
       {/* 1. 이름 */}
       <p css={shelterName}>{shelter.name}</p>
@@ -176,7 +182,7 @@ const starsWrapper = css`
 `;
 
 const ratingNumber = css`
-  color: ${theme.colors.button.red};
+  color: ${theme.colors.text.red};
   font-size: ${theme.typography.highlight1Bold.fontSize};
   font-weight: ${theme.typography.highlight1Bold.fontWeight};
   line-height: ${theme.typography.highlight1Bold.lineHeight};
@@ -210,12 +216,18 @@ const statusTag = css`
   ${theme.typography.highlight2Bold}
 `;
 
-const operatingTag = css`
-  background-color: ${theme.colors.button.green};
-  color: ${theme.colors.button.white};
+const operatingOnTag = css`
+  background-color: ${theme.colors.button.greenOn};
 `;
 
-const outdoorsTag = css`
-  background-color: ${theme.colors.button.red};
-  color: ${theme.colors.button.white};
+const operatingOffTag = css`
+  background-color: ${theme.colors.button.greenOff};
+`;
+
+const outdoorsOnTag = css`
+  background-color: ${theme.colors.button.redOn};
+`;
+
+const outdoorsOffTag = css`
+  background-color: ${theme.colors.button.redOff};
 `;

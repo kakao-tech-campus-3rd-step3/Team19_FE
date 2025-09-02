@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
+import { useNavigate } from 'react-router-dom';
 import theme from '../../../styles/theme';
 import { typography } from '../../../styles/typography';
 
@@ -7,14 +8,25 @@ interface Props {
   onMyLocation: () => void;
 }
 
-const MapOverlayButtons = ({ onMyLocation }: Props) => (
-  <div css={overlayButtonStyle}>
-    <button css={myLocationButtonStyle} onClick={onMyLocation}>
-      내위치
-    </button>
-    <button css={findShelterButtonStyle}>가까운 쉼터 찾기</button>
-  </div>
-);
+const MapOverlayButtons = ({ onMyLocation }: Props) => {
+  const navigate = useNavigate(); // navigate 함수를 사용할 수 있도록 선언
+
+  // '가까운 쉼터 찾기' 버튼을 클릭했을 때 실행될 함수
+  const handleFindShelterClick = () => {
+    navigate('/find-shelters'); // '/find-shelters' 경로로 페이지를 이동시킴
+  };
+
+  return (
+    <div css={overlayButtonStyle}>
+      <button css={myLocationButtonStyle} onClick={onMyLocation}>
+        내위치
+      </button>
+      <button css={findShelterButtonStyle} onClick={handleFindShelterClick}>
+        가까운 쉼터 찾기
+      </button>
+    </div>
+  );
+};
 
 export default MapOverlayButtons;
 

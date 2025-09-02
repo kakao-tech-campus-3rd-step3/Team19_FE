@@ -24,6 +24,10 @@ const NavBar = () => {
 export default NavBar;
 
 const navStyle = css`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: ${theme.spacing.spacing16};
 
   display: flex;

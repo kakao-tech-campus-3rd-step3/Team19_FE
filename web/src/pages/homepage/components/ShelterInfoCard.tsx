@@ -101,7 +101,7 @@ export default ShelterInfoCard;
 /* 카드 스타일 */
 const infoCardStyle = css`
   position: absolute;
-  bottom: 4rem;
+  bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
   width: 90%;

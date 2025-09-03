@@ -70,7 +70,7 @@ const ShelterInfoCard = ({
           )}
         </div>
       )}
-      <p css={shelterName}>{shelter.name}</p>
+      <p css={shelterName({ variant })}>{shelter.name}</p>
 
       <div css={cardTop}>
         <img
@@ -80,12 +80,12 @@ const ShelterInfoCard = ({
               : 'src/assets/images/NoImage.png'
           }
           alt={shelter.name || 'shelter'}
-          css={thumbnail}
+          css={thumbnail({ variant })}
         />
         <div css={infoText}>
-          <p css={infoParagraph}>거리: {shelter.distance}</p>
-          <p css={infoParagraph}>
-            별점: <span css={ratingNumber}>{shelter.averageRating.toFixed(1)}</span>{' '}
+          <p css={infoParagraph({ variant })}>거리: {shelter.distance}</p>
+          <p css={infoParagraph({ variant })}>
+            별점: <span css={ratingNumber({ variant })}>{shelter.averageRating.toFixed(1)}</span>{' '}
             <span css={starsWrapper}>
               {Array.from({ length: 5 }, (_, i) => (
                 <span key={i} css={i < Math.round(shelter.averageRating) ? filledStar : emptyStar}>
@@ -96,16 +96,16 @@ const ShelterInfoCard = ({
           </p>
           {/* variant에 따라 운영시간 또는 주소를 보여줍니다. */}
           {variant === 'home' ? (
-            <p css={infoParagraph}>운영시간: {formattedOperatingHours}</p>
+            <p css={infoParagraph({ variant })}>운영시간: {formattedOperatingHours}</p>
           ) : (
-            <p css={infoParagraph}>주소: {shelter.address}</p>
+            <p css={infoParagraph({ variant })}>주소: {shelter.address}</p>
           )}
         </div>
       </div>
 
       {/* 버튼 컨테이너 */}
       <div css={buttonContainer({ variant })}>
-        <button css={mainButton} onClick={onStart}>
+        <button css={mainButton({ variant })} onClick={onStart}>
           안내 시작
         </button>
         {/* 'find' variant일 때만 하트 버튼을 보여줍니다. */}
@@ -124,16 +124,15 @@ export default ShelterInfoCard;
 /* 카드 스타일 */
 const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 16px;
 
   /* variant에 따라 달라지는 스타일 */
   ${variant === 'home'
     ? css`
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border-radius: 12px;
         position: absolute;
         bottom: 2rem;
         left: 50%;
@@ -141,10 +140,12 @@ const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
         width: 90%;
         z-index: 1000;
         padding: 12px 16px;
+        padding-bottom: 16px;
       `
     : css`
         position: relative;
         width: 100%;
+        padding-bottom: 4px;
       `}
 `;
 
@@ -156,12 +157,20 @@ const cardTop = css`
   align-items: center;
 `;
 
-const thumbnail = css`
+const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
   width: 30%;
   height: 90%;
   object-fit: cover;
   border-radius: 8px;
-  margin-right: 12px;
+
+  /* variant에 따라 달라지는 스타일 */
+  ${variant === 'home'
+    ? css`
+        margin-right: 12px;
+      `
+    : css`
+        margin-right: 4px;
+      `}
 `;
 
 const infoText = css`
@@ -169,54 +178,99 @@ const infoText = css`
   text-align: left;
 `;
 
-const infoParagraph = css`
+const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+
+  /* variant에 따라 달라지는 스타일 */
+  ${variant === 'home'
+    ? css`
+        margin-bottom: 8px;
+
+        font-size: ${theme.typography.title1Bold.fontSize};
+        font-weight: ${theme.typography.title1Bold.fontWeight};
+        line-height: ${theme.typography.title1Bold.lineHeight};
+        color: ${theme.colors.button.bule};
+      `
+    : css`
+        margin-bottom: 4px;
+
+        font-size: ${theme.typography.title2Bold.fontSize};
+        font-weight: ${theme.typography.title2Bold.fontWeight};
+        line-height: ${theme.typography.title2Bold.lineHeight};
+        color: ${theme.colors.button.bule};
+      `}
+`;
+
+const infoParagraph = ({ variant }: { variant: 'home' | 'find' }) => css`
   margin: 2px 0;
   font-size: ${theme.typography.body2Bold.fontSize};
   font-weight: ${theme.typography.body2Bold.fontWeight};
   line-height: ${theme.typography.body2Bold.lineHeight};
   color: ${theme.colors.text.gray500};
-`;
 
-const shelterName = css`
-  font-size: ${theme.typography.title1Bold.fontSize};
-  font-weight: ${theme.typography.title1Bold.fontWeight};
-  line-height: ${theme.typography.title1Bold.lineHeight};
-  color: ${theme.colors.button.bule};
-  margin-bottom: 8px;
-  width: 100%;
-  text-align: center;
+  /* variant에 따라 달라지는 스타일 */
+  ${variant === 'home'
+    ? css`
+        font-size: ${theme.typography.body2Bold.fontSize};
+        font-weight: ${theme.typography.body2Bold.fontWeight};
+        line-height: ${theme.typography.body2Bold.lineHeight};
+        color: ${theme.colors.text.gray500};
+      `
+    : css`
+        padding-right: 2px;
+        font-size: ${theme.typography.body3Bold.fontSize};
+        font-weight: ${theme.typography.body3Bold.fontWeight};
+        line-height: ${theme.typography.body3Bold.lineHeight};
+        color: ${theme.colors.text.gray500};
+      `}
 `;
 
 /* 버튼 스타일 */
 const buttonContainer = ({ variant }: { variant: 'home' | 'find' }) => css`
   display: flex;
-  gap: 8px;
   ${variant === 'home'
     ? css`
         width: 100%;
+        gap: 8px;
       `
     : css`
-        width: 90%;
+        width: 95%;
+        gap: 4px;
       `}
 `;
 
-const mainButton = css`
-  margin-top: 10px;
+const mainButton = ({ variant }: { variant: 'home' | 'find' }) => css`
   width: 100%;
   background: ${theme.colors.button.red};
   color: white;
   border: none;
-  padding: 6px;
   border-radius: 8px;
-  font-size: ${theme.typography.button1Bold.fontSize};
-  font-weight: ${theme.typography.button1Bold.fontWeight};
-  line-height: ${theme.typography.button1Bold.lineHeight};
+
   cursor: pointer;
+  ${variant === 'home'
+    ? css`
+        margin-top: 10px;
+        padding: 6px;
+
+        font-size: ${theme.typography.button1Bold.fontSize};
+        font-weight: ${theme.typography.button1Bold.fontWeight};
+        line-height: ${theme.typography.button1Bold.lineHeight};
+      `
+    : css`
+        margin-top: 3px;
+        padding: 1px 8px;
+
+        font-size: ${theme.typography.button3Bold.fontSize};
+        font-weight: ${theme.typography.button3Bold.fontWeight};
+        line-height: ${theme.typography.button3Bold.lineHeight};
+      `}
 `;
 const favoriteButton = css`
   margin-top: 10px;
   width: 20%;
-  background: ${theme.colors.button.red};
+  background: ${theme.colors.button.white};
   color: white;
   border: none;
   padding: 6px;
@@ -234,11 +288,20 @@ const starsWrapper = css`
   gap: 2px;
 `;
 
-const ratingNumber = css`
-  color: ${theme.colors.text.red};
-  font-size: ${theme.typography.highlight1Bold.fontSize};
-  font-weight: ${theme.typography.highlight1Bold.fontWeight};
-  line-height: ${theme.typography.highlight1Bold.lineHeight};
+const ratingNumber = ({ variant }: { variant: 'home' | 'find' }) => css`
+  ${variant === 'home'
+    ? css`
+        color: ${theme.colors.text.red};
+        font-size: ${theme.typography.highlight1Bold.fontSize};
+        font-weight: ${theme.typography.highlight1Bold.fontWeight};
+        line-height: ${theme.typography.highlight1Bold.lineHeight};
+      `
+    : css`
+        color: ${theme.colors.text.red};
+        font-size: ${theme.typography.highlight2Bold.fontSize};
+        font-weight: ${theme.typography.highlight2Bold.fontWeight};
+        line-height: ${theme.typography.highlight2Bold.lineHeight};
+      `}
 `;
 
 const filledStar = css`

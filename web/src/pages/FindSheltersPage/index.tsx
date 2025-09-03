@@ -57,21 +57,20 @@ export default FindSheltersPage;
 
 const containerStyle = css`
   position: relative;
-  padding: ${theme.spacing.spacing16} 0;
+  padding: ${theme.spacing.spacing18} 0;
   margin: 0 auto;
-  background: ${theme.colors.button.white};
+  background: ${theme.colors.text.bule};
 `;
 
 const listContainerStyle = css`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 0 16px;
-  padding-bottom: ${theme.spacing.spacing16};
+  gap: 4px;
 `;
 
 const toastStyle = css`
   position: fixed;
+  width: 70%;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);

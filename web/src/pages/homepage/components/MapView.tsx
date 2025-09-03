@@ -5,6 +5,7 @@ import ShelterInfoCard from './ShelterInfoCard';
 import theme from '../../../styles/theme';
 import { typography } from '../../../styles/typography';
 
+// Shelter 인터페이스 (기존과 동일)
 interface Shelter {
   shelterId: number;
   name: string;
@@ -30,6 +31,7 @@ interface Props {
 const MapView = ({ onMapReady, shelters = [] }: Props) => {
   const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
 
   useEffect(() => {
@@ -53,13 +55,13 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
           mapInstanceRef.current = map;
           if (onMapReady) onMapReady(map);
 
-          // 내 위치 마커
+          // 내 위치 마커 (기존과 동일)
           const myMarker = new window.kakao.maps.Marker({
             position: new window.kakao.maps.LatLng(latitude, longitude),
           });
           myMarker.setMap(map);
 
-          // 쉼터 마커 이미지
+          // 쉼터 마커 이미지 (기존과 동일)
           const imageSrc =
             'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
           const imageSize = new window.kakao.maps.Size(24, 35);
@@ -114,10 +116,10 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
     <div css={mapStyle}>
       <div id="map" css={mapCanvas}></div>
 
-      {/* 선택된 쉼터 정보 카드 */}
       {selectedShelter && (
         <ShelterInfoCard
           shelter={selectedShelter}
+          variant="home" // 'home' variant로 설정하여 주소와 하트 버튼이 보이도록 함
           onStart={() => {
             console.log('안내 시작 클릭됨:', selectedShelter.name);
           }}
@@ -129,7 +131,7 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
 
 export default MapView;
 
-/* 스타일*/
+/* 스타일 */
 const mapStyle = css`
   width: 100%;
   height: calc(100vh - ${theme.spacing.spacing16});

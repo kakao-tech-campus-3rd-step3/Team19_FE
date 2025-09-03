@@ -21,13 +21,21 @@ interface Shelter {
 
 interface Props {
   shelter: Shelter;
+  variant: 'home' | 'find'; // 컴포넌트의 종류를 결정하는 prop
+  isFavorite?: boolean; // 'find' variant에서 하트의 상태
   onStart?: () => void;
+  onToggleFavorite?: () => void; // 'find' variant에서 하트 클릭 이벤트 핸들러
 }
 
-const ShelterInfoCard = ({ shelter, onStart }: Props) => {
+const ShelterInfoCard = ({
+  shelter,
+  variant,
+  isFavorite = false,
+  onStart,
+  onToggleFavorite,
+}: Props) => {
   //'09:00~16:00' 형식을 '09시~16시'로 변경하는 함수
   const formatOperatingHours = (timeString: string) => {
-    // timeString이 유효하지 않거나 형식이 맞지 않을 경우 대비
     if (!timeString || !timeString.includes('~')) {
       return '정보 없음';
     }
@@ -38,37 +46,35 @@ const ShelterInfoCard = ({ shelter, onStart }: Props) => {
     return `${startHour}시~${endHour}시`;
   };
 
-  // 오늘 요일을 확인하여 평일/주말 운영시간 결정
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
-
-  // 일요일(0) 또는 토요일(6)이면 주말, 그 외에는 평일
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-  const currentOperatingHours = isWeekend
-    ? shelter.operatingHours.weekend
-    : shelter.operatingHours.weekday;
-
-  // 결정된 운영시간을 원하는 형식으로 변환
-  const formattedOperatingHours = formatOperatingHours(currentOperatingHours);
+  // --- HomePage에서만 사용될 운영시간 관련 로직 ---
+  let formattedOperatingHours = '정보 없음';
+  if (variant === 'home') {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const currentOperatingHours = isWeekend
+      ? shelter.operatingHours.weekend
+      : shelter.operatingHours.weekday;
+    formattedOperatingHours = formatOperatingHours(currentOperatingHours);
+  }
 
   return (
     <div css={infoCardStyle}>
-      <div css={statusWrapper}>
-        {/* 운영 여부 태그 */}
-        <span css={[statusTag, shelter.isOpened ? operatingOnTag : operatingOffTag]}>
-          {shelter.isOpened ? '운영중' : '휴무'}
-        </span>
-        {/* 야외 여부 태그 (야외 쉼터일 경우에만 표시, 운영상태에 따라 색 변경) */}
-        {shelter.isOutdoors && (
-          <span css={[statusTag, shelter.isOpened ? outdoorsOnTag : outdoorsOffTag]}>야외</span>
-        )}
-      </div>
-      {/* 1. 이름 */}
+      {/* 'home' variant일 때만 상태 태그를 보여줍니다. */}
+      {variant === 'home' && (
+        <div css={statusWrapper}>
+          <span css={[statusTag, shelter.isOpened ? operatingOnTag : operatingOffTag]}>
+            {shelter.isOpened ? '운영중' : '휴무'}
+          </span>
+          {shelter.isOutdoors && (
+            <span css={[statusTag, shelter.isOpened ? outdoorsOnTag : outdoorsOffTag]}>야외</span>
+          )}
+        </div>
+      )}
+
       <p css={shelterName}>{shelter.name}</p>
 
       <div css={cardTop}>
-        {/* 2. 사진 */}
         <img
           src={
             shelter.photoUrl && shelter.photoUrl.trim() !== ''
@@ -78,7 +84,6 @@ const ShelterInfoCard = ({ shelter, onStart }: Props) => {
           alt={shelter.name || 'shelter'}
           css={thumbnail}
         />
-        {/* 3. 설명 */}
         <div css={infoText}>
           <p css={infoParagraph}>거리: {shelter.distance}</p>
           <p css={infoParagraph}>
@@ -91,13 +96,27 @@ const ShelterInfoCard = ({ shelter, onStart }: Props) => {
               ))}
             </span>
           </p>
-          <p css={infoParagraph}>운영시간: {formattedOperatingHours}</p>
+          {/* variant에 따라 운영시간 또는 주소를 보여줍니다. */}
+          {variant === 'home' ? (
+            <p css={infoParagraph}>운영시간: {formattedOperatingHours}</p>
+          ) : (
+            <p css={infoParagraph}>주소: {shelter.address}</p>
+          )}
         </div>
       </div>
-      {/* 4. 버튼 */}
-      <button css={startButton} onClick={onStart}>
-        안내 시작
-      </button>
+
+      {/* 버튼 컨테이너 */}
+      <div css={buttonContainer}>
+        <button css={mainButton} onClick={onStart}>
+          안내 시작
+        </button>
+        {/* 'find' variant일 때만 하트 버튼을 보여줍니다. */}
+        {variant === 'find' && (
+          <button css={favoriteButton} onClick={onToggleFavorite}>
+            {isFavorite ? '❤️' : '🤍'}
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -160,7 +179,14 @@ const shelterName = css`
   text-align: center;
 `;
 
-const startButton = css`
+/* 버튼 스타일 */
+const buttonContainer = css`
+  display: flex;
+  width: 100%;
+  gap: 8px;
+`;
+
+const mainButton = css`
   margin-top: 10px;
   width: 100%;
   background: ${theme.colors.button.red};
@@ -173,7 +199,19 @@ const startButton = css`
   line-height: ${theme.typography.button1Bold.lineHeight};
   cursor: pointer;
 `;
-
+const favoriteButton = css`
+  margin-top: 10px;
+  width: 80%;
+  background: ${theme.colors.button.red};
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  font-size: ${theme.typography.button1Bold.fontSize};
+  font-weight: ${theme.typography.button1Bold.fontWeight};
+  line-height: ${theme.typography.button1Bold.lineHeight};
+  cursor: pointer;
+`;
 /*별점 스타일*/
 const starsWrapper = css`
   display: inline-flex;

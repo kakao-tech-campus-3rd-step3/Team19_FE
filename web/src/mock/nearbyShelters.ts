@@ -47,4 +47,20 @@ export const nearbyShelters = [
     averageRating: 3.9,
     photoUrl: 'https://example.com/seodaejeon_station_shelter.jpg',
   },
+  {
+    shelterId: 4,
+    name: '다솔(아)경로당',
+    address: '대전 유성구 궁동로(다솔아파트 102동)',
+    latitude: 36.361972956493304,
+    longitude: 127.34719213983243,
+    distance: '512m',
+    isOpened: true,
+    isOutdoors: false,
+    operatingHours: {
+      weekday: '10:00~16:00',
+      weekend: '07:00~24:00',
+    },
+    averageRating: 3.2,
+    photoUrl: 'https://example.com/seodaejeon_station_shelter.jpg',
+  },
 ];

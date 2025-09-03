@@ -59,8 +59,7 @@ const ShelterInfoCard = ({
   }
 
   return (
-    <div css={infoCardStyle}>
-      {/* 'home' variant일 때만 상태 태그를 보여줍니다. */}
+    <div css={infoCardStyle({ variant })}>
       {variant === 'home' && (
         <div css={statusWrapper}>
           <span css={[statusTag, shelter.isOpened ? operatingOnTag : operatingOffTag]}>
@@ -71,7 +70,6 @@ const ShelterInfoCard = ({
           )}
         </div>
       )}
-
       <p css={shelterName}>{shelter.name}</p>
 
       <div css={cardTop}>
@@ -106,7 +104,7 @@ const ShelterInfoCard = ({
       </div>
 
       {/* 버튼 컨테이너 */}
-      <div css={buttonContainer}>
+      <div css={buttonContainer({ variant })}>
         <button css={mainButton} onClick={onStart}>
           안내 시작
         </button>
@@ -124,20 +122,30 @@ const ShelterInfoCard = ({
 export default ShelterInfoCard;
 
 /* 카드 스타일 */
-const infoCardStyle = css`
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
+const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 12px ${theme.colors.button.white};
-  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 1000;
+  padding-bottom: 16px;
+
+  /* variant에 따라 달라지는 스타일 */
+  ${variant === 'home'
+    ? css`
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        z-index: 1000;
+        padding: 12px 16px;
+      `
+    : css`
+        position: relative;
+        width: 100%;
+      `}
 `;
 
 const cardTop = css`
@@ -180,10 +188,16 @@ const shelterName = css`
 `;
 
 /* 버튼 스타일 */
-const buttonContainer = css`
+const buttonContainer = ({ variant }: { variant: 'home' | 'find' }) => css`
   display: flex;
-  width: 100%;
   gap: 8px;
+  ${variant === 'home'
+    ? css`
+        width: 100%;
+      `
+    : css`
+        width: 90%;
+      `}
 `;
 
 const mainButton = css`
@@ -201,7 +215,7 @@ const mainButton = css`
 `;
 const favoriteButton = css`
   margin-top: 10px;
-  width: 80%;
+  width: 20%;
   background: ${theme.colors.button.red};
   color: white;
   border: none;
@@ -212,6 +226,7 @@ const favoriteButton = css`
   line-height: ${theme.typography.button1Bold.lineHeight};
   cursor: pointer;
 `;
+
 /*별점 스타일*/
 const starsWrapper = css`
   display: inline-flex;

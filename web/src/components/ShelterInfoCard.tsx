@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import theme from '../../../styles/theme';
+import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 
 interface Shelter {

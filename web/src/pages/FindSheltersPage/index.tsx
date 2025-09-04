@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import theme from '../../styles/theme';
-import ShelterInfoCard from '../homepage/components/ShelterInfoCard';
+import ShelterInfoCard from '../../components/ShelterInfoCard';
 import { nearbyShelters } from '../../mock/nearbyShelters';
 import { FaArrowUp } from 'react-icons/fa';
 

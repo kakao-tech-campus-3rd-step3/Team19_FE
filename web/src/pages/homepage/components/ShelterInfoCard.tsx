@@ -191,7 +191,7 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
         font-size: ${theme.typography.title1Bold.fontSize};
         font-weight: ${theme.typography.title1Bold.fontWeight};
         line-height: ${theme.typography.title1Bold.lineHeight};
-        color: ${theme.colors.button.bule};
+        color: ${theme.colors.button.blue};
       `
     : css`
         margin-bottom: 4px;
@@ -199,7 +199,7 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
         font-size: ${theme.typography.title2Bold.fontSize};
         font-weight: ${theme.typography.title2Bold.fontWeight};
         line-height: ${theme.typography.title2Bold.lineHeight};
-        color: ${theme.colors.button.bule};
+        color: ${theme.colors.button.blue};
       `}
 `;
 

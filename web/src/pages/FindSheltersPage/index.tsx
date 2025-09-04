@@ -1,38 +1,52 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import theme from '../../styles/theme';
 import ShelterInfoCard from '../homepage/components/ShelterInfoCard';
 import { nearbyShelters } from '../../mock/nearbyShelters';
+import { FaArrowUp } from 'react-icons/fa';
 
-// 한 번에 보여줄 아이템의 개수를 상수로 정의하면 나중에 관리하기 편합니다.
 const ITEMS_PER_PAGE = 3;
 
 const FindSheltersPage = () => {
-  // '좋아요' 누른 쉼터의 id를 배열로 관리
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([2]); // 2번 쉼터는 기본으로 '좋아요'
-
-  // 토스트 메시지 상태 관리
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([2]);
   const [toastMessage, setToastMessage] = useState<string>('');
-
-  // 화면에 보여줄 쉼터의 개수를 관리하는 상태
   const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+
+  const hasMoreItems = visibleCount < nearbyShelters.length;
+
+  // 스크롤 이벤트를 window에서 감지하도록 수정한 useEffect
+  useEffect(() => {
+    const handleScroll = () => {
+      // 페이지 전체의 스크롤 위치(window.scrollY)를 확인
+      if (window.scrollY > 100) {
+        setShowScrollToTop(true);
+      } else {
+        setShowScrollToTop(false);
+      }
+    };
+
+    // window 객체에 스크롤 이벤트 리스너 추가
+    window.addEventListener('scroll', handleScroll);
+
+    // 컴포넌트가 사라질 때 window의 이벤트 리스너를 제거
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // '좋아요' 버튼 클릭 핸들러
   const handleToggleFavorite = (shelterId: number) => {
-    // 이미 '좋아요' 목록에 있는지 확인
     const isAlreadyFavorite = favoriteIds.includes(shelterId);
 
     if (isAlreadyFavorite) {
-      // 있다면 목록에서 제거
       setFavoriteIds((prev) => prev.filter((id) => id !== shelterId));
       setToastMessage('찜 목록에서 삭제되었습니다.');
     } else {
-      // 없다면 목록에 추가하고 토스트 메시지 띄우기
       setFavoriteIds((prev) => [...prev, shelterId]);
       setToastMessage('찜 목록에 추가되었습니다.');
     }
-    // 2초 후에 토스트 메시지 사라지게 하기
     setTimeout(() => {
       setToastMessage('');
     }, 2000);
@@ -40,18 +54,20 @@ const FindSheltersPage = () => {
 
   // '더보기' 버튼 클릭 핸들러
   const handleLoadMore = () => {
-    // 보여줄 개수를 3개씩 늘립니다.
     setVisibleCount((prevCount) => prevCount + ITEMS_PER_PAGE);
+  };
+
+  // '맨 위로 가기' 버튼 클릭 시 window를 스크롤
+  const handleScrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
   };
 
   return (
     <div css={containerStyle}>
-      <div
-        css={listContainerStyle({
-          hasMoreItems: visibleCount < nearbyShelters.length,
-        })}
-      >
-        {/* 전체 데이터를 slice하여 visibleCount만큼만 렌더링합니다. */}
+      <div css={listContainerStyle}>
         {nearbyShelters.slice(0, visibleCount).map((shelter) => (
           <ShelterInfoCard
             key={shelter.shelterId}
@@ -64,14 +80,23 @@ const FindSheltersPage = () => {
         ))}
       </div>
 
-      {/* 더 보여줄 쉼터가 있을 경우에만 '더보기' 버튼을 렌더링합니다. */}
-      {visibleCount < nearbyShelters.length && (
-        <button type="button" css={loadMoreButtonStyle} onClick={handleLoadMore}>
-          더보기
-        </button>
-      )}
+      <div css={bottomButtonContainerStyle}>
+        {hasMoreItems ? (
+          <button type="button" css={loadMoreButtonStyle} onClick={handleLoadMore}>
+            더보기
+          </button>
+        ) : (
+          <div /> // '더보기' 버튼이 없을 때 레이아웃 유지를 위한 빈 div
+        )}
 
-      {/* 토스트 메시지 */}
+        {/* '맨 위로' 버튼을 조건부로 렌더링 */}
+        {showScrollToTop && (
+          <button type="button" css={scrollToTopButtonStyle} onClick={handleScrollToTop}>
+            <FaArrowUp size={40} color="#ffffffff" />
+          </button>
+        )}
+      </div>
+
       {toastMessage && <div css={toastStyle}>{toastMessage}</div>}
     </div>
   );
@@ -87,16 +112,33 @@ const containerStyle = css`
   height: calc(100vh - ${theme.spacing.spacing18} - ${theme.spacing.spacing18});
 `;
 
-const listContainerStyle = ({ hasMoreItems }: { hasMoreItems: boolean }) => css`
+const listContainerStyle = css`
   display: flex;
   flex-direction: column;
   gap: 4px;
+`;
 
-  // '더보기' 버튼이 없을 때(!hasMoreItems)만 하단 여백을 추가합니다.
-  ${!hasMoreItems &&
-  css`
-    padding-bottom: ${theme.spacing.spacing18};
-  `}
+const bottomButtonContainerStyle = css`
+  display: flex;
+  justify-content: space-between; // 양쪽 끝으로 버튼을 배치
+  align-items: center;
+  padding: 0 18px; // 좌우 여백
+  margin-top: 12px; // 리스트와의 간격
+`;
+
+// '맨 위로 가기' 버튼 스타일
+const scrollToTopButtonStyle = css`
+  background: ${theme.colors.button.black};
+  padding: 0;
+  display: flex;
+  align-items: center;
+
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-bottom: 10px;
 `;
 
 // '더보기' 버튼 스타일

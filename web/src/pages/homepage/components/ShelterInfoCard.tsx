@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import theme from '../../../styles/theme';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
 
 interface Shelter {
   shelterId: number;
@@ -140,7 +141,11 @@ const ShelterInfoCard = ({
         </button>
         {variant === 'find' && (
           <button css={favoriteButton} onClick={onToggleFavorite}>
-            {isFavorite ? '❤️' : '🤍'}
+            {isFavorite ? (
+              <FaHeart size={40} color={theme.colors.button.red} />
+            ) : (
+              <FaRegHeart size={40} color={theme.colors.button.black} />
+            )}
           </button>
         )}
       </div>
@@ -149,6 +154,7 @@ const ShelterInfoCard = ({
 };
 
 export default ShelterInfoCard;
+
 /* 카드 스타일 */
 const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
   background: white;
@@ -296,7 +302,6 @@ const mainButton = ({ variant }: { variant: 'home' | 'find' }) => css`
       `}
 `;
 const favoriteButton = css`
-  margin-top: 10px;
   width: 20%;
   background: ${theme.colors.button.white};
   color: white;

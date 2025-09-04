@@ -53,7 +53,7 @@ const myLocationButtonStyle = css`
   width: 8rem;
   min-width: 7rem;
   padding: 0.5rem 0.5rem;
-  background-color: ${theme.colors.button.bule};
+  background-color: ${theme.colors.button.blue};
   color: white;
   border: 1px solid ${theme.colors.text.gray100};
   border-radius: 20px;

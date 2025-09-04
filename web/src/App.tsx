@@ -2,8 +2,8 @@
 import './App.css';
 import { Routes, Route } from 'react-router-dom';
 import FindSheltersPage from './pages/FindSheltersPage';
-import HomePage from './pages/homepage';
-import NavBar from './pages/homepage/components/NavBar';
+import HomePage from './pages/HomePage';
+import NavBar from './pages/HomePage/components/NavBar';
 
 function App() {
   return (

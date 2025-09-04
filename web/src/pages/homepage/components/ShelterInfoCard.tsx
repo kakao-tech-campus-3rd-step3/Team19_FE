@@ -9,7 +9,6 @@ interface Shelter {
   latitude: number;
   longitude: number;
   distance: string;
-  isOpened: boolean;
   isOutdoors: boolean;
   operatingHours: {
     weekday: string;
@@ -21,10 +20,10 @@ interface Shelter {
 
 interface Props {
   shelter: Shelter;
-  variant: 'home' | 'find'; // 컴포넌트의 종류를 결정하는 prop
-  isFavorite?: boolean; // 'find' variant에서 하트의 상태
+  variant: 'home' | 'find';
+  isFavorite?: boolean;
   onStart?: () => void;
-  onToggleFavorite?: () => void; // 'find' variant에서 하트 클릭 이벤트 핸들러
+  onToggleFavorite?: () => void;
 }
 
 const ShelterInfoCard = ({
@@ -46,27 +45,60 @@ const ShelterInfoCard = ({
     return `${startHour}시~${endHour}시`;
   };
 
-  // --- HomePage에서만 사용될 운영시간 관련 로직 ---
+  // 현재 시간이 운영 시간 내에 있는지 확인하는 함수
+  const checkIfOpenNow = (timeString: string): boolean => {
+    if (!timeString || !timeString.includes('~')) {
+      return false; // 운영 시간 정보가 없으면 운영 종료로 간주
+    }
+
+    try {
+      const [startTimeStr, endTimeStr] = timeString.split('~');
+      const now = new Date();
+
+      const startTime = new Date(now);
+      const [startHour, startMinute] = startTimeStr.split(':').map(Number);
+      startTime.setHours(startHour, startMinute, 0, 0);
+
+      const endTime = new Date(now);
+      const [endHour, endMinute] = endTimeStr.split(':').map(Number);
+      endTime.setHours(endHour, endMinute, 0, 0);
+
+      // 현재 시간이 시작 시간과 같거나 크고, 종료 시간보다 작을 때 운영 중
+      return now >= startTime && now < endTime;
+    } catch (error) {
+      console.error('운영 시간 파싱 오류:', error);
+      return false;
+    }
+  };
+
+  // isOpened 대신 isActuallyOpen을 계산하여 사용
   let formattedOperatingHours = '정보 없음';
+  let isActuallyOpen = false; // 기본값은 운영 종료(false)
+
   if (variant === 'home') {
     const today = new Date();
-    const dayOfWeek = today.getDay();
+    const dayOfWeek = today.getDay(); // 0: 일요일, 6: 토요일
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
     const currentOperatingHours = isWeekend
       ? shelter.operatingHours.weekend
       : shelter.operatingHours.weekday;
+
+    // 표시될 운영 시간 포맷팅
     formattedOperatingHours = formatOperatingHours(currentOperatingHours);
+    // 현재 실제 운영 여부 계산
+    isActuallyOpen = checkIfOpenNow(currentOperatingHours);
   }
 
   return (
     <div css={infoCardStyle({ variant })}>
       {variant === 'home' && (
         <div css={statusWrapper}>
-          <span css={[statusTag, shelter.isOpened ? operatingOnTag : operatingOffTag]}>
-            {shelter.isOpened ? '운영중' : '휴무'}
+          <span css={[statusTag, isActuallyOpen ? operatingOnTag : operatingOffTag]}>
+            {isActuallyOpen ? '운영중' : '운영 종료'}
           </span>
           {shelter.isOutdoors && (
-            <span css={[statusTag, shelter.isOpened ? outdoorsOnTag : outdoorsOffTag]}>야외</span>
+            <span css={[statusTag, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}>야외</span>
           )}
         </div>
       )}
@@ -94,7 +126,6 @@ const ShelterInfoCard = ({
               ))}
             </span>
           </p>
-          {/* variant에 따라 운영시간 또는 주소를 보여줍니다. */}
           {variant === 'home' ? (
             <p css={infoParagraph({ variant })}>운영시간: {formattedOperatingHours}</p>
           ) : (
@@ -103,12 +134,10 @@ const ShelterInfoCard = ({
         </div>
       </div>
 
-      {/* 버튼 컨테이너 */}
       <div css={buttonContainer({ variant })}>
         <button css={mainButton({ variant })} onClick={onStart}>
           안내 시작
         </button>
-        {/* 'find' variant일 때만 하트 버튼을 보여줍니다. */}
         {variant === 'find' && (
           <button css={favoriteButton} onClick={onToggleFavorite}>
             {isFavorite ? '❤️' : '🤍'}
@@ -120,7 +149,6 @@ const ShelterInfoCard = ({
 };
 
 export default ShelterInfoCard;
-
 /* 카드 스타일 */
 const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
   background: white;

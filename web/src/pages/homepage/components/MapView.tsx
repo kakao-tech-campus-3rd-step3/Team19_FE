@@ -5,7 +5,7 @@ import ShelterInfoCard from './ShelterInfoCard';
 import theme from '../../../styles/theme';
 import { typography } from '../../../styles/typography';
 
-// Shelter 인터페이스 (기존과 동일)
+// Shelter 인터페이스
 interface Shelter {
   shelterId: number;
   name: string;
@@ -13,7 +13,6 @@ interface Shelter {
   latitude: number;
   longitude: number;
   distance: string;
-  isOpened: boolean;
   isOutdoors: boolean;
   operatingHours: {
     weekday: string;
@@ -55,13 +54,13 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
           mapInstanceRef.current = map;
           if (onMapReady) onMapReady(map);
 
-          // 내 위치 마커 (기존과 동일)
+          // 내 위치 마커
           const myMarker = new window.kakao.maps.Marker({
             position: new window.kakao.maps.LatLng(latitude, longitude),
           });
           myMarker.setMap(map);
 
-          // 쉼터 마커 이미지 (기존과 동일)
+          // 쉼터 마커 이미지
           const imageSrc =
             'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
           const imageSize = new window.kakao.maps.Size(24, 35);

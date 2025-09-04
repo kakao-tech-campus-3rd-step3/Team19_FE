@@ -5,6 +5,7 @@ import theme from '../../styles/theme';
 import { nearbyShelters } from '../../mock/nearbyShelters';
 import ShelterList from './components/ShelterList';
 import BottomControls from './components/BottomControls';
+import ToastMessage from './components/ToastMessage';
 
 const ITEMS_PER_PAGE = 3;
 
@@ -72,7 +73,8 @@ const FindSheltersPage = () => {
         onScrollToTop={handleScrollToTop}
       />
 
-      {toastMessage && <div css={toastStyle}>{toastMessage}</div>}
+      {/* ToastMessage 컴포넌트 사용 */}
+      <ToastMessage message={toastMessage} />
     </div>
   );
 };
@@ -85,32 +87,4 @@ const containerStyle = css`
   margin: 0 auto;
   background: white;
   height: calc(100vh - ${theme.spacing.spacing18} - ${theme.spacing.spacing18});
-`;
-
-const toastStyle = css`
-  position: fixed;
-  width: 70%;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 20px;
-  z-index: 2000;
-  font-size: ${theme.typography.body2Bold.fontSize};
-  animation: fadeInOut 2s ease-in-out forwards;
-
-  @keyframes fadeInOut {
-    0%,
-    100% {
-      opacity: 0;
-      transform: translate(-50%, 10px);
-    }
-    10%,
-    90% {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-  }
 `;

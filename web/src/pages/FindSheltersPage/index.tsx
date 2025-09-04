@@ -2,9 +2,9 @@
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import theme from '../../styles/theme';
-import ShelterInfoCard from '../../components/ShelterInfoCard';
 import { nearbyShelters } from '../../mock/nearbyShelters';
 import { FaArrowUp } from 'react-icons/fa';
+import ShelterList from './components/ShelterList';
 
 const ITEMS_PER_PAGE = 3;
 
@@ -26,14 +26,10 @@ const FindSheltersPage = () => {
         setShowScrollToTop(false);
       }
     };
-
     // window 객체에 스크롤 이벤트 리스너 추가
     window.addEventListener('scroll', handleScroll);
-
     // 컴포넌트가 사라질 때 window의 이벤트 리스너를 제거
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // '좋아요' 버튼 클릭 핸들러
@@ -47,9 +43,7 @@ const FindSheltersPage = () => {
       setFavoriteIds((prev) => [...prev, shelterId]);
       setToastMessage('찜 목록에 추가되었습니다.');
     }
-    setTimeout(() => {
-      setToastMessage('');
-    }, 2000);
+    setTimeout(() => setToastMessage(''), 2000);
   };
 
   // '더보기' 버튼 클릭 핸들러
@@ -59,26 +53,16 @@ const FindSheltersPage = () => {
 
   // '맨 위로 가기' 버튼 클릭 시 window를 스크롤
   const handleScrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <div css={containerStyle}>
-      <div css={listContainerStyle}>
-        {nearbyShelters.slice(0, visibleCount).map((shelter) => (
-          <ShelterInfoCard
-            key={shelter.shelterId}
-            shelter={shelter}
-            variant="find"
-            isFavorite={favoriteIds.includes(shelter.shelterId)}
-            onToggleFavorite={() => handleToggleFavorite(shelter.shelterId)}
-            onStart={() => console.log(`${shelter.name} 안내 시작`)}
-          />
-        ))}
-      </div>
+      <ShelterList
+        shelters={nearbyShelters.slice(0, visibleCount)}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={handleToggleFavorite}
+      />
 
       <div css={bottomButtonContainerStyle}>
         {hasMoreItems ? (
@@ -108,14 +92,8 @@ const containerStyle = css`
   position: relative;
   padding: ${theme.spacing.spacing18} 0;
   margin: 0 auto;
-  background: ${theme.colors.text.blue};
+  background: white;
   height: calc(100vh - ${theme.spacing.spacing18} - ${theme.spacing.spacing18});
-`;
-
-const listContainerStyle = css`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 `;
 
 const bottomButtonContainerStyle = css`
@@ -132,7 +110,6 @@ const scrollToTopButtonStyle = css`
   padding: 0;
   display: flex;
   align-items: center;
-
   justify-content: center;
   width: 50px;
   height: 50px;

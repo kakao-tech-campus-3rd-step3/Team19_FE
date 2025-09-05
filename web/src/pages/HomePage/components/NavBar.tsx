@@ -2,8 +2,8 @@
 import { css } from '@emotion/react';
 import { IoCaretBack } from 'react-icons/io5';
 import { FaUser } from 'react-icons/fa';
-import theme from '../../../styles/theme';
-import logo from '../../../assets/images/logo.png';
+import theme from '@/styles/theme';
+import logo from '@/assets/images/logo.png';
 
 const NavBar = () => {
   return (

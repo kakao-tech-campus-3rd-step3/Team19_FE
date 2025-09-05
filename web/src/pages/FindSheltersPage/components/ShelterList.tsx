@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import ShelterInfoCard from '../../../components/ShelterInfoCard';
+import ShelterInfoCard from '@/components/ShelterInfoCard';
 
 interface Shelter {
   shelterId: number;

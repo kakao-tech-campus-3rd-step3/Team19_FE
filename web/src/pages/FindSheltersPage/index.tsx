@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import theme from '../../styles/theme';
-import { nearbyShelters } from '../../mock/nearbyShelters';
+import theme from '@/styles/theme';
+import { nearbyShelters } from '@/mock/nearbyShelters';
 import ShelterList from './components/ShelterList';
 import BottomControls from './components/BottomControls';
 import ToastMessage from './components/ToastMessage';

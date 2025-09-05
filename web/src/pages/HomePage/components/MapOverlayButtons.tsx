@@ -1,8 +1,8 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useNavigate } from 'react-router-dom';
-import theme from '../../../styles/theme';
-import { typography } from '../../../styles/typography';
+import theme from '@/styles/theme';
+import { typography } from '@/styles/typography';
 
 interface Props {
   onMyLocation: () => void;

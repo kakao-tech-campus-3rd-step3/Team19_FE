@@ -2,8 +2,8 @@
 import { css } from '@emotion/react';
 import MapOverlayButtons from './components/MapOverlayButtons';
 import MapView from './components/MapView';
-import { nearbyShelters } from '../../mock/nearbyShelters';
-import theme from '../../styles/theme';
+import { nearbyShelters } from '@/mock/nearbyShelters';
+import theme from '@/styles/theme';
 import { useMap } from './hooks/useMap';
 
 const HomePage = () => {

@@ -1,9 +1,9 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
-import ShelterInfoCard from '../../../components/ShelterInfoCard';
-import theme from '../../../styles/theme';
-import { typography } from '../../../styles/typography';
+import ShelterInfoCard from '@/components/ShelterInfoCard';
+import theme from '@/styles/theme';
+import { typography } from '@/styles/typography';
 
 // Shelter 인터페이스
 interface Shelter {

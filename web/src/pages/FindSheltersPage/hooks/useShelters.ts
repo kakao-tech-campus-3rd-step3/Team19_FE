@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { nearbyShelters } from '../../../mock/nearbyShelters';
+import { nearbyShelters } from '@/mock/nearbyShelters';
 
 const ITEMS_PER_PAGE = 3;
 

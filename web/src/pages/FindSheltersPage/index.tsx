@@ -1,6 +1,4 @@
 /** @jsxImportSource @emotion/react */
-import { css } from '@emotion/react';
-import theme from '@/styles/theme';
 import { nearbyShelters } from '@/mock/nearbyShelters';
 import ShelterList from './components/ShelterList';
 import BottomControls from './components/BottomControls';
@@ -20,7 +18,7 @@ const FindSheltersPage = () => {
   } = useShelters();
 
   return (
-    <div css={containerStyle}>
+    <div>
       <ShelterList
         shelters={nearbyShelters.slice(0, visibleCount)}
         favoriteIds={favoriteIds}
@@ -42,11 +40,3 @@ const FindSheltersPage = () => {
 };
 
 export default FindSheltersPage;
-
-const containerStyle = css`
-  position: relative;
-  padding: ${theme.spacing.spacing18} 0;
-  margin: 0 auto;
-  background: white;
-  height: calc(100vh - ${theme.spacing.spacing18} - ${theme.spacing.spacing18});
-`;

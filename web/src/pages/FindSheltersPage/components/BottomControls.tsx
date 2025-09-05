@@ -38,7 +38,7 @@ const bottomButtonContainerStyle = css`
   justify-content: space-between; // 양쪽 끝으로 버튼을 배치
   align-items: center;
   padding: 0 18px; // 좌우 여백
-  margin-top: 12px; // 리스트와의 간격
+  margin-bottom: 19vh;
 `;
 
 // '맨 위로 가기' 버튼 스타일
@@ -61,15 +61,15 @@ const scrollToTopButtonStyle = css`
 
 // '더보기' 버튼 스타일
 const loadMoreButtonStyle = css`
-  width: 40%;
-  margin: 12px auto 0;
+  width: 50%;
+  margin: 4px auto 0;
   padding: 6px 20px;
   border: 1px solid rgba(0, 0, 0, 0.52);
   border-radius: 8px;
   background-color: ${theme.colors.button.black};
   color: ${theme.colors.text.white};
-  font-size: ${theme.typography.body2Bold.fontSize};
-  font-weight: ${theme.typography.body2Bold.fontWeight};
+  font-size: ${theme.typography.title1Bold.fontSize};
+  font-weight: ${theme.typography.title1Bold.fontWeight};
   cursor: pointer;
 `;
 const emptyDivStyle = css`

@@ -177,9 +177,9 @@ const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
         padding-bottom: 16px;
       `
     : css`
+        height: 27vh;
         position: relative;
         width: 100%;
-        padding-bottom: 4px;
       `}
 `;
 
@@ -362,7 +362,7 @@ const statusTag = css`
   color: white;
   white-space: nowrap;
 
-  ${theme.typography.highlight2Bold}
+  ${theme.typography.highlight3Bold}
 `;
 
 const operatingOnTag = css`

@@ -2,8 +2,8 @@
 import { css } from '@emotion/react';
 import { IoCaretBack } from 'react-icons/io5';
 import { FaUser } from 'react-icons/fa';
-import theme from '../../../styles/theme';
-import logo from '../../../assets/images/logo.png';
+import theme from '@/styles/theme';
+import logo from '@/assets/images/logo.png';
 
 const NavBar = () => {
   return (
@@ -24,6 +24,12 @@ const NavBar = () => {
 export default NavBar;
 
 const navStyle = css`
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 500px; // App.css의 루트(#root) 레이아웃 너비와 동일하게 설정하여 좌우가 튀어나가지 않도록 함
+  width: 100%;
   height: ${theme.spacing.spacing16};
 
   display: flex;

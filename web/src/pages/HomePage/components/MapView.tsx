@@ -1,10 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
-import ShelterInfoCard from './ShelterInfoCard';
-import theme from '../../../styles/theme';
-import { typography } from '../../../styles/typography';
+import ShelterInfoCard from '@/components/ShelterInfoCard';
+import theme from '@/styles/theme';
+import { typography } from '@/styles/typography';
 
+// Shelter 인터페이스
 interface Shelter {
   shelterId: number;
   name: string;
@@ -12,7 +13,6 @@ interface Shelter {
   latitude: number;
   longitude: number;
   distance: string;
-  isOpened: boolean;
   isOutdoors: boolean;
   operatingHours: {
     weekday: string;
@@ -30,6 +30,7 @@ interface Props {
 const MapView = ({ onMapReady, shelters = [] }: Props) => {
   const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
 
   useEffect(() => {
@@ -114,10 +115,10 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
     <div css={mapStyle}>
       <div id="map" css={mapCanvas}></div>
 
-      {/* 선택된 쉼터 정보 카드 */}
       {selectedShelter && (
         <ShelterInfoCard
           shelter={selectedShelter}
+          variant="home" // 'home' variant로 설정하여 주소와 하트 버튼이 보이도록 함
           onStart={() => {
             console.log('안내 시작 클릭됨:', selectedShelter.name);
           }}
@@ -129,7 +130,7 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
 
 export default MapView;
 
-/* 스타일*/
+/* 스타일 */
 const mapStyle = css`
   width: 100%;
   height: calc(100vh - ${theme.spacing.spacing16});
@@ -150,7 +151,7 @@ const deniedStyle = css`
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: ${theme.colors.button.black};
+  color: ${theme.colors.text.black};
   background: ${theme.colors.button.white};
   ${typography.body1Regular};
 `;

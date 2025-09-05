@@ -14,15 +14,17 @@ export const useShelters = () => {
   // 스크롤 이벤트를 window에서 감지하도록 수정한 useEffect
   useEffect(() => {
     const handleScroll = () => {
-      // 페이지 전체의 스크롤 위치(window.scrollY)를 확인
-      if (window.scrollY > 100) {
+      // 스크롤 위치가 최상단이 아닐 경우 showScrollToTop을 true로 설정
+      if (window.scrollY > 0) {
         setShowScrollToTop(true);
       } else {
         setShowScrollToTop(false);
       }
     };
+
     // window 객체에 스크롤 이벤트 리스너 추가
     window.addEventListener('scroll', handleScroll);
+
     // 컴포넌트가 사라질 때 window의 이벤트 리스너를 제거
     return () => window.removeEventListener('scroll', handleScroll);
   }, []); // 컴포넌트 마운트 시 한 번만 실행

@@ -1,5 +1,5 @@
 export const nearbyShelters = [
-  {
+  /*{
     shelterId: 1,
     name: '목양마을아파트경로당',
     address: '대전 중구 목동로 37 (목동, 목양마을아파트)',
@@ -60,4 +60,5 @@ export const nearbyShelters = [
     averageRating: 3.2,
     photoUrl: 'https://example.com/seodaejeon_station_shelter.jpg',
   },
+  */
 ];

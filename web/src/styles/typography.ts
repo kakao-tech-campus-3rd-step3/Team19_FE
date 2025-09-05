@@ -18,9 +18,9 @@ export const typography = {
   },
 
   body1Regular: {
-    fontSize: '1.5rem', // 권한 거부 안내 문구
-    fontWeight: 400,
-    lineHeight: '2rem',
+    fontSize: '2rem', // 권한 거부 안내 문구
+    fontWeight: 800,
+    lineHeight: '2.8rem',
   },
   body2Bold: {
     fontSize: '1.2rem', // 카드 내 거리, 운영시간

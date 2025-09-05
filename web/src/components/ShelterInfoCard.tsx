@@ -2,6 +2,7 @@
 import { css } from '@emotion/react';
 import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import NoImage from '@/assets/images/NoImage.png';
 
 interface Shelter {
   shelterId: number;
@@ -107,11 +108,7 @@ const ShelterInfoCard = ({
 
       <div css={cardTop}>
         <img
-          src={
-            shelter.photoUrl && shelter.photoUrl.trim() !== ''
-              ? shelter.photoUrl
-              : 'src/assets/images/NoImage.png'
-          }
+          src={shelter.photoUrl && shelter.photoUrl.trim() !== '' ? shelter.photoUrl : NoImage}
           alt={shelter.name || 'shelter'}
           css={thumbnail({ variant })}
         />

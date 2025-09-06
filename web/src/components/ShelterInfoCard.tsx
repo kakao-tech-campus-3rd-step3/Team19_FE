@@ -4,6 +4,7 @@ import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import { useNavigate } from 'react-router-dom';
+import { formatOperatingHours, checkIfOpenNow } from '@/utils/date';
 
 interface Shelter {
   shelterId: number;
@@ -44,44 +45,6 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     event.currentTarget.src = NoImage; // 이미지 로드 실패 시 NoImage로 대체
   };
 
-  //'09:00~16:00' 형식을 '09시~16시'로 변경하는 함수
-  const formatOperatingHours = (timeString: string) => {
-    if (!timeString || !timeString.includes('~')) {
-      return '정보 없음';
-    }
-    const [startTime, endTime] = timeString.split('~');
-    const startHour = startTime.substring(0, 2);
-    const endHour = endTime.substring(0, 2);
-
-    return `${startHour}시~${endHour}시`;
-  };
-
-  // 현재 시간이 운영 시간 내에 있는지 확인하는 함수
-  const checkIfOpenNow = (timeString: string): boolean => {
-    if (!timeString || !timeString.includes('~')) {
-      return false; // 운영 시간 정보가 없으면 운영 종료로 간주
-    }
-
-    try {
-      const [startTimeStr, endTimeStr] = timeString.split('~');
-      const now = new Date();
-
-      const startTime = new Date(now);
-      const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-      startTime.setHours(startHour, startMinute, 0, 0);
-
-      const endTime = new Date(now);
-      const [endHour, endMinute] = endTimeStr.split(':').map(Number);
-      endTime.setHours(endHour, endMinute, 0, 0);
-
-      // 현재 시간이 시작 시간과 같거나 크고, 종료 시간보다 작을 때 운영 중
-      return now >= startTime && now < endTime;
-    } catch (error) {
-      console.error('운영 시간 파싱 오류:', error);
-      return false;
-    }
-  };
-
   // isOpened 대신 isActuallyOpen을 계산하여 사용
   let formattedOperatingHours = '정보 없음';
   let isActuallyOpen = false; // 기본값은 운영 종료(false)
@@ -96,7 +59,7 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
       : shelter.operatingHours.weekday;
 
     // 표시될 운영 시간 포맷팅
-    formattedOperatingHours = formatOperatingHours(currentOperatingHours);
+    formattedOperatingHours = formatOperatingHours(currentOperatingHours); // 유틸리티 함수 사용
     // 현재 실제 운영 여부 계산
     isActuallyOpen = checkIfOpenNow(currentOperatingHours);
   }

@@ -4,6 +4,7 @@ import './App.css';
 import FindSheltersPage from './pages/FindSheltersPage';
 import HomePage from './pages/HomePage';
 import GuidePage from './pages/GuidePage';
+import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './pages/HomePage/components/NavBar';
 import { Route, Routes } from 'react-router-dom';
 import theme from './styles/theme';
@@ -67,6 +68,8 @@ const App = () => {
             <Route path="/find-shelters" element={<FindSheltersPage />} />
             {/* path="/guide": 주소창에 /guide를 입력하면 GuidePage를 보여줌. */}
             <Route path="/guide" element={<GuidePage />} />
+            {/* path="/shelter-detail/:id": 쉼터 상세 페이지 추가 */}
+            <Route path="/shelter-detail/:id" element={<ShelterDetailPage />} />
           </Routes>
         </main>
       </div>

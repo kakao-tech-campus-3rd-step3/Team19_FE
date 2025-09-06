@@ -32,6 +32,10 @@ interface Props {
 const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorite }: Props) => {
   const navigate = useNavigate(); // React Router의 useNavigate 사용
 
+  const handleNavigateToDetail = () => {
+    navigate(`/shelter-detail/${shelter.shelterId}`); // 쉼터 상세 페이지로 이동
+  };
+
   const handleStartNavigation = () => {
     navigate('/guide'); // 길안내 페이지로 이동
   };
@@ -109,9 +113,11 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
           )}
         </div>
       )}
-      <p css={shelterName({ variant })}>{shelter.name}</p>
+      <p css={shelterName({ variant })} onClick={handleNavigateToDetail}>
+        {shelter.name}
+      </p>
 
-      <div css={cardTop}>
+      <div css={cardTop} onClick={handleNavigateToDetail}>
         <img
           src={shelter.photoUrl && shelter.photoUrl.trim() !== '' ? shelter.photoUrl : NoImage}
           alt={shelter.name || 'shelter'}
@@ -119,8 +125,10 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
           onError={handleImageError} // 이미지 로드 실패 시 처리
         />
         <div css={infoText}>
-          <p css={infoParagraph({ variant })}>거리: {shelter.distance}</p>
-          <p css={infoParagraph({ variant })}>
+          <p css={infoParagraph({ variant })} onClick={handleNavigateToDetail}>
+            거리: {shelter.distance}
+          </p>
+          <p css={infoParagraph({ variant })} onClick={handleNavigateToDetail}>
             별점: <span css={ratingNumber({ variant })}>{shelter.averageRating.toFixed(1)}</span>{' '}
             <span css={starsWrapper}>
               {Array.from({ length: 5 }, (_, i) => (
@@ -131,9 +139,13 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
             </span>
           </p>
           {variant === 'home' ? (
-            <p css={infoParagraph({ variant })}>운영시간: {formattedOperatingHours}</p>
+            <p css={infoParagraph({ variant })} onClick={handleNavigateToDetail}>
+              운영시간: {formattedOperatingHours}
+            </p>
           ) : (
-            <p css={infoParagraph({ variant })}>주소: {shelter.address}</p>
+            <p css={infoParagraph({ variant })} onClick={handleNavigateToDetail}>
+              주소: {shelter.address}
+            </p>
           )}
         </div>
       </div>

@@ -40,7 +40,7 @@ const FindSheltersPage = () => {
             onScrollToTop={handleScrollToTop}
           />
           {/* ToastMessage 컴포넌트 사용 */}
-          <ToastMessage message={toastMessage} />;
+          <ToastMessage message={toastMessage} />
         </div>
       ) : (
         // 쉼터 목록이 없을 때의 전체 화면 컨테이너

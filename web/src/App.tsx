@@ -29,6 +29,31 @@ const App = () => {
             margin: 0 auto;
             background: white;
           }
+
+          button,
+          img {
+            outline: none; /* 클릭 시 나타나는 윤곽선 제거 */
+            box-shadow: none; /* 클릭 시 나타나는 그림자 제거 */
+
+            -webkit-tap-highlight-color: transparent; /* 모바일 클릭 반응 제거 */
+          }
+
+          button:focus,
+          img:focus {
+            outline: none; /* 포커스 시 나타나는 윤곽선 제거 */
+            box-shadow: none; /* 포커스 시 나타나는 그림자 제거 */
+          }
+
+          button:active,
+          img:active {
+            outline: none; /* 활성화 상태에서 윤곽선 제거 */
+            box-shadow: none; /* 활성화 상태에서 그림자 제거 */
+          }
+
+          button:focus-visible {
+            outline: none; /* 브라우저 기본 focus-visible 스타일 제거 */
+            box-shadow: none; /* 클릭 시 파란색 반응 제거 */
+          }
         `}
       />
       <div css={appContainerStyle}>

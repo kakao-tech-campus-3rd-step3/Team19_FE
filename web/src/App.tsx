@@ -20,6 +20,7 @@ const App = () => {
             margin: 0;
             padding: 0;
             background: white;
+            user-select: none; /* 텍스트 선택 비활성화 */
           }
 
           #root {
@@ -34,7 +35,6 @@ const App = () => {
           img {
             outline: none; /* 클릭 시 나타나는 윤곽선 제거 */
             box-shadow: none; /* 클릭 시 나타나는 그림자 제거 */
-
             -webkit-tap-highlight-color: transparent; /* 모바일 클릭 반응 제거 */
           }
 

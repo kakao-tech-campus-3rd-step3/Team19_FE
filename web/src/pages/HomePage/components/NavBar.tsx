@@ -4,14 +4,31 @@ import { IoCaretBack } from 'react-icons/io5';
 import { FaUser } from 'react-icons/fa';
 import theme from '@/styles/theme';
 import logo from '@/assets/images/logo.png';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const NavBar = () => {
+  const navigate = useNavigate();
+  const location = useLocation(); // 현재 경로 확인
+
+  const handleLogoClick = () => {
+    if (location.pathname === '/') return; // 현재 페이지가 홈페이지일 경우 클릭 막음
+    navigate('/'); // 홈페이지가 아닐 경우 홈페이지로 이동
+  };
+
+  const handleBackClick = () => {
+    navigate(-1); // 이전 페이지로 이동
+  };
+
   return (
     <nav css={navStyle}>
-      <button css={iconButtonStyle}>
+      {/* 홈페이지인 경우 버튼을 숨기고 공간은 유지 */}
+      <button
+        css={[iconButtonStyle, location.pathname === '/' && hiddenStyle]}
+        onClick={handleBackClick}
+      >
         <IoCaretBack size={50} color="#ffffffff" />
       </button>
-      <button css={titleButtonStyle}>
+      <button css={titleButtonStyle} onClick={handleLogoClick}>
         <img src={logo} alt="무쉼사 로고" css={logoStyle} />
       </button>
       <button css={iconButtonStyle}>
@@ -48,6 +65,10 @@ const iconButtonStyle = css`
   cursor: pointer;
   display: flex;
   align-items: center;
+`;
+
+const hiddenStyle = css`
+  visibility: hidden; /* 버튼을 숨기지만 공간은 유지 */
 `;
 
 const titleButtonStyle = css`

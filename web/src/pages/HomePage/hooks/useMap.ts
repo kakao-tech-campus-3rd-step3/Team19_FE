@@ -19,13 +19,8 @@ export const useMap = () => {
 
           const locPosition = new kakao.maps.LatLng(lat, lng);
 
-          // 지도 중심 이동
+          // 지도 중심을 내 위치로 이동
           map.setCenter(locPosition);
-
-          const marker = new kakao.maps.Marker({
-            position: locPosition,
-          });
-          marker.setMap(map);
         },
         (error) => {
           console.error('위치 정보를 가져올 수 없습니다:', error);

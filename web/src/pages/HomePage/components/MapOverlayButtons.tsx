@@ -50,8 +50,8 @@ const myLocationButtonStyle = css`
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  width: 8rem;
-  min-width: 7rem;
+  width: 9rem;
+  height: 3.5rem;
   padding: 0.5rem 0.5rem;
   background-color: ${theme.colors.button.blue};
   color: white;
@@ -60,7 +60,7 @@ const myLocationButtonStyle = css`
   cursor: pointer;
   margin-bottom: 0.75rem;
 
-  ${typography.button1Bold};
+  ${typography.home2};
 `;
 
 // 쉼터 찾기 버튼 스타일
@@ -73,5 +73,5 @@ const findShelterButtonStyle = css`
   border-radius: 12px;
   cursor: pointer;
 
-  ${typography.button2Bold};
+  ${typography.home1};
 `;

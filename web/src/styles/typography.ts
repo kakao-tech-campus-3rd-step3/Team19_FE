@@ -1,59 +1,82 @@
 // 타이포그래피 토큰 정의
 export const typography = {
-  // 버튼 (Button)
-  button1Bold: {
-    fontSize: '1.8rem', // "내 위치" 버튼, "안내 시작" 버튼
+  // 홈 화면 (Home)
+  home1: {
+    fontSize: '4.33vh', // "가까운 쉼터 찾기" 버튼
     fontWeight: 700,
-    lineHeight: '2.3rem',
+    lineHeight: '6.03vh',
   },
-  button2Bold: {
-    fontSize: '2.3rem', // "가까운 쉼터 찾기" 버튼
+  home2: {
+    fontSize: '3.57vh', // "내 위치" 버튼
     fontWeight: 700,
-    lineHeight: '3.2rem',
-  },
-  button3Bold: {
-    fontSize: '1.6rem', // "안내 시작" 버튼
-    fontWeight: 700,
-    lineHeight: '1.7rem',
+    lineHeight: '3.2vh',
   },
 
-  body1Regular: {
-    fontSize: '1.5rem', // 권한 거부 안내 문구
-    fontWeight: 400,
-    lineHeight: '2rem',
+  // 카드 (Card)- HomePage
+  cardh1: {
+    fontSize: '3.57vh', // 쉼터 이름
+    fontWeight: 800,
+    lineHeight: '3.72vh',
   },
-  body2Bold: {
-    fontSize: '1.2rem', // 카드 내 거리, 운영시간
+  cardh2: {
+    fontSize: '2.63vh', // 카드 내 거리, 운영시간
     fontWeight: 700,
-    lineHeight: '1.8rem',
+    lineHeight: '3.39vh',
   },
-  body3Bold: {
-    fontSize: '1.0rem', // 카드 내 거리, 운영시간
+  cardh3: {
+    fontSize: '3.76vh', // "안내 시작" 버튼
     fontWeight: 700,
-    lineHeight: '1.2rem',
+    lineHeight: '4.7vh',
   },
-
-  // 제목 (Title)
-  title1Bold: {
-    fontSize: '1.8rem', // 쉼터 이름
+  cardh4: {
+    fontSize: '2.26vh', // 평점 숫자, 상태 태그
     fontWeight: 700,
-    lineHeight: '2rem',
-  },
-  title2Bold: {
-    fontSize: '1.3rem', // 쉼터 이름
-    fontWeight: 700,
-    lineHeight: '1.4rem',
+    lineHeight: '3.2vh',
   },
 
-  // 기타 강조 텍스트
-  highlight1Bold: {
-    fontSize: '1.2rem', // 평점 숫자
-    fontWeight: 700,
-    lineHeight: '1.7rem',
+  //카드 (Card) - FindSheltersPage
+  cardf1: {
+    fontSize: '3.38vh', // 쉼터 이름
+    fontWeight: 800,
+    lineHeight: '3.34vh',
   },
-  highlight2Bold: {
-    fontSize: '1rem', // 운영중, 야외 태그
+  cardf2: {
+    fontSize: '2.26vh', // 카드 내 거리, 운영시간
+    fontWeight: 600,
+    lineHeight: '2.64vh',
+  },
+  cardf3: {
+    fontSize: '3.57vh', // "안내 시작" 버튼
     fontWeight: 700,
-    lineHeight: '1.5rem',
+    lineHeight: '3.2vh',
+  },
+  cardf4: {
+    fontSize: '2.44vh', // 평점 숫자
+    fontWeight: 700,
+    lineHeight: '3.02vh',
+  },
+
+  //버튼 (Button)
+  button1: {
+    fontSize: '3.38vh', // "더보기" 버튼
+    fontWeight: 700,
+    lineHeight: '3.52vh',
+  },
+
+  //텍스트 (Text)
+  text1: {
+    fontSize: '3.76vh', // 권한 거부 안내 문구
+    fontWeight: 800,
+    lineHeight: '5.27vh',
+  },
+  text2: {
+    fontSize: '2.8vh', // 찜 toast 메시지
+    fontWeight: 500,
+    lineHeight: '3.39vh',
   },
 } as const;
+
+/*
+1rem = 16px
+vh 값 = (rem 값 * 16 / 851) * 100
+*/

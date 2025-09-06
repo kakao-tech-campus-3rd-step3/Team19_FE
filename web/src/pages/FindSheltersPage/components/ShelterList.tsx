@@ -46,5 +46,4 @@ export default ShelterList;
 const listContainerStyle = css`
   display: flex;
   flex-direction: column;
-  gap: 4px;
 `;

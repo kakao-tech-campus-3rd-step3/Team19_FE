@@ -35,10 +35,10 @@ export const useShelters = () => {
 
     if (isAlreadyFavorite) {
       setFavoriteIds((prev) => prev.filter((id) => id !== shelterId));
-      setToastMessage('찜 목록에서 삭제되었습니다.');
+      setToastMessage('찜 목록에서\n삭제되었습니다.');
     } else {
       setFavoriteIds((prev) => [...prev, shelterId]);
-      setToastMessage('찜 목록에 추가되었습니다.');
+      setToastMessage('찜 목록에\n추가되었습니다.');
     }
     setTimeout(() => setToastMessage(''), 2000);
   };

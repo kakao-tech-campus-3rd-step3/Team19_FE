@@ -239,41 +239,29 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
     ? css`
         margin-bottom: 8px;
 
-        font-size: ${theme.typography.title1Bold.fontSize};
-        font-weight: ${theme.typography.title1Bold.fontWeight};
-        line-height: ${theme.typography.title1Bold.lineHeight};
+        ${theme.typography.cardh1};
         color: ${theme.colors.button.blue};
       `
     : css`
         margin-bottom: 0.7vh;
 
-        font-size: ${theme.typography.title2Bold.fontSize};
-        font-weight: ${theme.typography.title2Bold.fontWeight};
-        line-height: ${theme.typography.title2Bold.lineHeight};
+        ${theme.typography.cardf1};
         color: ${theme.colors.button.blue};
       `}
 `;
 
 const infoParagraph = ({ variant }: { variant: 'home' | 'find' }) => css`
   margin: 2px 0;
-  font-size: ${theme.typography.body2Bold.fontSize};
-  font-weight: ${theme.typography.body2Bold.fontWeight};
-  line-height: ${theme.typography.body2Bold.lineHeight};
-  color: ${theme.colors.text.gray500};
 
   /* variant에 따라 달라지는 스타일 */
   ${variant === 'home'
     ? css`
-        font-size: ${theme.typography.body2Bold.fontSize};
-        font-weight: ${theme.typography.body2Bold.fontWeight};
-        line-height: ${theme.typography.body2Bold.lineHeight};
+        ${theme.typography.cardh2};
         color: ${theme.colors.text.gray500};
       `
     : css`
         padding-right: 2px;
-        font-size: ${theme.typography.body3Bold.fontSize};
-        font-weight: ${theme.typography.body3Bold.fontWeight};
-        line-height: ${theme.typography.body3Bold.lineHeight};
+        ${theme.typography.cardf2};
         color: ${theme.colors.text.gray500};
       `}
 `;
@@ -305,17 +293,13 @@ const mainButton = ({ variant }: { variant: 'home' | 'find' }) => css`
         margin-top: 10px;
         padding: 6px;
 
-        font-size: ${theme.typography.button1Bold.fontSize};
-        font-weight: ${theme.typography.button1Bold.fontWeight};
-        line-height: ${theme.typography.button1Bold.lineHeight};
+        ${theme.typography.cardh3}
       `
     : css`
         margin-top: 2px;
         padding: 1px 8px;
 
-        font-size: ${theme.typography.button3Bold.fontSize};
-        font-weight: ${theme.typography.button3Bold.fontWeight};
-        line-height: ${theme.typography.button3Bold.lineHeight};
+        ${theme.typography.cardf3};
       `}
 `;
 const favoriteButton = css`
@@ -325,9 +309,7 @@ const favoriteButton = css`
   border: none;
   padding: 6px;
   border-radius: 8px;
-  font-size: ${theme.typography.button1Bold.fontSize};
-  font-weight: ${theme.typography.button1Bold.fontWeight};
-  line-height: ${theme.typography.button1Bold.lineHeight};
+
   cursor: pointer;
 `;
 
@@ -342,26 +324,22 @@ const ratingNumber = ({ variant }: { variant: 'home' | 'find' }) => css`
   ${variant === 'home'
     ? css`
         color: ${theme.colors.text.red};
-        font-size: ${theme.typography.highlight1Bold.fontSize};
-        font-weight: ${theme.typography.highlight1Bold.fontWeight};
-        line-height: ${theme.typography.highlight1Bold.lineHeight};
+        ${theme.typography.cardh4};
       `
     : css`
         color: ${theme.colors.text.red};
-        font-size: ${theme.typography.highlight2Bold.fontSize};
-        font-weight: ${theme.typography.highlight2Bold.fontWeight};
-        line-height: ${theme.typography.highlight2Bold.lineHeight};
+        ${theme.typography.cardf4};
       `}
 `;
 
 const filledStar = css`
   color: ${theme.colors.text.yellow};
-  font-size: ${theme.typography.highlight1Bold.fontSize};
+  font-size: ${theme.typography.cardh4.fontSize};
 `;
 
 const emptyStar = css`
   color: ${theme.colors.text.gray100};
-  font-size: ${theme.typography.highlight1Bold.fontSize};
+  font-size: ${theme.typography.cardh4.fontSize};
 `;
 
 /* 상태 태그 스타일 */
@@ -379,7 +357,7 @@ const statusTag = css`
   color: white;
   white-space: nowrap;
 
-  ${theme.typography.highlight3Bold}
+  ${theme.typography.cardh4}
 `;
 
 const operatingOnTag = css`

@@ -164,5 +164,5 @@ const deniedStyle = css`
   text-align: center;
   color: ${theme.colors.text.black};
   background: ${theme.colors.button.white};
-  ${typography.body1Regular};
+  ${typography.text1};
 `;

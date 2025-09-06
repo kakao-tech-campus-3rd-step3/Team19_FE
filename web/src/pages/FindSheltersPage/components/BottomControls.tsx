@@ -67,8 +67,8 @@ const loadMoreButtonStyle = css`
   border-radius: 8px;
   background-color: ${theme.colors.button.black};
   color: ${theme.colors.text.white};
-  font-size: ${theme.typography.title1Bold.fontSize};
-  font-weight: ${theme.typography.title1Bold.fontWeight};
+  ${theme.typography.button1};
+
   cursor: pointer;
 `;
 const emptyDivStyle = css`

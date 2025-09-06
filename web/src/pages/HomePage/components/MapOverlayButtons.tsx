@@ -60,7 +60,7 @@ const myLocationButtonStyle = css`
   cursor: pointer;
   margin-bottom: 0.75rem;
 
-  ${typography.button3Bold};
+  ${typography.home2};
 `;
 
 // 쉼터 찾기 버튼 스타일
@@ -73,5 +73,5 @@ const findShelterButtonStyle = css`
   border-radius: 12px;
   cursor: pointer;
 
-  ${typography.button2Bold};
+  ${typography.home1};
 `;

@@ -35,6 +35,10 @@ const ShelterInfoCard = ({
   onStart,
   onToggleFavorite,
 }: Props) => {
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    event.currentTarget.src = NoImage; // 이미지 로드 실패 시 NoImage로 대체
+  };
+
   //'09:00~16:00' 형식을 '09시~16시'로 변경하는 함수
   const formatOperatingHours = (timeString: string) => {
     if (!timeString || !timeString.includes('~')) {
@@ -111,6 +115,7 @@ const ShelterInfoCard = ({
           src={shelter.photoUrl && shelter.photoUrl.trim() !== '' ? shelter.photoUrl : NoImage}
           alt={shelter.name || 'shelter'}
           css={thumbnail({ variant })}
+          onError={handleImageError} // 이미지 로드 실패 시 처리
         />
         <div css={infoText}>
           <p css={infoParagraph({ variant })}>거리: {shelter.distance}</p>

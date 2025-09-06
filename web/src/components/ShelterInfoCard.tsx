@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
+import { useNavigate } from 'react-router-dom';
 
 interface Shelter {
   shelterId: number;
@@ -28,13 +29,13 @@ interface Props {
   onToggleFavorite?: () => void;
 }
 
-const ShelterInfoCard = ({
-  shelter,
-  variant,
-  isFavorite = false,
-  onStart,
-  onToggleFavorite,
-}: Props) => {
+const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorite }: Props) => {
+  const navigate = useNavigate(); // React Router의 useNavigate 사용
+
+  const handleStartNavigation = () => {
+    navigate('/guide'); // 길안내 페이지로 이동
+  };
+
   const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     event.currentTarget.src = NoImage; // 이미지 로드 실패 시 NoImage로 대체
   };
@@ -138,7 +139,7 @@ const ShelterInfoCard = ({
       </div>
 
       <div css={buttonContainer({ variant })}>
-        <button css={mainButton({ variant })} onClick={onStart}>
+        <button css={mainButton({ variant })} onClick={handleStartNavigation}>
           안내 시작
         </button>
         {variant === 'find' && (

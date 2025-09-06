@@ -3,6 +3,7 @@ import { css, Global } from '@emotion/react';
 import './App.css';
 import FindSheltersPage from './pages/FindSheltersPage';
 import HomePage from './pages/HomePage';
+import GuidePage from './pages/GuidePage';
 import NavBar from './pages/HomePage/components/NavBar';
 import { Route, Routes } from 'react-router-dom';
 import theme from './styles/theme';
@@ -62,9 +63,10 @@ const App = () => {
           <Routes>
             {/* path="/": 기본 주소일 때 HomePage를 보여줌 */}
             <Route path="/" element={<HomePage />} />
-
             {/* path="/find-shelters": 주소창에 /find-shelters를 입력하면 FindSheltersPage를 보여줌. */}
             <Route path="/find-shelters" element={<FindSheltersPage />} />
+            {/* path="/guide": 주소창에 /guide를 입력하면 GuidePage를 보여줌. */}
+            <Route path="/guide" element={<GuidePage />} />
           </Routes>
         </main>
       </div>

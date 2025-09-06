@@ -4,14 +4,23 @@ import { IoCaretBack } from 'react-icons/io5';
 import { FaUser } from 'react-icons/fa';
 import theme from '@/styles/theme';
 import logo from '@/assets/images/logo.png';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const NavBar = () => {
+  const navigate = useNavigate();
+  const location = useLocation(); // 현재 경로 확인
+
+  const handleLogoClick = () => {
+    if (location.pathname === '/') return; // 현재 페이지가 홈페이지일 경우 클릭 막음
+    navigate('/'); // 홈페이지가 아닐 경우 홈페이지로 이동
+  };
+
   return (
     <nav css={navStyle}>
       <button css={iconButtonStyle}>
         <IoCaretBack size={50} color="#ffffffff" />
       </button>
-      <button css={titleButtonStyle}>
+      <button css={titleButtonStyle} onClick={handleLogoClick}>
         <img src={logo} alt="무쉼사 로고" css={logoStyle} />
       </button>
       <button css={iconButtonStyle}>

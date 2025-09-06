@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import ShelterInfoCard from '@/components/ShelterInfoCard';
 import theme from '@/styles/theme';
 import { typography } from '@/styles/typography';
+import marker from '@/assets/images/marker.png';
 
 // Shelter 인터페이스
 interface Shelter {
@@ -48,6 +49,7 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
           const mapOption = {
             center: new window.kakao.maps.LatLng(latitude, longitude),
             level: 3,
+            draggable: true,
           };
 
           const map = new window.kakao.maps.Map(container, mapOption);
@@ -61,8 +63,7 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
           myMarker.setMap(map);
 
           // 쉼터 마커 이미지
-          const imageSrc =
-            'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+          const imageSrc = marker;
           const imageSize = new window.kakao.maps.Size(24, 35);
 
           // 쉼터 마커 생성
@@ -136,7 +137,6 @@ const mapStyle = css`
   height: calc(100vh - ${theme.spacing.spacing16});
   margin: 0;
   position: relative;
-  overflow: hidden;
 `;
 
 const mapCanvas = css`

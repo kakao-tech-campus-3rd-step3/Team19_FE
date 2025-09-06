@@ -189,17 +189,19 @@ const cardTop = css`
 `;
 
 const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
-  width: 30%;
-  height: 90%;
-  object-fit: cover;
-  border-radius: 8px;
-
-  /* variant에 따라 달라지는 스타일 */
   ${variant === 'home'
     ? css`
+        width: 30%;
+        height: 90%;
+        object-fit: cover;
+        border-radius: 8px;
         margin-right: 12px;
       `
     : css`
+        width: 12vh;
+        height: 12vh;
+        object-fit: cover;
+        border-radius: 8px;
         margin-right: 4px;
       `}
 `;
@@ -225,7 +227,7 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
         color: ${theme.colors.button.blue};
       `
     : css`
-        margin-bottom: 4px;
+        margin-bottom: 0.7vh;
 
         font-size: ${theme.typography.title2Bold.fontSize};
         font-weight: ${theme.typography.title2Bold.fontWeight};
@@ -290,7 +292,7 @@ const mainButton = ({ variant }: { variant: 'home' | 'find' }) => css`
         line-height: ${theme.typography.button1Bold.lineHeight};
       `
     : css`
-        margin-top: 3px;
+        margin-top: 2px;
         padding: 1px 8px;
 
         font-size: ${theme.typography.button3Bold.fontSize};

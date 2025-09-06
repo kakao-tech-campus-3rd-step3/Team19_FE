@@ -38,7 +38,6 @@ const bottomButtonContainerStyle = css`
   justify-content: space-between; // 양쪽 끝으로 버튼을 배치
   align-items: center;
   padding: 0 18px; // 좌우 여백
-  margin-bottom: 19vh;
 `;
 
 // '맨 위로 가기' 버튼 스타일

@@ -63,7 +63,7 @@ const pageContainerStyle = css`
   height: 100%;
   margin: 0 auto;
   background: white;
-  padding-top: 16px;
+  padding-top: 1vh;
 `;
 
 const emptyStateStyle = css`

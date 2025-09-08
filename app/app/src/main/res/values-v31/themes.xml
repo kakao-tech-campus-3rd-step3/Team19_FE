@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Android 12 이상 스플래시 스크린 설정 -->
+    <style name="Theme.Musuimsa" parent="Base.Theme.Musuimsa">
+        <!-- 스플래시 배경색 -->
+        <item name="android:windowSplashScreenBackground">@android:color/black</item>
+        <!-- 스플래시에 표시할 아이콘 -->
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <!-- 아이콘 뒤 원형 배경색 (투명) -->
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+    </style>
+</resources>

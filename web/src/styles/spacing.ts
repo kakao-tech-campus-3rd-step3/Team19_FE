@@ -1,0 +1,22 @@
+// 간격 토큰 정의
+export const spacing = {
+  spacing0: '0px',
+  spacing1: '4px',
+  spacing2: '8px',
+  spacing3: '12px',
+  spacing4: '16px',
+  spacing5: '20px',
+  spacing6: '24px',
+  spacing7: '28px',
+  spacing8: '32px',
+  spacing9: '36px',
+  spacing10: '40px',
+  spacing11: '44px',
+  spacing12: '48px',
+  spacing13: '52px',
+  spacing14: '56px',
+  spacing15: '60px',
+  spacing16: '64px',
+  spacing17: '68px',
+  spacing18: '72px',
+} as const;

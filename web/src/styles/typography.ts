@@ -74,6 +74,23 @@ export const typography = {
     lineHeight: '3.39vh',
   },
 
+  //리뷰 섹션 - ShelterDetailPage
+  review1: {
+    fontSize: '3.5vh', // "리뷰" 제목
+    fontWeight: 800,
+    lineHeight: '5.27vh',
+  },
+  review2: {
+    fontSize: '2.63vh', // 작성자 이름, 날짜
+    fontWeight: 700,
+    lineHeight: '3.39vh',
+  },
+  review3: {
+    fontSize: '2.8vh', // 리뷰 내용
+    fontWeight: 500,
+    lineHeight: '3.39vh',
+  },
+
   //버튼 (Button)
   button1: {
     fontSize: '3.38vh', // "더보기" 버튼

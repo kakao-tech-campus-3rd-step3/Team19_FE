@@ -29,10 +29,25 @@ interface ShelterDetail {
   photoUrl: string;
 }
 
+// --- Review 타입, 상태, useEffect 등은 질문 코드 참고 ---
+interface Review {
+  reviewId: number;
+  shelterId: number;
+  userId: number;
+  nickname: string;
+  rating: number;
+  title: string;
+  content: string;
+  photoUrl: string;
+  createdAt: string;
+}
+
 const ShelterDetailPage = () => {
   const { id } = useParams(); // URL에서 쉼터 ID 가져오기
   const [shelter, setShelter] = useState<ShelterDetail | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   useEffect(() => {
     // 실제 API 연동 시에는 GET /api/shelters/{shelterId}로 호출됨.
@@ -65,6 +80,42 @@ const ShelterDetailPage = () => {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoadingReviews(true);
+      // 실제 API 연동 시에는 GET /api/shelters/{shelterId}/reviews로 호출됨.
+      // 임시 데이터 사용 중
+      const reviewData: Review[] = [
+        {
+          reviewId: 1,
+          shelterId: 1,
+          userId: 1,
+          nickname: '사용자1',
+          rating: 5,
+          title: '아주 좋은 쉼터입니다',
+          content: '위치도 좋고 시설도 깨끗해요. 강추합니다!',
+          photoUrl: '',
+          createdAt: '2023-10-01T12:00:00Z',
+        },
+        {
+          reviewId: 2,
+          shelterId: 1,
+          userId: 2,
+          nickname: '사용자2',
+          rating: 4,
+          title: '만족스러운 쉼터',
+          content: '전반적으로 만족스러웠습니다. 다만, 주차 공간이 부족해요.',
+          photoUrl: 'https://example.com/review2.jpg',
+          createdAt: '2023-10-02T12:00:00Z',
+        },
+      ];
+      setReviews(reviewData);
+      setLoadingReviews(false);
+    };
+
+    fetchReviews();
+  }, [id]);
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = NoImage;
   };
@@ -74,10 +125,17 @@ const ShelterDetailPage = () => {
   // 평균 별점 계산
   const averageRating = shelter.reviewCount > 0 ? shelter.totalRating / shelter.reviewCount : 0;
 
+  function formatDateShort(createdAt: string) {
+    try {
+      return new Date(createdAt).toLocaleDateString();
+    } catch {
+      return createdAt;
+    }
+  }
+
   return (
     <div css={container}>
       <h2 css={title}>{shelter.name}</h2>
-
       <div css={topSection}>
         <img
           src={shelter.photoUrl || NoImage}
@@ -86,9 +144,7 @@ const ShelterDetailPage = () => {
           onError={handleImageError}
         />
         <div css={infoText}>
-          {/* 거리 표시 */}
           <div css={distanceStyle}>거리: {shelter.distance}</div>
-          {/* 별점 표시 */}
           <div css={ratingRow}>
             별점: <span css={ratingNumber}>{averageRating.toFixed(1)}</span>
             <span css={starsWrapper}>
@@ -118,13 +174,66 @@ const ShelterDetailPage = () => {
           )}
         </button>
       </div>
+
+      {/* 리뷰 섹션 */}
+      <section css={reviewSectionStyle}>
+        <div css={reviewHeader}>
+          <div css={reviewTitle}>리뷰({reviews ? reviews.length : 0})</div>
+          <button css={reviewWriteButton}>리뷰 작성</button>
+        </div>
+
+        {loadingReviews ? (
+          <div css={loadingStyle}>로딩 중...</div>
+        ) : reviews && reviews.length > 0 ? (
+          <div css={reviewListStyle}>
+            {reviews.map((r) => (
+              <article css={reviewCardStyle} key={r.reviewId}>
+                <div css={reviewLeft}>
+                  <div css={avatarRow}>
+                    <div css={avatarStyle}>{(r.nickname && r.nickname.charAt(0)) || '유'}</div>
+                    <span css={reviewNickname}>{r.nickname}</span>
+                    <span css={reviewStarsRow}>
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <span key={i} css={i < r.rating ? filledStar : emptyStar}>
+                          ★
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                  <div css={reviewContentBox}>
+                    {r.title && <div css={reviewTitleText}>{r.title}</div>}
+                    <div css={reviewText}>{r.content}</div>
+                    {r.photoUrl ? (
+                      <img
+                        src={r.photoUrl}
+                        alt={`review-${r.reviewId}`}
+                        css={reviewPhoto}
+                        onError={handleImageError}
+                      />
+                    ) : null}
+                    <div css={reviewMeta}>
+                      <span>{formatDateShort(r.createdAt)}</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div css={noReviewStyle}>리뷰가 없습니다.</div>
+        )}
+
+        <div css={moreWrap}>
+          <button css={moreButton}>더보기</button>
+        </div>
+      </section>
     </div>
   );
 };
 
 export default ShelterDetailPage;
 
-/* 스타일 */
+/* 상세 정보 스타일 */
 const container = css`
   padding: 16px;
   margin-top: 0px;
@@ -149,7 +258,7 @@ const thumbnail = css`
   width: 70%;
   height: 70%;
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); /* 그림자 효과 추가 */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); /* 사진 그림자 효과 */
   margin-bottom: 8px;
 `;
 
@@ -229,4 +338,151 @@ const infoBold = css`
   ${theme.typography.detail3};
   color: ${theme.colors.text.black};
   font-weight: 700;
+`;
+
+/* 리뷰 섹션 */
+const reviewSectionStyle = css`
+  margin-top: 32px;
+  padding: 16px;
+  wdith: 80%;
+  border-top: 1px solid ${theme.colors.text.gray500};
+`;
+
+const reviewHeader = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+`;
+
+const reviewTitle = css`
+  ${theme.typography.cardh3};
+  color: ${theme.colors.text.black};
+`;
+
+const reviewWriteButton = css`
+  padding: 8px;
+  border: none;
+  border-radius: 16px;
+  background: ${theme.colors.button.red};
+  color: white;
+  cursor: pointer;
+  ${theme.typography.detail3};
+`;
+
+const loadingStyle = css`
+  text-align: center;
+  padding: 16px;
+  color: ${theme.colors.text.gray500};
+`;
+
+const reviewListStyle = css`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const reviewCardStyle = css`
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: ${theme.colors.text.gray100};
+  align-items: flex-start;
+`;
+
+const reviewLeft = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const avatarRow = css`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const avatarStyle = css`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: ${theme.colors.text.gray500};
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  ${theme.typography.detail2};
+  font-weight: 700;
+`;
+
+const reviewNickname = css`
+  ${theme.typography.detail3};
+  color: ${theme.colors.text.black};
+  font-weight: 700;
+`;
+
+const reviewStarsRow = css`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+`;
+
+const reviewContentBox = css`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+`;
+
+const reviewTitleText = css`
+  ${theme.typography.review1};
+  color: ${theme.colors.text.black};
+  font-weight: 700;
+`;
+
+const reviewText = css`
+  ${theme.typography.review3};
+  color: ${theme.colors.text.black};
+`;
+
+const reviewMeta = css`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  ${theme.typography.review2};
+  color: ${theme.colors.text.gray500};
+  font-size: 20px;
+`;
+
+const reviewPhoto = css`
+  width: 35%;
+  height: 35%;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  margin-left: 8px;
+`;
+
+const noReviewStyle = css`
+  text-align: center;
+  color: ${theme.colors.text.gray500};
+  padding: 16px;
+`;
+
+const moreWrap = css`
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+`;
+
+const moreButton = css`
+  padding: 8px;
+  border: none;
+  border-radius: 16px;
+  background: ${theme.colors.text.gray500};
+  color: white;
+  cursor: pointer;
+  ${theme.typography.detail3};
 `;

@@ -202,15 +202,17 @@ const ShelterDetailPage = () => {
                   </div>
                   <div css={reviewContentBox}>
                     {r.title && <div css={reviewTitleText}>{r.title}</div>}
-                    <div css={reviewText}>{r.content}</div>
-                    {r.photoUrl ? (
-                      <img
-                        src={r.photoUrl}
-                        alt={`review-${r.reviewId}`}
-                        css={reviewPhoto}
-                        onError={handleImageError}
-                      />
-                    ) : null}
+                    <div css={reviewRow}>
+                      <div css={reviewText}>{r.content}</div>
+                      {r.photoUrl && (
+                        <img
+                          src={r.photoUrl}
+                          alt={`review-${r.reviewId}`}
+                          css={reviewPhoto}
+                          onError={handleImageError}
+                        />
+                      )}
+                    </div>
                     <div css={reviewMeta}>
                       <span>{formatDateShort(r.createdAt)}</span>
                     </div>
@@ -259,6 +261,7 @@ const thumbnail = css`
   height: 70%;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); /* 사진 그림자 효과 */
+  pointer-events: none;
   margin-bottom: 8px;
 `;
 
@@ -330,7 +333,7 @@ const filledStar = css`
 `;
 
 const emptyStar = css`
-  color: ${theme.colors.text.gray100};
+  color: ${theme.colors.text.gray200};
   ${theme.typography.detail2};
 `;
 
@@ -358,6 +361,7 @@ const reviewHeader = css`
 const reviewTitle = css`
   ${theme.typography.cardh3};
   color: ${theme.colors.text.black};
+  text-align: left;
 `;
 
 const reviewWriteButton = css`
@@ -389,6 +393,7 @@ const reviewCardStyle = css`
   border-radius: 12px;
   background: ${theme.colors.text.gray100};
   align-items: flex-start;
+  text-align: left;
 `;
 
 const reviewLeft = css`
@@ -414,6 +419,7 @@ const avatarStyle = css`
   align-items: center;
   justify-content: center;
   ${theme.typography.detail2};
+  font-size: 25px;
   font-weight: 700;
 `;
 
@@ -442,6 +448,12 @@ const reviewTitleText = css`
   font-weight: 700;
 `;
 
+const reviewRow = css`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+`;
+
 const reviewText = css`
   ${theme.typography.review3};
   color: ${theme.colors.text.black};
@@ -457,12 +469,15 @@ const reviewMeta = css`
 `;
 
 const reviewPhoto = css`
-  width: 35%;
-  height: 35%;
+  width: 25%;
+  height: 25%;
   border-radius: 8px;
   object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.41); /* 사진 그림자 효과 */
+  pointer-events: none;
   flex-shrink: 0;
   margin-left: 8px;
+  margin-top: 8px;
 `;
 
 const noReviewStyle = css`

@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // useNavigate 추가
 import { useEffect, useState } from 'react';
 import theme from '@/styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
@@ -44,6 +44,7 @@ interface Review {
 
 const ShelterDetailPage = () => {
   const { id } = useParams(); // URL에서 쉼터 ID 가져오기
+  const navigate = useNavigate(); // navigate 훅 사용
   const [shelter, setShelter] = useState<ShelterDetail | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -171,7 +172,12 @@ const ShelterDetailPage = () => {
       </div>
 
       <div css={bottomSection}>
-        <button css={mainButton}>안내 시작</button>
+        <button
+          css={mainButton}
+          onClick={() => navigate('/guide')} // 안내 시작 버튼 클릭 시 GuidePage로 이동
+        >
+          안내 시작
+        </button>
         <button css={favoriteButton} onClick={() => setIsFavorite(!isFavorite)}>
           {isFavorite ? (
             <FaHeart size={36} color={theme.colors.button.red} />

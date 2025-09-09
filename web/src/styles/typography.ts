@@ -56,6 +56,24 @@ export const typography = {
     lineHeight: '3.02vh',
   },
 
+  //상세 페이지 - ShelterDetailPage
+  detail1: {
+    fontSize: '4.5vh', // 쉼터 이름
+    fontWeight: 800,
+    lineHeight: '5.27vh',
+  },
+  detail2: {
+    fontSize: '3.57vh', // 거리, 평점
+    fontWeight: 800,
+    lineHeight: '3.72vh',
+  },
+
+  detail3: {
+    fontSize: '2.63vh', // 나머지 정보들
+    fontWeight: 700,
+    lineHeight: '3.39vh',
+  },
+
   //버튼 (Button)
   button1: {
     fontSize: '3.38vh', // "더보기" 버튼

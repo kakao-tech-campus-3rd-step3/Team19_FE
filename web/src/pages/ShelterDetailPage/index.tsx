@@ -48,6 +48,7 @@ const ShelterDetailPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(3);
 
   useEffect(() => {
     // 실제 API 연동 시에는 GET /api/shelters/{shelterId}로 호출됨.
@@ -133,6 +134,11 @@ const ShelterDetailPage = () => {
     }
   }
 
+  // 더보기 버튼 클릭 핸들러
+  const handleMore = () => {
+    setVisibleCount((prev) => prev + 3);
+  };
+
   return (
     <div css={container}>
       <h2 css={title}>{shelter.name}</h2>
@@ -186,7 +192,7 @@ const ShelterDetailPage = () => {
           <div css={loadingStyle}>로딩 중...</div>
         ) : reviews && reviews.length > 0 ? (
           <div css={reviewListStyle}>
-            {reviews.map((r) => (
+            {reviews.slice(0, visibleCount).map((r) => (
               <article css={reviewCardStyle} key={r.reviewId}>
                 <div css={reviewLeft}>
                   <div css={avatarRow}>
@@ -225,9 +231,14 @@ const ShelterDetailPage = () => {
           <div css={noReviewStyle}>리뷰가 없습니다.</div>
         )}
 
-        <div css={moreWrap}>
-          <button css={moreButton}>더보기</button>
-        </div>
+        {/* 더보기 버튼: 보여줄 리뷰가 남아있을 때만 노출 */}
+        {reviews && visibleCount < reviews.length && (
+          <div css={moreWrap}>
+            <button css={moreButton} onClick={handleMore}>
+              더보기
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );
@@ -367,7 +378,7 @@ const reviewTitle = css`
 const reviewWriteButton = css`
   padding: 8px;
   border: none;
-  border-radius: 16px;
+  border-radius: 8px;
   background: ${theme.colors.button.red};
   color: white;
   cursor: pointer;
@@ -492,12 +503,16 @@ const moreWrap = css`
   margin-top: 16px;
 `;
 
+// '더보기' 버튼 스타일
 const moreButton = css`
-  padding: 8px;
-  border: none;
-  border-radius: 16px;
-  background: ${theme.colors.text.gray500};
-  color: white;
+  width: 50%;
+  margin: 4px auto 0;
+  padding: 6px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.52);
+  border-radius: 8px;
+  background-color: ${theme.colors.button.black};
+  color: ${theme.colors.text.white};
+  ${theme.typography.button1};
+
   cursor: pointer;
-  ${theme.typography.detail3};
 `;

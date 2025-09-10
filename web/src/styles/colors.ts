@@ -17,8 +17,9 @@ export const colors = {
     white: '#fff', // 버튼 글자 색
     gray500: '#555', // 쉼터 정보 카드에서 쉼터 정보 나타낼 때 사용
     gray200: '#777', // 상세페이지 리뷰 빈 별 색상
-    gray100: '#ddd', // 별점 빈 별 색상
-    yellow: ' #ffd700', // 별점 채워진 별 색상
+    gray100: '#d5d3d3ff', // 별점 빈 별 색상
+    gray50: '#e0dedeff', // 리뷰 카드 배경 색상
+    yellow: ' #ffdc17ff', // 별점 채워진 별 색상
     blue: '#337afdff', // 쉼터 이름 색상
   },
 };

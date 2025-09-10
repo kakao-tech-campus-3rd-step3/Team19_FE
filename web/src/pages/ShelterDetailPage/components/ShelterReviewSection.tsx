@@ -64,14 +64,16 @@ const ShelterReviewSection = ({
                   ) : (
                     <div css={avatarStyle}>{(r.nickname && r.nickname.charAt(0)) || '유'}</div>
                   )}
-                  <span css={reviewNickname}>{r.nickname}</span>
-                  <span css={reviewStarsRow}>
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <span key={i} css={i < r.rating ? filledStar : emptyStar}>
-                        ★
-                      </span>
-                    ))}
-                  </span>
+                  <div css={avatarInfoCol}>
+                    <span css={reviewNickname}>{r.nickname}</span>
+                    <span css={reviewStarsRow}>
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <span key={i} css={i < r.rating ? filledStar : emptyStar}>
+                          ★
+                        </span>
+                      ))}
+                    </span>
+                  </div>
                 </div>
                 <div css={reviewContentBox}>
                   <div css={reviewRow}>
@@ -168,9 +170,8 @@ const reviewListStyle = css`
 const reviewCardStyle = css`
   display: flex;
   gap: 16px;
-  padding: 16px;
   border-radius: 12px;
-  background: ${theme.colors.text.gray100};
+  background: ${theme.colors.text.white};
   align-items: flex-start;
   text-align: left;
 `;
@@ -188,9 +189,16 @@ const avatarRow = css`
   gap: 8px;
 `;
 
+const avatarInfoCol = css`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+`;
+
 const avatarStyle = css`
-  width: 36px;
-  height: 36px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: ${theme.colors.text.gray500};
   color: white;
@@ -203,8 +211,8 @@ const avatarStyle = css`
 `;
 
 const avatarImgStyle = css`
-  width: 36px;
-  height: 36px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
   background: ${theme.colors.text.gray500};
@@ -229,12 +237,14 @@ const reviewContentBox = css`
   flex-direction: column;
   gap: 4px;
   margin-top: 4px;
+  padding: 12px;
+  background: ${theme.colors.text.gray50};
 `;
 
 const reviewRow = css`
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
 `;
 
 const reviewText = css`

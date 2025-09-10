@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
+import { useRef, useState, useEffect } from 'react';
 
 // Review 타입 정의
 interface Review {
@@ -39,6 +40,35 @@ const ShelterReviewSection = ({
   onMore,
   handleImageError,
 }: ShelterReviewSectionProps) => {
+  const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
+  const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
+
+  const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
+
+  // 줄 수 감지 함수
+  const checkLineClamp = (reviewId: number) => {
+    const el = contentRefs.current[reviewId];
+    if (!el) return;
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight || '20');
+    const maxHeight = lineHeight * 3;
+    // 3줄 초과면 showMoreMap[reviewId] = true
+    setShowMoreMap((prev) => ({
+      ...prev,
+      [reviewId]: el.scrollHeight > maxHeight,
+    }));
+  };
+
+  // 화면 크기 변경 시 줄 수 재확인
+  useEffect(() => {
+    const handleResize = () => {
+      reviews.forEach((r) => checkLineClamp(r.reviewId));
+    };
+    window.addEventListener('resize', handleResize);
+    // mount 시에도 체크
+    reviews.forEach((r) => checkLineClamp(r.reviewId));
+    return () => window.removeEventListener('resize', handleResize);
+  }, [reviews]);
+
   return (
     <section css={reviewSectionStyle}>
       <div css={reviewHeader}>
@@ -76,7 +106,32 @@ const ShelterReviewSection = ({
                   </div>
                 </div>
                 <div css={reviewContentBox}>
-                  <div css={reviewText}>{r.content}</div>
+                  <div
+                    ref={(el) => {
+                      contentRefs.current[r.reviewId] = el;
+                    }}
+                    css={[
+                      reviewText,
+                      !expandedMap[r.reviewId] && showMoreMap[r.reviewId]
+                        ? clamp3LineStyle
+                        : undefined,
+                    ]}
+                  >
+                    {r.content}
+                  </div>
+                  {showMoreMap[r.reviewId] && (
+                    <button
+                      css={moreTextButtonStyle}
+                      onClick={() =>
+                        setExpandedMap((prev) => ({
+                          ...prev,
+                          [r.reviewId]: !prev[r.reviewId],
+                        }))
+                      }
+                    >
+                      {expandedMap[r.reviewId] ? '접기' : '더보기'}
+                    </button>
+                  )}
                   {r.photoUrl && (
                     <img
                       src={r.photoUrl}
@@ -236,7 +291,7 @@ const reviewContentBox = css`
   border-radius: 12px;
   gap: 8px;
   margin-top: 4px;
-  padding: 12px;
+  padding: 8px;
   background: ${theme.colors.text.gray50};
 `;
 
@@ -290,4 +345,21 @@ const moreButton = css`
   color: ${theme.colors.text.white};
   ${theme.typography.button1};
   cursor: pointer;
+`;
+
+const clamp3LineStyle = css`
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const moreTextButtonStyle = css`
+  background: none;
+  border: none;
+  color: ${theme.colors.text.blue};
+  cursor: pointer;
+  margin-top: 2px;
+  ${theme.typography.review2};
+  align-self: flex-end;
 `;

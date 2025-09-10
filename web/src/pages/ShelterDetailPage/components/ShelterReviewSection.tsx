@@ -76,17 +76,15 @@ const ShelterReviewSection = ({
                   </div>
                 </div>
                 <div css={reviewContentBox}>
-                  <div css={reviewRow}>
-                    <div css={reviewText}>{r.content}</div>
-                    {r.photoUrl && (
-                      <img
-                        src={r.photoUrl}
-                        alt={`review-${r.reviewId}`}
-                        css={reviewPhoto}
-                        onError={handleImageError}
-                      />
-                    )}
-                  </div>
+                  <div css={reviewText}>{r.content}</div>
+                  {r.photoUrl && (
+                    <img
+                      src={r.photoUrl}
+                      alt={`review-${r.reviewId}`}
+                      css={reviewPhoto}
+                      onError={handleImageError}
+                    />
+                  )}
                   <div css={reviewMeta}>
                     <span>{formatDateShort(r.createdAt)}</span>
                   </div>
@@ -235,16 +233,11 @@ const reviewStarsRow = css`
 const reviewContentBox = css`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  border-radius: 12px;
+  gap: 8px;
   margin-top: 4px;
   padding: 12px;
   background: ${theme.colors.text.gray50};
-`;
-
-const reviewRow = css`
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
 `;
 
 const reviewText = css`
@@ -262,15 +255,16 @@ const reviewMeta = css`
 `;
 
 const reviewPhoto = css`
-  width: 25%;
-  height: 25%;
+  width: 40%;
+  max-width: 180px;
+  height: auto;
   border-radius: 8px;
   object-fit: cover;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.41); /* 사진 그림자 효과 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.23);
   pointer-events: none;
-  flex-shrink: 0;
-  margin-left: 4px;
+  align-self: flex-start;
   margin-top: 8px;
+  background: ${theme.colors.text.white};
 `;
 
 const noReviewStyle = css`

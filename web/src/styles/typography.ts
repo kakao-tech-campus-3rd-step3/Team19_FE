@@ -69,7 +69,7 @@ export const typography = {
   },
 
   detail3: {
-    fontSize: '2.63vh', // 나머지 정보들
+    fontSize: '2.83vh', // 나머지 정보들
     fontWeight: 700,
     lineHeight: '3.39vh',
   },

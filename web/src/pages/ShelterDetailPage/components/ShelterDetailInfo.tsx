@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
+import { formatOperatingHours } from '@/utils/date';
 
 // ShelterDetailPage에서 내려주는 데이터 타입
 interface ShelterDetail {
@@ -68,8 +69,12 @@ const ShelterDetailInfo = ({
             </span>
           </div>
           <b css={infoBold}>주소: {shelter.address}</b>
-          <b css={infoBold}>평일 운영시간: {shelter.operatingHours.weekday}</b>
-          <b css={infoBold}>주말 운영시간: {shelter.operatingHours.weekend}</b>
+          <b css={infoBold}>
+            평일 운영시간: {formatOperatingHours(shelter.operatingHours.weekday)}
+          </b>
+          <b css={infoBold}>
+            주말 운영시간: {formatOperatingHours(shelter.operatingHours.weekend)}
+          </b>
           <b css={infoBold}>수용 가능 인원: {shelter.capacity}명</b>
           <b css={infoBold}>에어컨: {shelter.coolingEquipment.acCount}대</b>
           <b css={infoBold}>선풍기: {shelter.coolingEquipment.fanCount}대</b>

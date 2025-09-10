@@ -8,7 +8,6 @@ interface Review {
   userId: number;
   nickname: string;
   rating: number;
-  title: string;
   content: string;
   photoUrl: string;
   userProfileUrl: string;
@@ -75,7 +74,6 @@ const ShelterReviewSection = ({
                   </span>
                 </div>
                 <div css={reviewContentBox}>
-                  {r.title && <div css={reviewTitleText}>{r.title}</div>}
                   <div css={reviewRow}>
                     <div css={reviewText}>{r.content}</div>
                     {r.photoUrl && (
@@ -233,12 +231,6 @@ const reviewContentBox = css`
   margin-top: 4px;
 `;
 
-const reviewTitleText = css`
-  ${theme.typography.review1};
-  color: ${theme.colors.text.black};
-  font-weight: 700;
-`;
-
 const reviewRow = css`
   display: flex;
   align-items: flex-start;
@@ -267,7 +259,7 @@ const reviewPhoto = css`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.41); /* 사진 그림자 효과 */
   pointer-events: none;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 4px;
   margin-top: 8px;
 `;
 
@@ -275,6 +267,7 @@ const noReviewStyle = css`
   text-align: center;
   color: ${theme.colors.text.gray500};
   padding: 16px;
+  ${theme.typography.review1};
 `;
 
 const moreWrap = css`

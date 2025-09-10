@@ -30,7 +30,6 @@ interface Review {
   userId: number;
   nickname: string;
   rating: number;
-  title: string;
   content: string;
   photoUrl: string;
   userProfileUrl: string;
@@ -90,8 +89,8 @@ export const useShelterDetail = (id: string | undefined) => {
           userId: 1,
           nickname: '사용자1',
           rating: 5,
-          title: '아주 좋은 쉼터입니다',
-          content: '위치도 좋고 시설도 깨끗해요. 강추합니다!',
+          content:
+            '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
           photoUrl: '',
           userProfileUrl: 'https://example.com/users/1.jpg',
           createdAt: '2023-10-01T12:00:00Z',
@@ -101,8 +100,8 @@ export const useShelterDetail = (id: string | undefined) => {
           userId: 2,
           nickname: '사용자2',
           rating: 4,
-          title: '만족스러운 쉼터',
-          content: '전반적으로 만족스러웠습니다. 다만, 주차 공간이 부족해요.',
+          content:
+            '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
           photoUrl: 'https://example.com/review2.jpg',
           userProfileUrl: '',
           createdAt: '2023-10-02T12:00:00Z',

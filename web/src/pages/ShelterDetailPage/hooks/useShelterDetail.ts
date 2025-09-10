@@ -27,7 +27,6 @@ interface ShelterDetail {
 
 interface Review {
   reviewId: number;
-  shelterId: number;
   userId: number;
   nickname: string;
   rating: number;
@@ -88,7 +87,6 @@ export const useShelterDetail = (id: string | undefined) => {
       const reviewData: Review[] = [
         {
           reviewId: 1,
-          shelterId: 1,
           userId: 1,
           nickname: '사용자1',
           rating: 5,
@@ -100,7 +98,6 @@ export const useShelterDetail = (id: string | undefined) => {
         },
         {
           reviewId: 2,
-          shelterId: 1,
           userId: 2,
           nickname: '사용자2',
           rating: 4,

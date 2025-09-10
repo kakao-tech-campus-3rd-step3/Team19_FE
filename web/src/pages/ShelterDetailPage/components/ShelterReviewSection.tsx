@@ -5,7 +5,6 @@ import theme from '@/styles/theme';
 // Review 타입 정의
 interface Review {
   reviewId: number;
-  shelterId: number;
   userId: number;
   nickname: string;
   rating: number;

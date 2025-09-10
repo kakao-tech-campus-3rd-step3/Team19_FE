@@ -13,18 +13,15 @@ const FindSheltersPage = () => {
     favoriteIds,
     toastMessage,
     visibleCount,
-    showScrollToTop,
     hasMoreItems,
     handleToggleFavorite,
     handleLoadMore,
-    handleScrollToTop,
   } = useShelters();
 
   const shelters = nearbyShelters.slice(0, visibleCount);
 
   return (
     <>
-      {' '}
       {shelters.length > 0 ? (
         // 쉼터 목록이 있을 때의 전체 화면 컨테이너
         <div css={pageContainerStyle}>
@@ -33,12 +30,7 @@ const FindSheltersPage = () => {
             favoriteIds={favoriteIds}
             onToggleFavorite={handleToggleFavorite}
           />
-          <BottomControls
-            hasMoreItems={hasMoreItems}
-            onLoadMore={handleLoadMore}
-            showScrollToTop={showScrollToTop}
-            onScrollToTop={handleScrollToTop}
-          />
+          <BottomControls hasMoreItems={hasMoreItems} onLoadMore={handleLoadMore} />
           {/* ToastMessage 컴포넌트 사용 */}
           <ToastMessage message={toastMessage} />
         </div>

@@ -5,11 +5,14 @@ import { nearbyShelters } from '@/mock/nearbyShelters';
 import { useMap } from './hooks/useMap';
 
 const HomePage = () => {
+  // useMap에서 지도 준비 및 내 위치 이동 함수 가져오기
   const { handleMapReady, handleMyLocation } = useMap();
 
   return (
     <div>
+      {/* 지도 준비 시 handleMapReady를 넘기고, 쉼터 마커는 그대로 */}
       <MapView onMapReady={handleMapReady} shelters={nearbyShelters} />
+      {/* 내 위치 버튼 클릭 시 handleMyLocation 호출 */}
       <MapOverlayButtons onMyLocation={handleMyLocation} />
     </div>
   );

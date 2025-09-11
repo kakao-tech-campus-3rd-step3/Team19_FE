@@ -181,7 +181,6 @@ const emptyStar = css`
 const reviewSectionStyle = css`
   margin-top: 32px;
   padding: 16px;
-  width: 80%;
   border-top: 1px solid ${theme.colors.text.gray500};
 `;
 

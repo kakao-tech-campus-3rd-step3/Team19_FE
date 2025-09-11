@@ -56,21 +56,22 @@ export const useMap = () => {
     mapInstanceRef.current = map;
   };
 
-  // 1초마다 내 위치 갱신
+  // 위치 변경 시 내 위치 갱신 (watchPosition 사용)
   useEffect(() => {
     if (!navigator.geolocation) return;
-
-    watchIdRef.current = window.setInterval(() => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          updateMyLocation(position.coords.latitude, position.coords.longitude, false);
-        },
-        () => {},
-      );
-    }, 1000);
-
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        updateMyLocation(position.coords.latitude, position.coords.longitude, false);
+      },
+      () => {},
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+      },
+    );
     return () => {
-      if (watchIdRef.current) clearInterval(watchIdRef.current);
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     };
   }, []);
 

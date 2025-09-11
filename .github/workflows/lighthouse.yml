@@ -1,22 +1,20 @@
 name: Lighthouse CI
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  workflow_dispatch:
+  push:
+    branches: [main, develop]
 
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 22.15.1
 
@@ -28,24 +26,15 @@ jobs:
         run: npm run build
         working-directory: ./web
 
-      - name: Install static server
-        run: npm install --no-save serve
-        working-directory: ./web
-
       - name: Serve app
         run: npx serve -s dist -l 5173 &
         working-directory: ./web
 
-      - name: Wait for server to start
-        run: npx wait-on http://localhost:5173
-        working-directory: ./web
-
       - name: Run Lighthouse
         run: npx lighthouse http://localhost:5173 --output html --output-path ./lighthouse-report.html --quiet --chrome-flags="--headless"
-        working-directory: ./web
 
       - name: Upload Lighthouse report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lighthouse-report
-          path: ./web/lighthouse-report.html
+          path: ./lighthouse-report.html

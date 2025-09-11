@@ -5,7 +5,6 @@ import ShelterInfoCard from '@/components/ShelterInfoCard';
 import theme from '@/styles/theme';
 import { typography } from '@/styles/typography';
 import marker from '@/assets/images/marker.png';
-import myLocationMarker from '@/assets/images/myLocationMarker.png';
 
 // Shelter 인터페이스
 interface Shelter {
@@ -55,24 +54,6 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
           const map = new window.kakao.maps.Map(container, mapOption);
           mapInstanceRef.current = map;
           if (onMapReady) onMapReady(map);
-
-          // 내 위치 마커 이미지 설정
-          const myMarkerImageSrc = myLocationMarker; // 이미지 경로
-          const myMarkerImageSize = new window.kakao.maps.Size(50, 50); // 이미지 크기
-          const myMarkerImageOptions = { offset: new window.kakao.maps.Point(25, 50) }; // 중심점 설정
-
-          const myMarkerImage = new window.kakao.maps.MarkerImage(
-            myMarkerImageSrc,
-            myMarkerImageSize,
-            myMarkerImageOptions,
-          );
-
-          const myMarker = new window.kakao.maps.Marker({
-            position: new window.kakao.maps.LatLng(latitude, longitude),
-            image: myMarkerImage, // 사용자 정의 이미지 설정
-          });
-
-          myMarker.setMap(map);
 
           // 쉼터 마커 이미지 설정
           const imageSrc = marker;

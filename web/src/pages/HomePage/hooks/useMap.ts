@@ -25,7 +25,9 @@ export const useMap = () => {
         position: locPosition,
         image: myMarkerImage,
       });
-      myMarkerRef.current!.setPosition(locPosition);
+      if (myMarkerRef.current) {
+        myMarkerRef.current.setPosition(locPosition);
+      }
     } else {
       // 마커가 있으면 위치만 갱신
       if (myMarkerRef.current) {

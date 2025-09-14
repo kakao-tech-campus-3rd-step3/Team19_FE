@@ -103,9 +103,9 @@ export const typography = {
     lineHeight: '4.5vh',
   },
   my3: {
-    fontSize: '3.5vh', // 메뉴 버튼
+    fontSize: '3.2vh', // 메뉴 버튼
     fontWeight: 700,
-    lineHeight: '2.8vh',
+    lineHeight: '3.6vh',
   },
   my4: {
     fontSize: '3.8vh', // 로그아웃 버튼

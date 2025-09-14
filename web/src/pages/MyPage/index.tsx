@@ -59,9 +59,12 @@ export default MyPage;
 
 // 스타일
 const container = css`
-  background: #fff;
+  background: #ffffffff;
   padding: 0;
   font-family: 'Pretendard', sans-serif;
+  height: calc(100vh - ${theme.spacing.spacing16});
+  display: flex;
+  flex-direction: column;
 `;
 
 const mypageTitle = css`
@@ -79,8 +82,8 @@ const profileBox = css`
 `;
 
 const profileImg = css`
-  width: 45%;
-  height: 45%;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid #eee;
@@ -113,7 +116,6 @@ const menuBox = css`
   gap: 18px;
   align-items: center;
   padding-top: 5%;
-  padding-bottom: 10%;
 `;
 
 const menuBtn = css`
@@ -143,6 +145,7 @@ const menuBtn = css`
 
 const logoutBtn = css`
   width: 90%;
+  margin: auto auto 5% auto;
   background: #111;
   color: #fff;
   border: none;

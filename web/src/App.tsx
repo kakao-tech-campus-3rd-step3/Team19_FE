@@ -10,6 +10,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import theme from './styles/theme';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { useEffect } from 'react';
+import MyPage from './pages/MyPage';
 
 const App = () => {
   const location = useLocation();
@@ -79,6 +80,8 @@ const App = () => {
             <Route path="/guide" element={<GuidePage />} />
             {/* path="/shelter-detail/:id": 쉼터 상세 페이지 추가 */}
             <Route path="/shelter-detail/:id" element={<ShelterDetailPage />} />
+            {/* path="/my-page": 마이페이지 추가 */}
+            <Route path="/my-page" element={<MyPage />} />
           </Routes>
         </main>
         <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}

@@ -10,6 +10,7 @@ export const colors = {
     greenOff: '#a5d6a7ff', // 휴무 태그 배경 색
     redOn: '#dc1515ff', // 야영장 운영중 태그 배경 색
     redOff: '#dc15158d', // 야영장 휴무 태그 배경 색
+    gray100: '#d5d3d3ff', // 마이페이지 버튼 배경 색
   },
   text: {
     red: '#e53935', // 별점 숫자 색상

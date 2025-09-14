@@ -91,6 +91,28 @@ export const typography = {
     lineHeight: '3.39vh',
   },
 
+  // 마이페이지 (MyPage)
+  my1: {
+    fontSize: '5vh', // 마이페이지 타이틀
+    fontWeight: 700,
+    lineHeight: '6vh',
+  },
+  my2: {
+    fontSize: '4vh', // 사용자 이름
+    fontWeight: 700,
+    lineHeight: '4.5vh',
+  },
+  my3: {
+    fontSize: '3.5vh', // 메뉴 버튼
+    fontWeight: 700,
+    lineHeight: '2.8vh',
+  },
+  my4: {
+    fontSize: '3.8vh', // 로그아웃 버튼
+    fontWeight: 700,
+    lineHeight: '4.1vh',
+  },
+
   //버튼 (Button)
   button1: {
     fontSize: '3.38vh', // "더보기" 버튼

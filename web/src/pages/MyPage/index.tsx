@@ -4,6 +4,7 @@ import { FaRegCommentDots, FaRegEdit, FaHeart } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
+import { useNavigate } from 'react-router-dom';
 
 // 사용자 조회 API 응답 타입
 interface UserResponse {
@@ -16,6 +17,7 @@ interface UserResponse {
 const MyPage = () => {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [imgError, setImgError] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch('/api/users/1')
@@ -52,15 +54,15 @@ const MyPage = () => {
       </div>
       <div css={userNameRow}>
         <span css={userName}>{user.nickname}</span>
-        <FaRegEdit css={editIcon} />
+        <FaRegEdit css={editIcon} onClick={() => navigate('/edit-profile')} />
       </div>
 
       {/* 메뉴 버튼들 */}
       <div css={menuBox}>
-        <button css={menuBtn}>
+        <button css={menuBtn} onClick={() => navigate('/wishlist')}>
           <FaHeart color="red" css={iconStyle} />찜 목록
         </button>
-        <button css={menuBtn}>
+        <button css={menuBtn} onClick={() => navigate('/myreviews')}>
           <FaRegCommentDots color="#444" css={iconStyle} />
           내가 쓴 리뷰 목록
         </button>

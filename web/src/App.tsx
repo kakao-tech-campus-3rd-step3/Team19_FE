@@ -5,7 +5,7 @@ import FindSheltersPage from './pages/FindSheltersPage';
 import HomePage from './pages/HomePage';
 import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
-import NavBar from './pages/HomePage/components/NavBar';
+import NavBar from './components/NavBar';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import theme from './styles/theme';
 import ScrollToTopButton from './components/ScrollToTopButton';

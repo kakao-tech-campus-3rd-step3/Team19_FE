@@ -1,37 +1,16 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { FaRegCommentDots, FaRegEdit, FaHeart } from 'react-icons/fa';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 import { useNavigate } from 'react-router-dom';
-
-// 사용자 조회 API 응답 타입
-interface UserResponse {
-  userId: number;
-  email: string;
-  nickname: string;
-  profileImageUrl: string;
-}
+import { useUser } from './hooks/useUser';
 
 const MyPage = () => {
-  const [user, setUser] = useState<UserResponse | null>(null);
+  const user = useUser(1); // userId를 실제 로그인 정보에 맞게 변경 필요
   const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetch('/api/users/1')
-      .then((res) => res.json())
-      .then((data) => setUser(data))
-      .catch(() => {
-        setUser({
-          userId: 1,
-          email: '',
-          nickname: '사용자',
-          profileImageUrl: '/assets/images/app-logo.png',
-        });
-      });
-  }, []);
 
   if (!user) return <div css={container}>로딩 중...</div>;
 
@@ -66,7 +45,8 @@ const MyPage = () => {
           <FaRegCommentDots color="#444" css={iconStyle} />
           내가 쓴 리뷰 목록
         </button>
-        <button css={menuBtn}>앱 푸쉬 알림 ON/OFF</button>
+        <button css={menuBtn}>앱 푸쉬 알림 ON/OFF</button>{' '}
+        {/* 앱 푸시 현재 설정에 따른 변화 필요 */}
       </div>
 
       {/* 로그아웃 버튼 */}

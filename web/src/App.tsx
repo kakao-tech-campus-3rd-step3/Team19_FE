@@ -84,7 +84,7 @@ const App = () => {
             {/* path="/shelter-detail/:id": 쉼터 상세 페이지 추가 */}
             <Route path="/shelter-detail/:id" element={<ShelterDetailPage />} />
             {/* path="/my-page": 마이페이지 추가 */}
-            <Route path="/my-page" element={<MyPage />} />
+            <Route path="/mypage" element={<MyPage />} />
             {/* path="/wishlist": 찜 목록 페이지 라우트 추가 */}
             <Route path="/wishlist" element={<WishListPage />} />
             {/* path="/myreviews": 내가 쓴 리뷰 목록 페이지 라우트 추가 */}

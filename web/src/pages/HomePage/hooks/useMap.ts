@@ -2,8 +2,9 @@ import { useRef, useEffect } from 'react';
 import myLocationMarker from '@/assets/images/myLocationMarker.png';
 
 export const useMap = () => {
-  const mapInstanceRef = useRef<any>(null);
-  const myMarkerRef = useRef<any>(null);
+  // 카카오맵 타입 명확히 지정
+  const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
+  const myMarkerRef = useRef<kakao.maps.Marker | null>(null);
   const watchIdRef = useRef<number | null>(null);
 
   // 내 위치 마커 생성 및 갱신 함수
@@ -24,10 +25,12 @@ export const useMap = () => {
         position: locPosition,
         image: myMarkerImage,
       });
-      myMarkerRef.current.setMap(map);
+      myMarkerRef.current!.setPosition(locPosition);
     } else {
       // 마커가 있으면 위치만 갱신
-      myMarkerRef.current.setPosition(locPosition);
+      if (myMarkerRef.current) {
+        myMarkerRef.current.setPosition(locPosition);
+      }
     }
 
     if (moveCenter) {

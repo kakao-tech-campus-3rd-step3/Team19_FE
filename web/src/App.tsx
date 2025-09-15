@@ -6,10 +6,19 @@ import HomePage from './pages/HomePage';
 import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './pages/HomePage/components/NavBar';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import theme from './styles/theme';
+import ScrollToTopButton from './components/ScrollToTopButton';
+import { useEffect } from 'react';
 
 const App = () => {
+  const location = useLocation();
+
+  // 라우트 변경 시 스크롤 맨 위로 이동
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [location.pathname]);
+
   return (
     <>
       {/* 전역 스타일 정의 및 적용 */}
@@ -72,6 +81,7 @@ const App = () => {
             <Route path="/shelter-detail/:id" element={<ShelterDetailPage />} />
           </Routes>
         </main>
+        <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
       </div>
     </>
   );

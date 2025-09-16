@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.production
 .vercel
+
+# 개인 폴더(정지원)
+private/

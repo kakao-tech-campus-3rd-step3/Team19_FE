@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
+import { formatOperatingHours } from '@/utils/date';
 
 interface WishShelter {
   shelterId: number;
@@ -50,7 +51,7 @@ const WishListCard = ({ item, onClick }: WishListCardProps) => (
         <div css={cardinfostyle}>
           거리: {item.distance}
           <br />
-          운영시간: {item.operatingHours}
+          운영시간: {formatOperatingHours(item.operatingHours)}
           <br />
           주소: {item.address}
         </div>

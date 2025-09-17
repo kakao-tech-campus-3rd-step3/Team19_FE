@@ -4,6 +4,8 @@ import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { formatOperatingHours } from '@/utils/date';
+import { useState } from 'react';
+import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
 
 interface WishShelter {
   shelterId: number;
@@ -24,41 +26,115 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-const WishListCard = ({ item, onClick }: WishListCardProps) => (
-  <div css={card} onClick={() => onClick(item.shelterId)} style={{ cursor: 'pointer' }}>
-    <div css={cardTitleRow}>
-      <span css={cardTitle}>{item.name}</span>
-      <FaHeart color="red" size={30} css={cardHeart} />
-    </div>
-    <div css={cardBottomRow}>
-      <img
-        src={item.photoUrl && item.photoUrl.trim() !== '' ? item.photoUrl : NoImage}
-        alt="찜 이미지"
-        css={cardImg}
-        onError={handleImageError}
-      />
-      <div css={cardInfo}>
-        <div css={cardRating}>
-          별점: <span css={ratingNumber}>{item.averageRating}</span>
-          <span css={starsWrapper}>
-            {Array.from({ length: 5 }, (_, i) => (
-              <span key={i} css={i < Math.round(item.averageRating) ? filledStar : emptyStar}>
-                ★
-              </span>
-            ))}
-          </span>
-        </div>
-        <div css={cardinfostyle}>
-          거리: {item.distance}
-          <br />
-          운영시간: {formatOperatingHours(item.operatingHours)}
-          <br />
-          주소: {item.address}
+const WishListCard = ({ item, onClick }: WishListCardProps) => {
+  const [isFavorite, setIsFavorite] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const handleHeartClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isFavorite) {
+      setShowModal(true);
+    } else {
+      // 찜 추가 (POST)
+      try {
+        await fetch(`/api/users/1/wishes/${item.shelterId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            shelterId: item.shelterId,
+            userId: 1, // TODO: 실제 userId는 인증 정보에서 받아야 함
+          }),
+        });
+        setIsFavorite(true);
+        setToastMessage('찜 목록에\n추가되었습니다.');
+        setTimeout(() => setToastMessage(''), 2000);
+      } catch (err) {
+        // TODO: 에러 처리 필요
+      }
+    }
+  };
+
+  const handleConfirm = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // 찜 삭제 (DELETE)
+    try {
+      await fetch(`/api/users/1/wishes/${item.shelterId}`, {
+        method: 'DELETE',
+      });
+      setIsFavorite(false);
+      setToastMessage('찜 목록에서\n삭제되었습니다.');
+      setTimeout(() => setToastMessage(''), 2000);
+    } catch (err) {
+      // TODO: 에러 처리 필요
+    }
+    setShowModal(false);
+  };
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowModal(false);
+  };
+
+  return (
+    <div css={card} onClick={() => onClick(item.shelterId)} style={{ cursor: 'pointer' }}>
+      <div css={cardTitleRow}>
+        <span css={cardTitle}>{item.name}</span>
+        <span onClick={handleHeartClick} style={{ cursor: 'pointer' }}>
+          {isFavorite ? (
+            <FaHeart color="red" size={30} css={cardHeart} />
+          ) : (
+            <FaHeart color="#bbb" size={30} css={cardHeart} />
+          )}
+        </span>
+      </div>
+      <div css={cardBottomRow}>
+        <img
+          src={item.photoUrl && item.photoUrl.trim() !== '' ? item.photoUrl : NoImage}
+          alt="찜 이미지"
+          css={cardImg}
+          onError={handleImageError}
+        />
+        <div css={cardInfo}>
+          <div css={cardRating}>
+            별점: <span css={ratingNumber}>{item.averageRating}</span>
+            <span css={starsWrapper}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <span key={i} css={i < Math.round(item.averageRating) ? filledStar : emptyStar}>
+                  ★
+                </span>
+              ))}
+            </span>
+          </div>
+          <div css={cardinfostyle}>
+            거리: {item.distance}
+            <br />
+            운영시간: {formatOperatingHours(item.operatingHours)}
+            <br />
+            주소: {item.address}
+          </div>
         </div>
       </div>
+      {showModal && (
+        <div css={modalOverlay} onClick={(e) => e.stopPropagation()}>
+          <div css={modalBox}>
+            <div css={modalText}>찜 목록에서 삭제하시겠습니까?</div>
+            <div css={modalButtons}>
+              <button css={modalBtn} onClick={handleConfirm}>
+                예
+              </button>
+              <button css={modalBtn} onClick={handleCancel}>
+                아니요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ToastMessage 컴포넌트로 안내 팝업 표시 */}
+      <ToastMessage message={toastMessage} />
     </div>
-  </div>
-);
+  );
+};
 
 const card = css`
   background: #e0e0e0;
@@ -69,6 +145,7 @@ const card = css`
   display: flex;
   flex-direction: column;
   padding: 12px 0;
+  -webkit-tap-highlight-color: transparent; // 모바일 클릭 반응 제거
 `;
 
 const cardTitleRow = css`
@@ -148,6 +225,55 @@ const cardinfostyle = css`
   text-align: left;
   ${theme.typography.wish3};
   color: ${theme.colors.text.gray500};
+`;
+
+const modalOverlay = css`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+`;
+
+const modalBox = css`
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 24px;
+  box-shadow: 0 2px 12px #2224;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const modalText = css`
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+`;
+
+const modalButtons = css`
+  display: flex;
+  gap: 16px;
+`;
+
+const modalBtn = css`
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #d76464;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:last-of-type {
+    background: #bbb;
+    color: #222;
+  }
 `;
 
 export default WishListCard;

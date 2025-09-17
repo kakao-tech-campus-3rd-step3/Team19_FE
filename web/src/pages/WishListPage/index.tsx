@@ -18,100 +18,94 @@ interface WishShelter {
 
 // 목데이터 (API 응답 형태와 동일)
 const mockWishList: WishShelter[] = [
-  {
-    shelterId: 1,
-    name: '종로 무더위 쉼터',
-    address: '서울 종로구 세종대로 175',
-    operatingHours: '09:00~18:00',
-    averageRating: 4.5,
-    photoUrl: 'https://example.com/shelter1.jpg',
-    distance: '250m',
-  },
-  {
-    shelterId: 2,
-    name: '강남 무더위 쉼터',
-    address: '서울 강남구 테헤란로 123',
-    operatingHours: '09:00~18:00',
-    averageRating: 4.2,
-    photoUrl: '',
-    distance: '1.2km',
-  },
+  // 데이터가 없을 경우 테스트를 위해 빈 배열로 두세요.
 ];
 
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
-  event.currentTarget.src = NoImage; // 이미지 로드 실패 시 NoImage로 대체
+  event.currentTarget.src = NoImage;
 };
 
 const WishListPage = () => {
   const wishList = mockWishList; // TODO: 추후 API 연결 시 변경
 
   return (
-    <div css={container}>
-      <div css={header}>
-        <FaHeart color="red" size={43} css={heartIcon} />
-        <span css={title}>찜 목록</span>
-      </div>
-      {wishList.length === 0 ? (
-        <div css={emptyBox}>
-          <img src={emptyWishImg} alt="찜 없음" css={emptyImg} />
-          <div css={emptyText}>찜이 없습니다.</div>
-        </div>
-      ) : (
-        <div css={listBox}>
-          {wishList.map((item) => (
-            <div key={item.shelterId} css={card}>
-              <div css={cardTitleRow}>
-                <span css={cardTitle}>{item.name}</span>
-                <FaHeart color="red" size={30} css={cardHeart} />
-              </div>
-              <div css={cardBottomRow}>
-                <img
-                  src={item.photoUrl && item.photoUrl.trim() !== '' ? item.photoUrl : NoImage}
-                  alt="찜 이미지"
-                  css={cardImg}
-                  onError={handleImageError}
-                />
-                <div css={cardInfo}>
-                  <div css={cardRating}>
-                    별점: <span css={ratingNumber}>{item.averageRating}</span>
-                    <span css={starsWrapper}>
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <span
-                          key={i}
-                          css={i < Math.round(item.averageRating) ? filledStar : emptyStar}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </span>
-                  </div>
-                  <div css={cardinfostyle}>
-                    거리: {item.distance}
-                    <br />
-                    운영시간: {item.operatingHours}
-                    <br />
-                    주소: {item.address}
+    <>
+      {wishList.length > 0 ? (
+        // 찜 목록이 있을 때 컨테이너
+        <div css={pageContainerStyle}>
+          <div css={header}>
+            <FaHeart color="red" size={43} css={heartIcon} />
+            <span css={title}>찜 목록</span>
+          </div>
+          <div css={listBox}>
+            {wishList.map((item) => (
+              <div key={item.shelterId} css={card}>
+                <div css={cardTitleRow}>
+                  <span css={cardTitle}>{item.name}</span>
+                  <FaHeart color="red" size={30} css={cardHeart} />
+                </div>
+                <div css={cardBottomRow}>
+                  <img
+                    src={item.photoUrl && item.photoUrl.trim() !== '' ? item.photoUrl : NoImage}
+                    alt="찜 이미지"
+                    css={cardImg}
+                    onError={handleImageError}
+                  />
+                  <div css={cardInfo}>
+                    <div css={cardRating}>
+                      별점: <span css={ratingNumber}>{item.averageRating}</span>
+                      <span css={starsWrapper}>
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <span
+                            key={i}
+                            css={i < Math.round(item.averageRating) ? filledStar : emptyStar}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </span>
+                    </div>
+                    <div css={cardinfostyle}>
+                      거리: {item.distance}
+                      <br />
+                      운영시간: {item.operatingHours}
+                      <br />
+                      주소: {item.address}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      ) : (
+        // 찜 목록이 없을 때 컨테이너
+        <div css={emptyStateStyle}>
+          <div css={emptyHeader}>
+            <FaHeart color="red" size={43} css={heartIcon} />
+            <span css={emptyTitle}>찜 목록</span>
+          </div>
+          <div css={emptyBox}>
+            <div css={emptyText}>찜이 없습니다.</div>
+            <img src={emptyWishImg} alt="찜 없음" css={emptyImg} />
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
 export default WishListPage;
 
 // 스타일
-const container = css`
+const pageContainerStyle = css`
+  position: relative;
+  min-height: 100vh;
+  margin: 0 auto;
   background: #fff;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 0px;
 `;
 
 const header = css`
@@ -132,6 +126,7 @@ const heartIcon = css`
 const title = css`
   ${theme.typography.wish1};
   text-shadow: 2px 2px 6px #bbb;
+  color: #222;
 `;
 
 const listBox = css`
@@ -155,7 +150,7 @@ const card = css`
 const cardTitleRow = css`
   display: flex;
   align-items: center;
-  justify-content: space-between; // 추가
+  justify-content: space-between;
   gap: 8px;
   padding: 0 16px 8px 16px;
 `;
@@ -231,24 +226,52 @@ const cardinfostyle = css`
   color: ${theme.colors.text.gray500};
 `;
 
+const emptyStateStyle = css`
+  position: fixed;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+  background: #000;
+  overflow: hidden;
+`;
+
+const emptyHeader = css`
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  padding-left: 16px;
+  box-sizing: border-box;
+`;
+
+const emptyTitle = css`
+  ${theme.typography.wish1};
+  color: #fff;
+  text-shadow: 2px 2px 6px #222;
+`;
+
 const emptyBox = css`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
   gap: 24px;
   width: 100%;
 `;
 
 const emptyImg = css`
   width: 160px;
-  height: 160px;
+  height: auto;
   object-fit: contain;
 `;
 
 const emptyText = css`
-  font-size: 1.6rem;
+  padding-top: 20%;
+  font-size: 2.2rem;
   font-weight: 700;
   color: #fff;
   text-shadow: 2px 2px 6px #222;

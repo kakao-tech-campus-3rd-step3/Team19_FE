@@ -25,6 +25,7 @@ export const useShelters = () => {
   }, []);
 
   // wishApi를 활용한 찜 버튼 클릭 핸들러
+  // TODO: userId는 실제 서비스에서는 인증 정보에서 받아야 함
   const handleToggleFavorite = async (shelterId: number, userId: number = 1) => {
     const isAlreadyFavorite = favoriteIds.includes(shelterId);
 

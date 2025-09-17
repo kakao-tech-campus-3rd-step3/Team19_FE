@@ -40,7 +40,7 @@ const WishListCard = ({ item, onClick }: WishListCardProps) => {
       // wishApi를 사용해 찜 추가
       const result = await toggleWish({
         shelterId: item.shelterId,
-        userId: 1, // 실제 서비스에서는 인증 정보에서 받아야 함
+        userId: 1, // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
         isFavorite: false,
       });
       if (result.success) setIsFavorite(true);

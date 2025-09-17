@@ -20,8 +20,9 @@ declare global {
       }
 
       class Marker {
-        constructor(options: { position: LatLng });
+        constructor(options: { position: LatLng; image?: MarkerImage });
         setMap(map: Map | null): void;
+        setPosition(position: LatLng): void;
       }
     }
   }

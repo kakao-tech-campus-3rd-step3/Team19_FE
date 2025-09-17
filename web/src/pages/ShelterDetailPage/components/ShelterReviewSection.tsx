@@ -130,6 +130,7 @@ const ShelterReviewSection = ({
                       }
                     >
                       {expandedMap[r.reviewId] ? '접기' : '더보기'}
+                      {/* TODO: 더보기 버튼 필요 없을 시 숨기기 */}
                     </button>
                   )}
                   {r.photoUrl && (

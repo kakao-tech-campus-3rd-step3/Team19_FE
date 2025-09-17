@@ -5,11 +5,15 @@ import FindSheltersPage from './pages/FindSheltersPage';
 import HomePage from './pages/HomePage';
 import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
-import NavBar from './pages/HomePage/components/NavBar';
+import NavBar from './components/NavBar';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import theme from './styles/theme';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { useEffect } from 'react';
+import MyPage from './pages/MyPage';
+import WishListPage from './pages/WishListPage';
+import MyReviewPage from './pages/MyReviewPage';
+import EditProfilePage from './pages/EditProfilePage';
 
 const App = () => {
   const location = useLocation();
@@ -79,6 +83,14 @@ const App = () => {
             <Route path="/guide" element={<GuidePage />} />
             {/* path="/shelter-detail/:id": 쉼터 상세 페이지 추가 */}
             <Route path="/shelter-detail/:id" element={<ShelterDetailPage />} />
+            {/* path="/my-page": 마이페이지 추가 */}
+            <Route path="/mypage" element={<MyPage />} />
+            {/* path="/wishlist": 찜 목록 페이지 라우트 추가 */}
+            <Route path="/wishlist" element={<WishListPage />} />
+            {/* path="/myreviews": 내가 쓴 리뷰 목록 페이지 라우트 추가 */}
+            <Route path="/myreviews" element={<MyReviewPage />} />
+            {/* path="/edit-profile": 프로필 수정 페이지 추가 */}
+            <Route path="/edit-profile" element={<EditProfilePage />} />
           </Routes>
         </main>
         <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}

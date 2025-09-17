@@ -19,6 +19,11 @@ const NavBar = () => {
     navigate(-1); // 이전 페이지로 이동
   };
 
+  const handleUserClick = () => {
+    // TODO: 로그인 검증 필요. 추후 추가 해야함!!!!!
+    navigate('/mypage');
+  };
+
   return (
     <nav css={navStyle}>
       {/* 홈페이지인 경우 버튼을 숨기고 공간은 유지 */}
@@ -31,7 +36,7 @@ const NavBar = () => {
       <button css={titleButtonStyle} onClick={handleLogoClick}>
         <img src={logo} alt="무쉼사 로고" css={logoStyle} />
       </button>
-      <button css={iconButtonStyle}>
+      <button css={iconButtonStyle} onClick={handleUserClick}>
         <FaUser size={50} color="#ffffffff" />
       </button>
     </nav>

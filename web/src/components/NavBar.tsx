@@ -20,7 +20,7 @@ const NavBar = () => {
   };
 
   const handleUserClick = () => {
-    // 로그인 검증 필요. 추후 추가 해야함!!!!!
+    // TODO: 로그인 검증 필요. 추후 추가 해야함!!!!!
     navigate('/mypage');
   };
 

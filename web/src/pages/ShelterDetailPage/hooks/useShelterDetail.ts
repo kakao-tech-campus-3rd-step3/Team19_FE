@@ -48,7 +48,7 @@ export const useShelterDetail = (id: string | undefined) => {
   // 쉼터 상세 정보 Fetching
   useEffect(() => {
     const fetchData = async () => {
-      // 실제 API 연동 시에는 GET /api/shelters/{id}로 호출
+      // TODO: 실제 API 연동 시에는 GET /api/shelters/{id}로 호출
       const data: ShelterDetail = {
         shelterId: 1,
         name: '쉼터 이름 예시',
@@ -82,7 +82,7 @@ export const useShelterDetail = (id: string | undefined) => {
   useEffect(() => {
     const fetchReviews = async () => {
       setLoadingReviews(true);
-      // 실제 API 연동 시에는 GET /api/shelters/{id}/reviews?sort=created_at으로 호출
+      // TODO: 실제 API 연동 시에는 GET /api/shelters/{id}/reviews?sort=created_at으로 호출
       const reviewData: Review[] = [
         {
           reviewId: 1,
@@ -133,7 +133,7 @@ export const useShelterDetail = (id: string | undefined) => {
   // 즐겨찾기 토글 핸들러
   const onToggleFavorite = () => {
     setIsFavorite(!isFavorite);
-    // 실제 API 연동 시에는 POST /api/shelters/{id}/favorites 호출
+    // TODO: 실제 API 연동 시에는 POST /api/shelters/{id}/favorites 호출
   };
 
   // 길 안내 시작 핸들러

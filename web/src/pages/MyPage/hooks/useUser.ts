@@ -14,6 +14,7 @@ export const useUser = (userId: number) => {
   useEffect(() => {
     fetch(`/api/users/${userId}`)
       .then((res) => res.json())
+      // TODO: https://github.com/kakao-tech-campus-3rd-step3/Team19_FE/pull/40#discussion_r2347400930
       .then((data) => setUser(data))
       .catch(() => {
         setUser({

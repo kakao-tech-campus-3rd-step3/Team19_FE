@@ -29,6 +29,7 @@ export const useShelters = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []); // 컴포넌트 마운트 시 한 번만 실행
 
+  // TODO: 낙관적 업데이트 or 로그인 사용자만 가능하도록 수정 필요
   // '좋아요' 버튼 클릭 핸들러
   const handleToggleFavorite = (shelterId: number) => {
     const isAlreadyFavorite = favoriteIds.includes(shelterId);

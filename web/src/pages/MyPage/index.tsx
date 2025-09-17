@@ -8,9 +8,10 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from './hooks/useUser';
 
 const MyPage = () => {
-  const user = useUser(1); // userId를 실제 로그인 정보에 맞게 변경 필요
+  const user = useUser(1); // TODO: userId를 실제 로그인 정보에 맞게 변경 필요
   const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
+  // TODO: https://github.com/kakao-tech-campus-3rd-step3/Team19_FE/pull/40#discussion_r2347400932
 
   if (!user) return <div css={container}>로딩 중...</div>;
 
@@ -46,10 +47,10 @@ const MyPage = () => {
           내가 쓴 리뷰 목록
         </button>
         <button css={menuBtn}>앱 푸쉬 알림 ON/OFF</button>{' '}
-        {/* 앱 푸시 현재 설정에 따른 변화 필요 */}
+        {/* TODO: 앱 푸시 현재 설정에 따른 변화 필요 */}
       </div>
 
-      {/* 로그아웃 버튼 */}
+      {/* TODO: 로그아웃 버튼 기능 추가 */}
       <button css={logoutBtn}>로그아웃</button>
     </div>
   );

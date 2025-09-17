@@ -6,6 +6,7 @@ import theme from '@/styles/theme';
 import { formatOperatingHours } from '@/utils/date';
 import { useState } from 'react';
 import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
+import { toggleWish } from '@/utils/wishApi';
 
 interface WishShelter {
   shelterId: number;
@@ -36,38 +37,29 @@ const WishListCard = ({ item, onClick }: WishListCardProps) => {
     if (isFavorite) {
       setShowModal(true);
     } else {
-      // 찜 추가 (POST)
-      try {
-        await fetch(`/api/users/1/wishes/${item.shelterId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            shelterId: item.shelterId,
-            userId: 1, // TODO: 실제 userId는 인증 정보에서 받아야 함
-          }),
-        });
-        setIsFavorite(true);
-        setToastMessage('찜 목록에\n추가되었습니다.');
-        setTimeout(() => setToastMessage(''), 2000);
-      } catch (err) {
-        // TODO: 에러 처리 필요
-      }
+      // wishApi를 사용해 찜 추가
+      const result = await toggleWish({
+        shelterId: item.shelterId,
+        userId: 1, // 실제 서비스에서는 인증 정보에서 받아야 함
+        isFavorite: false,
+      });
+      if (result.success) setIsFavorite(true);
+      setToastMessage(result.message);
+      setTimeout(() => setToastMessage(''), 2000);
     }
   };
 
   const handleConfirm = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    // 찜 삭제 (DELETE)
-    try {
-      await fetch(`/api/users/1/wishes/${item.shelterId}`, {
-        method: 'DELETE',
-      });
-      setIsFavorite(false);
-      setToastMessage('찜 목록에서\n삭제되었습니다.');
-      setTimeout(() => setToastMessage(''), 2000);
-    } catch (err) {
-      // TODO: 에러 처리 필요
-    }
+    // wishApi를 사용해 찜 삭제
+    const result = await toggleWish({
+      shelterId: item.shelterId,
+      userId: 1,
+      isFavorite: true,
+    });
+    if (result.success) setIsFavorite(false);
+    setToastMessage(result.message);
+    setTimeout(() => setToastMessage(''), 2000);
     setShowModal(false);
   };
 
@@ -130,7 +122,6 @@ const WishListCard = ({ item, onClick }: WishListCardProps) => {
           </div>
         </div>
       )}
-      {/* ToastMessage 컴포넌트로 안내 팝업 표시 */}
       <ToastMessage message={toastMessage} />
     </div>
   );

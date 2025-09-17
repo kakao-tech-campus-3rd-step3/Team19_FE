@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import NoImage from '@/assets/images/NoImage.png';
 import emptyWishImg from '@/assets/images/empty-wish.png';
 import theme from '@/styles/theme';
@@ -18,7 +19,24 @@ interface WishShelter {
 
 // 목데이터 (API 응답 형태와 동일)
 const mockWishList: WishShelter[] = [
-  // 데이터가 없을 경우 테스트를 위해 빈 배열로 두세요.
+  {
+    shelterId: 1,
+    name: '종로 무더위 쉼터',
+    address: '서울 종로구 세종대로 175',
+    operatingHours: '09:00~18:00',
+    averageRating: 4.5,
+    photoUrl: 'https://example.com/shelter1.jpg',
+    distance: '250m',
+  },
+  {
+    shelterId: 2,
+    name: '강남 무더위 쉼터',
+    address: '서울 강남구 테헤란로 123',
+    operatingHours: '09:00~18:00',
+    averageRating: 4.2,
+    photoUrl: '',
+    distance: '1.2km',
+  },
 ];
 
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -27,6 +45,11 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
 
 const WishListPage = () => {
   const wishList = mockWishList; // TODO: 추후 API 연결 시 변경
+  const navigate = useNavigate();
+
+  const handleCardClick = (shelterId: number) => {
+    navigate(`/shelter-detail/${shelterId}`);
+  };
 
   return (
     <>
@@ -39,7 +62,12 @@ const WishListPage = () => {
           </div>
           <div css={listBox}>
             {wishList.map((item) => (
-              <div key={item.shelterId} css={card}>
+              <div
+                key={item.shelterId}
+                css={card}
+                onClick={() => handleCardClick(item.shelterId)}
+                style={{ cursor: 'pointer' }} // 클릭 가능한 UI 표시
+              >
                 <div css={cardTitleRow}>
                   <span css={cardTitle}>{item.name}</span>
                   <FaHeart color="red" size={30} css={cardHeart} />
@@ -100,7 +128,6 @@ export default WishListPage;
 // 스타일
 const pageContainerStyle = css`
   position: relative;
-  min-height: 100vh;
   margin: 0 auto;
   background: #fff;
   display: flex;

@@ -16,7 +16,7 @@ const GuidePage = () => {
   const { map, waitForTmapSDK, isMapFullyLoaded, initializeMapWithLocation } = useTmapSDK(mapRef);
   
   // 현재 위치 Hook 사용
-  const { currentLocation, setCurrentLocation, getCurrentLocation, updateCurrentLocationMarker } = useCurrentLocation({
+  const { currentLocation, setCurrentLocation, getCurrentLocation, updateCurrentLocationMarker, startWatchingPosition, stopWatchingPosition } = useCurrentLocation({
     map,
     isMapFullyLoaded
   });
@@ -30,6 +30,47 @@ const GuidePage = () => {
   // 타겟 대피소 정보 상태
   const [targetShelter, setTargetShelter] = useState<Shelter | null>(null);
   const [shelterMarker, setShelterMarker] = useState<any>(null);
+  const lastRecalcTimeRef = useRef<number>(0);
+  const lastRecalcLocationRef = useRef<LocationState | null>(null);
+
+  // 위치 간 거리 계산 (미터)
+  const haversineDistanceMeters = (a: LocationState, b: LocationState): number => {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 6371000; // meters
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLon = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLon = Math.sin(dLon / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  };
+
+  // 경로 재계산 조건부 실행 (스팸 방지)
+  const maybeRecalculateRoute = (loc: LocationState, shelter: Shelter) => {
+    const now = Date.now();
+    const MIN_INTERVAL_MS = 5000; // 5초 간격 제한
+    const MIN_MOVE_METERS = 10;   // 10m 이상 이동 시
+
+    if (now - lastRecalcTimeRef.current < MIN_INTERVAL_MS) {
+      return;
+    }
+
+    if (lastRecalcLocationRef.current) {
+      const moved = haversineDistanceMeters(lastRecalcLocationRef.current, loc);
+      if (moved < MIN_MOVE_METERS) {
+        return;
+      }
+    }
+
+    lastRecalcTimeRef.current = now;
+    lastRecalcLocationRef.current = loc;
+
+    // 지도 영역 조정 후 경로 계산
+    fitMapToBounds(loc, shelter);
+    handleCalculateRoute(loc, shelter);
+  };
 
   // 타겟 대피소 초기화
   useEffect(() => {
@@ -153,6 +194,15 @@ const GuidePage = () => {
         if (currentLocationData) {
           updateCurrentLocationMarker(currentLocationData);
         }
+
+        // 실시간 위치 추적 시작 (마운트 동안 유지)
+        startWatchingPosition((loc) => {
+          // 필요 시 여기서 추가 UI 업데이트 가능
+          if (loc && targetShelter) {
+            // 경로 재계산은 스팸 방지 로직으로 제어
+            maybeRecalculateRoute(loc, targetShelter);
+          }
+        });
         
       } catch (err) {
         console.error('지도 설정 실패:', err);
@@ -163,6 +213,8 @@ const GuidePage = () => {
 
     return () => {
       isMounted = false;
+      // 실시간 위치 추적 중지
+      stopWatchingPosition();
     };
   }, []);
 
@@ -180,16 +232,11 @@ const GuidePage = () => {
     }
   }, [map, currentLocation]);
 
-  // 현재 위치와 타겟 대피소가 모두 준비되면 지도 영역 조정 및 경로 계산
+  // 현재 위치와 타겟 대피소가 모두 준비되면 초기 1회 지도 영역 조정 및 경로 계산
   useEffect(() => {
     if (currentLocation && targetShelter && map) {
       console.log('조건 충족 - 지도 영역 조정 및 경로 계산 시작');
-      
-      // 지도 영역 조정
-      fitMapToBounds(currentLocation, targetShelter);
-      
-      // 경로 계산 및 표시
-      handleCalculateRoute(currentLocation, targetShelter);
+      maybeRecalculateRoute(currentLocation, targetShelter);
     }
   }, [currentLocation, targetShelter, map]);
 

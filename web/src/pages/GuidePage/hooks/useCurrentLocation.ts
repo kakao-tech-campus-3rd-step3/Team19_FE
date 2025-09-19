@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { LocationState } from '../types/tmap';
 
 interface UseCurrentLocationProps {
@@ -9,6 +9,7 @@ interface UseCurrentLocationProps {
 export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocationProps) => {
   const [currentLocation, setCurrentLocation] = useState<LocationState | null>(null);
   const [currentLocationMarker, setCurrentLocationMarker] = useState<any>(null);
+  const watchIdRef = useRef<number | null>(null);
 
   // 현재 위치 획득
   const getCurrentLocation = (): Promise<LocationState> => {
@@ -99,10 +100,63 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
     }
   };
 
+  // 실시간 위치 추적 시작
+  const startWatchingPosition = (onUpdate?: (loc: LocationState) => void) => {
+    if (!navigator.geolocation) {
+      console.warn('이 브라우저는 위치 서비스를 지원하지 않습니다.');
+      return;
+    }
+
+    // 이미 감시 중이면 중복 시작 방지
+    if (watchIdRef.current !== null) {
+      return;
+    }
+
+    const id = navigator.geolocation.watchPosition(
+      (position) => {
+        const locationData: LocationState = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        };
+
+        setCurrentLocation(locationData);
+        updateCurrentLocationMarker(locationData);
+        if (onUpdate) onUpdate(locationData);
+      },
+      (error) => {
+        console.warn('실시간 위치 추적 오류:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        // 배터리 절약 및 과도한 업데이트 방지를 위해 약간의 캐싱 허용
+        maximumAge: 2000,
+        timeout: 10000,
+        // 일부 브라우저에서는 지원되지 않지만, 지원 시 이동 임계치 설정 가능
+        // @ts-expect-error: non-standard but widely supported on Android Chrome
+        distanceFilter: 3
+      }
+    );
+
+    watchIdRef.current = id as unknown as number;
+  };
+
+  // 실시간 위치 추적 중지
+  const stopWatchingPosition = () => {
+    if (watchIdRef.current !== null && navigator.geolocation && navigator.geolocation.clearWatch) {
+      try {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      } catch {}
+    }
+    watchIdRef.current = null;
+  };
+
   return {
     currentLocation,
     setCurrentLocation,
     getCurrentLocation,
-    updateCurrentLocationMarker
+    updateCurrentLocationMarker,
+    startWatchingPosition,
+    stopWatchingPosition
   };
 };

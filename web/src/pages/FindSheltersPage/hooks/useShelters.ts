@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { nearbyShelters } from '@/mock/nearbyShelters';
+import { toggleWish } from '@/utils/wishApi';
 
 const ITEMS_PER_PAGE = 3;
 
@@ -11,45 +12,44 @@ export const useShelters = () => {
 
   const hasMoreItems = visibleCount < nearbyShelters.length;
 
-  // 스크롤 이벤트를 window에서 감지하도록 수정한 useEffect
   useEffect(() => {
     const handleScroll = () => {
-      // 스크롤 위치가 최상단이 아닐 경우 showScrollToTop을 true로 설정
       if (window.scrollY > 0) {
         setShowScrollToTop(true);
       } else {
         setShowScrollToTop(false);
       }
     };
-
-    // window 객체에 스크롤 이벤트 리스너 추가
     window.addEventListener('scroll', handleScroll);
-
-    // 컴포넌트가 사라질 때 window의 이벤트 리스너를 제거
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []); // 컴포넌트 마운트 시 한 번만 실행
+  }, []);
 
-  // TODO: 낙관적 업데이트 or 로그인 사용자만 가능하도록 수정 필요
-  // '좋아요' 버튼 클릭 핸들러
-  const handleToggleFavorite = (shelterId: number) => {
+  // wishApi를 활용한 찜 버튼 클릭 핸들러
+  // TODO: userId는 실제 서비스에서는 인증 정보에서 받아야 함
+  const handleToggleFavorite = async (shelterId: number, userId: number = 1) => {
     const isAlreadyFavorite = favoriteIds.includes(shelterId);
 
-    if (isAlreadyFavorite) {
-      setFavoriteIds((prev) => prev.filter((id) => id !== shelterId));
-      setToastMessage('찜 목록에서\n삭제되었습니다.');
-    } else {
-      setFavoriteIds((prev) => [...prev, shelterId]);
-      setToastMessage('찜 목록에\n추가되었습니다.');
+    const result = await toggleWish({
+      shelterId,
+      userId,
+      isFavorite: isAlreadyFavorite,
+    });
+
+    if (result.success) {
+      if (isAlreadyFavorite) {
+        setFavoriteIds((prev) => prev.filter((id) => id !== shelterId));
+      } else {
+        setFavoriteIds((prev) => [...prev, shelterId]);
+      }
     }
+    setToastMessage(result.message);
     setTimeout(() => setToastMessage(''), 2000);
   };
 
-  // '더보기' 버튼 클릭 핸들러
   const handleLoadMore = () => {
     setVisibleCount((prevCount) => prevCount + ITEMS_PER_PAGE);
   };
 
-  // '맨 위로 가기' 버튼 클릭 시 window를 스크롤
   const handleScrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

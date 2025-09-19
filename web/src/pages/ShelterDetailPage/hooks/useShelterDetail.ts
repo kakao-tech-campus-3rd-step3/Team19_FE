@@ -146,6 +146,7 @@ export const useShelterDetail = (id: string | undefined) => {
     shelter,
     isLoading: !shelter, // 쉼터 정보가 로드되기 전까지 로딩 상태로 간주
     isFavorite,
+    setIsFavorite, //isFavorite 상태를 직접 변경할 수 있도록 반환
     reviews,
     loadingReviews,
     visibleCount,

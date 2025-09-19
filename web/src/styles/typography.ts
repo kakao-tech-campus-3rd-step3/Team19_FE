@@ -93,7 +93,7 @@ export const typography = {
 
   // 마이페이지 (MyPage)
   my1: {
-    fontSize: '5vh', // 마이페이지 타이틀
+    fontSize: '4.5vh', // 마이페이지 타이틀
     fontWeight: 700,
     lineHeight: '6vh',
   },
@@ -111,6 +111,23 @@ export const typography = {
     fontSize: '3.8vh', // 로그아웃 버튼
     fontWeight: 700,
     lineHeight: '4.1vh',
+  },
+
+  //wishlist 페이지 (WishListPage)
+  wish1: {
+    fontSize: '4.5vh', // "찜 목록" 타이틀
+    fontWeight: 700,
+    lineHeight: '6vh',
+  },
+  wish2: {
+    fontSize: '3vh', // 찜 목록 내 쉼터 이름
+    fontWeight: 800,
+    lineHeight: '3.72vh',
+  },
+  wish3: {
+    fontSize: '2.26vh', // 찜 목록 내 거리, 운영시간
+    fontWeight: 600,
+    lineHeight: '2.84vh',
   },
 
   //버튼 (Button)

@@ -7,6 +7,7 @@ import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
 import { useRouteCalculation } from './hooks/useRouteCalculation';
+import theme from '@/styles/theme';
 
 const GuidePage = () => {
   const location = useLocation();
@@ -22,7 +23,7 @@ const GuidePage = () => {
   });
 
   // 경로 계산 Hook 사용
-  const { handleCalculateRoute } = useRouteCalculation({
+  const { handleCalculateRoute, guidanceSteps } = useRouteCalculation({
     map,
     isMapFullyLoaded
   });
@@ -206,6 +207,11 @@ const GuidePage = () => {
           ref={mapRef} 
           css={mapStyle}
         />
+        {guidanceSteps.length > 0 && (
+          <div css={guidanceBarStyle}>
+            <div css={guidanceTextStyle}>{guidanceSteps[0]}</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -213,7 +219,7 @@ const GuidePage = () => {
 
 const containerStyle = css`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${theme.spacing.spacing16});
   position: relative;
 `;
 
@@ -228,6 +234,31 @@ const mapStyle = css`
   height: 100%;
   border: none;
   outline: none;
+`;
+
+const guidanceBarStyle = css`
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  background: ${theme.colors.button.black};
+  color: ${theme.colors.text.white};
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+`;
+
+const guidanceTextStyle = css`
+  font-size: ${theme.typography.guide1.fontSize};
+  font-weight: ${theme.typography.guide1.fontWeight};
+  line-height: ${theme.typography.guide1.lineHeight};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export default GuidePage;

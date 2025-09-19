@@ -8,6 +8,8 @@ interface UseRouteCalculationProps {
 
 export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculationProps) => {
   const [routePolyline, setRoutePolyline] = useState<any>(null);
+  const [routeDataState, setRouteDataState] = useState<RouteData | null>(null);
+  const [guidanceSteps, setGuidanceSteps] = useState<string[]>([]);
 
   // 보행자 경로 계산 API 호출
   const calculatePedestrianRoute = async (start: LocationState, destination: Shelter): Promise<RouteData> => {
@@ -130,6 +132,24 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
       // API 호출
       const routeResult = await calculatePedestrianRoute(start, destination);
 
+      // 상태 저장
+      setRouteDataState(routeResult);
+
+      // 안내 문구 추출 (Point 타입의 description)
+      try {
+        const steps: string[] = [];
+        routeResult.features.forEach((feature) => {
+          if (feature.geometry.type === 'Point') {
+            const desc = feature.properties?.description?.toString()?.trim();
+            if (desc) steps.push(desc);
+          }
+        });
+        setGuidanceSteps(steps);
+      } catch (e) {
+        console.warn('안내 문구 추출 중 오류', e);
+        setGuidanceSteps([]);
+      }
+
       // 지도에 경로 표시
       displayRouteOnMap(routeResult);
 
@@ -148,6 +168,8 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
   };
 
   return {
-    handleCalculateRoute
+    handleCalculateRoute,
+    routeData: routeDataState,
+    guidanceSteps
   };
 };

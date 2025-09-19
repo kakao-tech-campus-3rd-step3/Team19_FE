@@ -317,9 +317,9 @@ const guidanceTextStyle = css`
   font-size: ${theme.typography.guide1.fontSize};
   font-weight: ${theme.typography.guide1.fontWeight};
   line-height: ${theme.typography.guide1.lineHeight};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 `;
 
 export default GuidePage;

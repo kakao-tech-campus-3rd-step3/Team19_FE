@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import type { LocationState, Shelter, RouteData } from '../types/tmap';
 
+export interface GuidancePoint {
+  description: string;
+  latitude: number;
+  longitude: number;
+  turnType?: number;
+  pointType?: string;
+  index?: number;
+}
+
 interface UseRouteCalculationProps {
   map: any;
   isMapFullyLoaded: (mapInstance: any) => boolean;
@@ -10,6 +19,7 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
   const [routePolyline, setRoutePolyline] = useState<any>(null);
   const [routeDataState, setRouteDataState] = useState<RouteData | null>(null);
   const [guidanceSteps, setGuidanceSteps] = useState<string[]>([]);
+  const [guidancePoints, setGuidancePoints] = useState<GuidancePoint[]>([]);
 
   // 보행자 경로 계산 API 호출
   const calculatePedestrianRoute = async (start: LocationState, destination: Shelter): Promise<RouteData> => {
@@ -135,19 +145,39 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
       // 상태 저장
       setRouteDataState(routeResult);
 
-      // 안내 문구 추출 (Point 타입의 description)
+      // 안내 문구/포인트 추출 (Point 타입)
       try {
         const steps: string[] = [];
+        const points: GuidancePoint[] = [];
         routeResult.features.forEach((feature) => {
           if (feature.geometry.type === 'Point') {
             const desc = feature.properties?.description?.toString()?.trim();
+            const raw = feature.geometry.coordinates;
             if (desc) steps.push(desc);
+            if (
+              Array.isArray(raw) &&
+              raw.length >= 2 &&
+              typeof raw[0] === 'number' &&
+              typeof raw[1] === 'number'
+            ) {
+              const coords = raw as unknown as number[];
+              points.push({
+                description: desc || '',
+                latitude: coords[1],
+                longitude: coords[0],
+                turnType: feature.properties?.turnType as number | undefined,
+                pointType: feature.properties?.pointType as string | undefined,
+                index: feature.properties?.pointIndex as number | undefined,
+              });
+            }
           }
         });
         setGuidanceSteps(steps);
+        setGuidancePoints(points);
       } catch (e) {
         console.warn('안내 문구 추출 중 오류', e);
         setGuidanceSteps([]);
+        setGuidancePoints([]);
       }
 
       // 지도에 경로 표시
@@ -170,6 +200,7 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
   return {
     handleCalculateRoute,
     routeData: routeDataState,
-    guidanceSteps
+    guidanceSteps,
+    guidancePoints
   };
 };

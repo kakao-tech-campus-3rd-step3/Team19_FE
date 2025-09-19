@@ -7,11 +7,13 @@ import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
 import { useRouteCalculation } from './hooks/useRouteCalculation';
+import type { GuidancePoint } from './hooks/useRouteCalculation';
 import theme from '@/styles/theme';
 
 const GuidePage = () => {
   const location = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
+  const reachedPointIndexRef = useRef<number>(-1);
   
   // TMAP SDK Hook 사용
   const { map, waitForTmapSDK, isMapFullyLoaded, initializeMapWithLocation } = useTmapSDK(mapRef);
@@ -23,10 +25,11 @@ const GuidePage = () => {
   });
 
   // 경로 계산 Hook 사용
-  const { handleCalculateRoute, guidanceSteps } = useRouteCalculation({
+  const { handleCalculateRoute, guidanceSteps, guidancePoints } = useRouteCalculation({
     map,
     isMapFullyLoaded
   });
+  const [activeGuidance, setActiveGuidance] = useState<string | null>(null);
   
   // 타겟 대피소 정보 상태
   const [targetShelter, setTargetShelter] = useState<Shelter | null>(null);
@@ -157,7 +160,7 @@ const GuidePage = () => {
         }
 
         // 실시간 위치 추적 시작 (마운트 동안 유지)
-        // 이동 중에는 마커만 업데이트하고 경로 재계산은 하지 않음
+        // 위치 변경은 별도 effect에서 처리하여 최신 guidancePoints를 사용
         startWatchingPosition();
         
       } catch (err) {
@@ -200,6 +203,64 @@ const GuidePage = () => {
     }
   }, [currentLocation, targetShelter, map]);
 
+  // 경로 계산 후 안내 포인트/문구 초기화
+  useEffect(() => {
+    if (guidanceSteps && guidanceSteps.length > 0) {
+      setActiveGuidance(guidanceSteps[0]);
+    }
+  }, [guidanceSteps]);
+
+  // 새 경로 포인트가 설정되면 진행 상태 초기화
+  useEffect(() => {
+    reachedPointIndexRef.current = -1;
+  }, [guidancePoints]);
+
+  // 현재 위치 또는 안내 포인트 변경 시, 도달 여부를 평가하여 안내 문구 갱신
+  useEffect(() => {
+    if (!currentLocation || guidancePoints.length === 0) return;
+    const nearest = getReachableGuidancePoint(currentLocation, guidancePoints);
+    if (nearest) {
+      setActiveGuidance(nearest.description || guidanceSteps[0] || null);
+    }
+  }, [currentLocation, guidancePoints, guidanceSteps]);
+
+  // 사용자가 도달한 안내 포인트를 계산
+  const getReachableGuidancePoint = (loc: LocationState, points: GuidancePoint[]) => {
+    // 다음 목표 포인트만 체크(이미 지난 포인트는 건너뜀)
+    const nextIndex = Math.min(reachedPointIndexRef.current + 1, points.length - 1);
+    if (nextIndex < 0 || nextIndex >= points.length) return null;
+
+    const target = points[nextIndex];
+    const distance = haversineDistanceMeters(
+      { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy },
+      { latitude: target.latitude, longitude: target.longitude, accuracy: 0 }
+    );
+
+    const THRESHOLD_M = 15; // 15m 이내 접근 시 도달로 간주
+    if (distance <= THRESHOLD_M) {
+      reachedPointIndexRef.current = nextIndex;
+      return target;
+    }
+    return null;
+  };
+
+  // 거리 계산 함수 (재사용)
+  const haversineDistanceMeters = (a: LocationState, b: LocationState): number => {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLon = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLon = Math.sin(dLon / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  };
+
+  // NOTE: guidancePoints를 훅에서 직접 꺼내지 못해, 임시로 window에 저장된 routeData를 확장하거나
+  // 별도 반환을 추가해야 한다. 여기서는 훅 내에 guidancePoints 상태를 노출했다고 가정.
+
   return (
     <div css={containerStyle}>
       <div css={mapContainerStyle}>
@@ -207,9 +268,9 @@ const GuidePage = () => {
           ref={mapRef} 
           css={mapStyle}
         />
-        {guidanceSteps.length > 0 && (
+        {(activeGuidance || guidanceSteps.length > 0) && (
           <div css={guidanceBarStyle}>
-            <div css={guidanceTextStyle}>{guidanceSteps[0]}</div>
+            <div css={guidanceTextStyle}>{activeGuidance || guidanceSteps[0]}</div>
           </div>
         )}
       </div>

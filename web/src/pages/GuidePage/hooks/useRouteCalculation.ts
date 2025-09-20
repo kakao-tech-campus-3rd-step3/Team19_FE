@@ -114,7 +114,7 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
         const polyline = new window.Tmapv3.Polyline({
           path: pathCoordinates,
           strokeColor: "#2B70F9", // 파란색
-          strokeWeight: 12,
+          strokeWeight: 14,
           strokeOpacity: 0.9,
           map: map
         });
@@ -123,7 +123,7 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
         const arrowPolyline = new window.Tmapv3.Polyline({
           path: pathCoordinates,
           strokeColor: "#FFFFFF", // 흰색
-          strokeWeight: 7,
+          strokeWeight: 9,
           strokeOpacity: 1,
           direction: true,
           map: map

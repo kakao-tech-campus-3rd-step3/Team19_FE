@@ -78,7 +78,15 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
     // 기존 경로 라인 제거
     if (routePolyline) {
       try {
-        routePolyline.setMap(null);
+        if (Array.isArray(routePolyline)) {
+          routePolyline.forEach(polyline => {
+            if (polyline && polyline.setMap) {
+              polyline.setMap(null);
+            }
+          });
+        } else if (routePolyline && routePolyline.setMap) {
+          routePolyline.setMap(null);
+        }
       } catch (err) {
         console.warn('기존 경로 제거 중 오류:', err);
       }
@@ -102,17 +110,39 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
 
     if (pathCoordinates.length > 0) {
       try {
-        // Polyline 생성
+        // 파란색 경로선
         const polyline = new window.Tmapv3.Polyline({
           path: pathCoordinates,
-          strokeColor: "#FF0000", // 빨간색 경로
-          strokeWeight: 6,
-          strokeOpacity: 0.8,
+          strokeColor: "#2B70F9", // 파란색
+          strokeWeight: 12,
+          strokeOpacity: 0.9,
           map: map
         });
 
-        setRoutePolyline(polyline);
-        console.log('경로 표시 완료');
+        // 검은색색 화살표 (파란선 위에 겹쳐서)
+        const arrowPolyline = new window.Tmapv3.Polyline({
+          path: pathCoordinates,
+          strokeColor: "#FFFFFF", // 흰색
+          strokeWeight: 7,
+          strokeOpacity: 1,
+          direction: true,
+          map: map
+        });
+
+        // // 후보. 파란선에 검은색 화살표
+        // const polyline = new window.Tmapv3.Polyline({
+        //   path: pathCoordinates,
+        //   strokeColor: "#2B70F9", // 파란색
+        //   strokeWeight: 10,
+        //   strokeOpacity: 0.9,
+        //   direction: true,
+        //   map: map
+        // });
+
+        // 두 polyline을 배열로 관리
+        const allPolylines = [polyline, arrowPolyline];
+        setRoutePolyline(allPolylines);
+        console.log('파란색 경로 + 흰색 화살표 표시 완료');
       } catch (err: any) {
         console.error('Polyline 생성 중 오류:', err);
         // 스타일이 로드되지 않은 경우 재시도

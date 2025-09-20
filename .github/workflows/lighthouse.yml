@@ -31,10 +31,28 @@ jobs:
         working-directory: ./web
 
       - name: Run Lighthouse
-        run: npx lighthouse http://localhost:5173 --output html --output-path ./lighthouse-report.html --quiet --chrome-flags="--headless"
+        run: npx lighthouse http://localhost:5173 \
+          --output json \
+          --output-path ./lighthouse-report.json \
+          --output html \
+          --output-path ./lighthouse-report.html \
+          --quiet --chrome-flags="--headless"
 
-      - name: Upload Lighthouse report
-        uses: actions/upload-artifact@v4
+      - name: Read Lighthouse score
+        id: lh
+        run: |
+          score=$(jq '.categories.performance.score * 100' ./lighthouse-report.json)
+          echo "score=$score" >> $GITHUB_OUTPUT
+
+      - name: Comment Lighthouse score
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         with:
-          name: lighthouse-report
-          path: ./lighthouse-report.html
+          script: |
+            const score = "${{ steps.lh.outputs.score }}";
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `⚡ Lighthouse 성능 점수: **${score}**`
+            });

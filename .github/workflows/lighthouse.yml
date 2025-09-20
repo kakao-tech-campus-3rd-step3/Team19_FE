@@ -80,7 +80,8 @@ jobs:
             **Best Practices:** ${bestPractices} / 100  
             **SEO:** ${seo} / 100  
 
-            [HTML 보고서 보기](./web/lighthouse-report.html)`;
+            👉 [Actions에서 Lighthouse HTML 리포트 다운로드](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.GITHUB_RUN_ID})
+            `;
 
                         await github.rest.issues.createComment({
                           issue_number: context.issue.number,

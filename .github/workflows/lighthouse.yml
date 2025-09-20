@@ -51,22 +51,40 @@ jobs:
           name: lighthouse-report-json
           path: ./web/lighthouse-report.json
 
-      - name: Read Lighthouse score
+      - name: Read Lighthouse scores
         id: lh
         run: |
-          score=$(jq '.categories.performance.score * 100' ./web/lighthouse-report.json)
-          echo "score=$score" >> $GITHUB_OUTPUT
+          performance=$(jq '.categories.performance.score * 100 | round' ./web/lighthouse-report.json)
+          accessibility=$(jq '.categories.accessibility.score * 100 | round' ./web/lighthouse-report.json)
+          bestPractices=$(jq '.categories["best-practices"].score * 100 | round' ./web/lighthouse-report.json)
+          seo=$(jq '.categories.seo.score * 100 | round' ./web/lighthouse-report.json)
+          echo "performance=$performance" >> $GITHUB_OUTPUT
+          echo "accessibility=$accessibility" >> $GITHUB_OUTPUT
+          echo "bestPractices=$bestPractices" >> $GITHUB_OUTPUT
+          echo "seo=$seo" >> $GITHUB_OUTPUT
 
-      - name: Comment Lighthouse score on PR
+      - name: Comment Lighthouse scores on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const score = "${{ steps.lh.outputs.score }}";
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `⚡ Lighthouse 성능 점수: **${score}**`
-            });
+            const performance = "${{ steps.lh.outputs.performance }}";
+            const accessibility = "${{ steps.lh.outputs.accessibility }}";
+            const bestPractices = "${{ steps.lh.outputs.bestPractices }}";
+            const seo = "${{ steps.lh.outputs.seo }}";
+
+            const commentBody = `### ⚡ Lighthouse Report
+            **Performance:** ${performance} / 100  
+            **Accessibility:** ${accessibility} / 100  
+            **Best Practices:** ${bestPractices} / 100  
+            **SEO:** ${seo} / 100  
+
+            [HTML 보고서 보기](./web/lighthouse-report.html)`;
+
+                        await github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body: commentBody
+                        });

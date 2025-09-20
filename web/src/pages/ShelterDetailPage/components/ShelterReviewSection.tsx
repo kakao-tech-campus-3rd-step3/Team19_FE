@@ -51,22 +51,18 @@ const ShelterReviewSection = ({
     if (!el) return;
     const lineHeight = parseFloat(getComputedStyle(el).lineHeight || '20');
     const maxHeight = lineHeight * 3;
-    // 3줄 초과면 showMoreMap[reviewId] = true
+    // 3줄 초과면 true, 3줄 이하면 false
     setShowMoreMap((prev) => ({
       ...prev,
-      [reviewId]: el.scrollHeight > maxHeight,
+      [reviewId]: el.scrollHeight > maxHeight + 1, // +1로 오차 보정
     }));
   };
 
   // 화면 크기 변경 시 줄 수 재확인
   useEffect(() => {
-    const handleResize = () => {
+    setTimeout(() => {
       reviews.forEach((r) => checkLineClamp(r.reviewId));
-    };
-    window.addEventListener('resize', handleResize);
-    // mount 시에도 체크
-    reviews.forEach((r) => checkLineClamp(r.reviewId));
-    return () => window.removeEventListener('resize', handleResize);
+    }, 0);
   }, [reviews]);
 
   return (
@@ -130,6 +126,7 @@ const ShelterReviewSection = ({
                       }
                     >
                       {expandedMap[r.reviewId] ? '접기' : '더보기'}
+                      {/* TODO: 더보기 버튼 필요 없을 시 숨기기 */}
                     </button>
                   )}
                   {r.photoUrl && (

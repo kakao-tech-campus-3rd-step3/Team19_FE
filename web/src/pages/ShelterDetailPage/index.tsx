@@ -6,11 +6,11 @@ import ToastMessage from '../FindSheltersPage/components/ToastMessage';
 import ShelterDetailInfo from './components/ShelterDetailInfo';
 import ShelterReviewSection from './components/ShelterReviewSection';
 import { useShelterDetail } from './hooks/useShelterDetail';
+import { toggleWish } from '@/utils/wishApi';
 
 const ShelterDetailPage = () => {
   const { id } = useParams();
 
-  // 커스텀 훅을 호출하여 페이지에 필요한 모든 데이터를 가져옴
   const {
     shelter,
     isLoading,
@@ -21,11 +21,10 @@ const ShelterDetailPage = () => {
     averageRating,
     handleImageError,
     handleMore,
-    onToggleFavorite,
     onGuideStart,
+    setIsFavorite,
   } = useShelterDetail(id);
 
-  // Toast 상태 추가
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
@@ -36,27 +35,29 @@ const ShelterDetailPage = () => {
     setTimeout(() => setToast({ open: false, message: '' }), 1500);
   };
 
-  // 찜 버튼 클릭 핸들러
-  const handleToggleFavorite = () => {
-    onToggleFavorite();
-    if (isFavorite) {
-      showToast('찜 목록에서\n삭제되었습니다');
-    } else {
-      showToast('찜 목록에\n추가되었습니다');
+  // wishApi를 활용한 찜 버튼 클릭 핸들러
+  const handleToggleFavorite = async () => {
+    const userId = 1; // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
+    const result = await toggleWish({
+      shelterId: id ?? '',
+      userId,
+      isFavorite,
+    });
+    // 찜 추가/삭제 성공 시 하트 상태 변경
+    if (result.success) {
+      setIsFavorite(!isFavorite);
     }
+    showToast(result.message);
   };
 
-  // 로딩 중일 때의 UI
   if (isLoading) {
     return <div>로딩 중...</div>;
   }
 
   return (
     <div css={container}>
-      {/* Toast 메시지 */}
       {toast.open && <ToastMessage message={toast.message} />}
 
-      {/* 쉼터 정보 컴포넌트 */}
       {shelter && (
         <ShelterDetailInfo
           shelter={shelter}
@@ -68,7 +69,6 @@ const ShelterDetailPage = () => {
         />
       )}
 
-      {/* 리뷰 섹션 컴포넌트 */}
       <ShelterReviewSection
         reviews={reviews}
         loading={loadingReviews}
@@ -82,7 +82,6 @@ const ShelterDetailPage = () => {
 
 export default ShelterDetailPage;
 
-/* 페이지 전체 컨테이너 스타일 */
 const container = css`
   padding: 16px;
   margin-top: 0px;

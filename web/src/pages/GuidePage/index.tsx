@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { nearbyShelters } from '@/mock/nearbyShelters';
 import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
@@ -12,6 +12,7 @@ import theme from '@/styles/theme';
 
 const GuidePage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const mapRef = useRef<HTMLDivElement>(null);
   const reachedPointIndexRef = useRef<number>(-1);
   
@@ -30,6 +31,7 @@ const GuidePage = () => {
     isMapFullyLoaded
   });
   const [activeGuidance, setActiveGuidance] = useState<string | null>(null);
+  const [hasArrived, setHasArrived] = useState<boolean>(false);
   
   // 타겟 대피소 정보 상태
   const [targetShelter, setTargetShelter] = useState<Shelter | null>(null);
@@ -217,12 +219,23 @@ const GuidePage = () => {
 
   // 현재 위치 또는 안내 포인트 변경 시, 도달 여부를 평가하여 안내 문구 갱신
   useEffect(() => {
-    if (!currentLocation || guidancePoints.length === 0) return;
-    const nearest = getReachableGuidancePoint(currentLocation, guidancePoints);
-    if (nearest) {
-      setActiveGuidance(nearest.description || guidanceSteps[0] || null);
+    if (!currentLocation) return;
+
+    // 목적지 도착 확인
+    if (targetShelter && checkArrival(currentLocation, targetShelter)) {
+      setHasArrived(true);
+      setActiveGuidance('목적지에 도착하셨습니다.\n경로 안내를 종료합니다.');
+      return;
     }
-  }, [currentLocation, guidancePoints, guidanceSteps]);
+
+    // 일반 안내 포인트 도달 확인
+    if (guidancePoints.length > 0) {
+      const nearest = getReachableGuidancePoint(currentLocation, guidancePoints);
+      if (nearest) {
+        setActiveGuidance(nearest.description || guidanceSteps[0] || null);
+      }
+    }
+  }, [currentLocation, guidancePoints, guidanceSteps, targetShelter]);
 
   // 사용자가 도달한 안내 포인트를 계산
   const getReachableGuidancePoint = (loc: LocationState, points: GuidancePoint[]) => {
@@ -258,6 +271,21 @@ const GuidePage = () => {
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
   };
 
+  // 목적지 도착 여부 확인
+  const checkArrival = (loc: LocationState, shelter: Shelter) => {
+    const distance = haversineDistanceMeters(
+      { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy },
+      { latitude: shelter.latitude, longitude: shelter.longitude, accuracy: 0 }
+    );
+    const ARRIVAL_THRESHOLD_M = 20; // 20m 이내 도착으로 간주
+    return distance <= ARRIVAL_THRESHOLD_M;
+  };
+
+  // 도착 확인 버튼 클릭 핸들러
+  const handleArrivalConfirm = () => {
+    navigate('/');
+  };
+
   // NOTE: guidancePoints를 훅에서 직접 꺼내지 못해, 임시로 window에 저장된 routeData를 확장하거나
   // 별도 반환을 추가해야 한다. 여기서는 훅 내에 guidancePoints 상태를 노출했다고 가정.
 
@@ -270,7 +298,14 @@ const GuidePage = () => {
         />
         {(activeGuidance || guidanceSteps.length > 0) && (
           <div css={guidanceBarStyle}>
-            <div css={guidanceTextStyle}>{activeGuidance || guidanceSteps[0]}</div>
+            <div css={guidanceContentStyle}>
+              <div css={guidanceTextStyle}>{activeGuidance || guidanceSteps[0]}</div>
+              {hasArrived && (
+                <button css={confirmButtonStyle} onClick={handleArrivalConfirm}>
+                  확인
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -308,18 +343,45 @@ const guidanceBarStyle = css`
   padding: 12px 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   z-index: 1000;
-  display: flex;
-  align-items: center;
   min-height: 48px;
+`;
+
+const guidanceContentStyle = css`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;
 
 const guidanceTextStyle = css`
   font-size: ${theme.typography.guide1.fontSize};
   font-weight: ${theme.typography.guide1.fontWeight};
   line-height: ${theme.typography.guide1.lineHeight};
-  white-space: normal;
+  white-space: pre-line;
   word-break: keep-all;
   overflow-wrap: anywhere;
+`;
+
+const confirmButtonStyle = css`
+  background: ${theme.colors.button.red};
+  color: ${theme.colors.text.white};
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: ${theme.typography.guide2.fontSize};
+  font-weight: ${theme.typography.guide2.fontWeight};
+  line-height: ${theme.typography.guide2.lineHeight};
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+  align-self: center;
+  
+  &:hover {
+    background: #b71c1c;
+  }
+  
+  &:active {
+    background: #d32f2f;
+  }
 `;
 
 export default GuidePage;

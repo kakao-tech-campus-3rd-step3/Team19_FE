@@ -156,9 +156,9 @@ export const typography = {
     lineHeight: '3.4vh',
   },
   guide2: {
-    fontSize: '2.26vh', // 보조 안내 텍스트(추가 정보 등)
-    fontWeight: 600,
-    lineHeight: '3.0vh',
+    fontSize: '3vh', // 도착 팝업 텍스트
+    fontWeight: 700,
+    lineHeight: '3.4vh',
   },
 } as const;
 

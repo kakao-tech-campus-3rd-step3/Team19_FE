@@ -31,23 +31,34 @@ jobs:
         working-directory: ./web
 
       - name: Run Lighthouse
-        run: npx lighthouse http://localhost:5173 \
-          --output json \
-          --output-path ./lighthouse-report.json \
-          --output html \
-          --output-path ./lighthouse-report.html \
-          --quiet --chrome-flags="--headless"
+        run: |
+          npx lighthouse http://localhost:5173 --output html --output-path ./lighthouse-report.html --quiet --chrome-flags="--headless"
+          npx lighthouse http://localhost:5173 --output json --output-path ./lighthouse-report.json --quiet --chrome-flags="--headless"
+        working-directory: ./web
+
+      - name: Upload Lighthouse HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-html
+          path: ./web/lighthouse-report.html
+
+      - name: Upload Lighthouse JSON report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-json
+          path: ./web/lighthouse-report.json
 
       - name: Read Lighthouse score
         id: lh
         run: |
-          score=$(jq '.categories.performance.score * 100' ./lighthouse-report.json)
+          score=$(jq '.categories.performance.score * 100' ./web/lighthouse-report.json)
           echo "score=$score" >> $GITHUB_OUTPUT
 
-      - name: Comment Lighthouse score
+      - name: Comment Lighthouse score on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const score = "${{ steps.lh.outputs.score }}";
             github.rest.issues.createComment({

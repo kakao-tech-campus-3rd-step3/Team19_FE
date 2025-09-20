@@ -76,8 +76,8 @@ const GuidePage = () => {
     try {
       const marker = new window.Tmapv3.Marker({
         position: new window.Tmapv3.LatLng(shelter.latitude, shelter.longitude),
-        color: "#dc3545", // Red for shelter
-        iconSize: new window.Tmapv3.Size(28, 28),
+        iconSize: new window.Tmapv3.Size(40, 53.33),
+        icon: window.Tmapv3.asset.Icon.get('arrival'),
         map: map
       });
 

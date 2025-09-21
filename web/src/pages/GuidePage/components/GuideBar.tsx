@@ -44,9 +44,7 @@ const guidanceContentStyle = css`
 `;
 
 const guidanceTextStyle = css`
-  font-size: ${theme.typography.guide1.fontSize};
-  font-weight: ${theme.typography.guide1.fontWeight};
-  line-height: ${theme.typography.guide1.lineHeight};
+  ${theme.typography.guide1}
   white-space: pre-line;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -58,9 +56,7 @@ const confirmButtonStyle = css`
   border: none;
   border-radius: 8px;
   padding: 8px 16px;
-  font-size: ${theme.typography.guide2.fontSize};
-  font-weight: ${theme.typography.guide2.fontWeight};
-  line-height: ${theme.typography.guide2.lineHeight};
+  ${theme.typography.guide2}
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.2s ease;

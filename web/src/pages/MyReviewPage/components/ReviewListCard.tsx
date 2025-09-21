@@ -4,6 +4,7 @@ import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface MyReview {
   reviewId: number;
@@ -30,6 +31,7 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
 
 const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const navigate = useNavigate();
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,6 +47,12 @@ const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
   const handleDeleteCancel = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(false);
+  };
+
+  // 수정 버튼 클릭 시 리뷰 수정 페이지로 이동
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/edit-review/${item.reviewId}`);
   };
 
   return (
@@ -81,7 +89,9 @@ const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
       </div>
       {/* 수정 버튼 */}
       <div css={editBtnWrapper}>
-        <button css={editBtn}>수정</button>
+        <button css={editBtn} onClick={handleEditClick}>
+          수정
+        </button>
       </div>
       {/* 삭제 모달 */}
       {showDeleteModal && (

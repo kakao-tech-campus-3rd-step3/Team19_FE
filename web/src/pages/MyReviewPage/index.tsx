@@ -76,7 +76,7 @@ const MyReviewPage = () => {
         // 내가 쓴 리뷰가 없을 때 컨테이너
         <div css={emptyStateStyle}>
           <div css={emptyHeader}>
-            <FaRegCommentDots color="#fff" size={43} css={reviewIcon} /> {/* 변경: 리뷰 아이콘 */}
+            <FaRegCommentDots color="#fff" size={43} css={reviewIcon} />
             <span css={emptyTitle}>내가 쓴 리뷰</span>
           </div>
           <div css={emptyBox}>

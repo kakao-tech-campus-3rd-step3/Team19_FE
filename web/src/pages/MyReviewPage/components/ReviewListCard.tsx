@@ -2,6 +2,8 @@
 import { css } from '@emotion/react';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
+import { FaTrash } from 'react-icons/fa';
+import { useState } from 'react';
 
 interface MyReview {
   reviewId: number;
@@ -21,23 +23,44 @@ interface ReviewListCardProps {
   onClick: (shelterId: number) => void;
 }
 
+// 이미지 url이 유효하지 않을 경우 대체 이미지를 보여주는 함수
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
 const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteModal(false);
+    // TODO: 실제 삭제 API 호출 및 처리
+  };
+
+  const handleDeleteCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteModal(false);
+  };
+
   return (
-    <div css={card} onClick={() => onClick(item.shelterId)} style={{ cursor: 'pointer' }}>
+    <div
+      css={card}
+      onClick={() => onClick(item.shelterId)}
+      style={{ cursor: 'pointer', position: 'relative' }}
+    >
+      {/* 휴지통 버튼 */}
+      <button css={deleteBtn} onClick={handleDeleteClick}>
+        <FaTrash size={25} />
+      </button>
       <div css={cardTitleRow}>
         <span css={cardTitle}>{item.name}</span>
       </div>
       <div css={cardBottomRow}>
-        <img
-          src={item.photoUrl ? item.photoUrl : NoImage}
-          alt="리뷰 이미지"
-          css={cardImg}
-          onError={handleImageError}
-        />
         <div css={cardInfo}>
           <div css={cardRating}>
             <span css={ratingNumber}>{item.rating}</span>
@@ -51,8 +74,31 @@ const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
           </div>
           <div css={cardContent}>{item.content}</div>
           <div css={cardDate}>작성일: {new Date(item.createdAt).toLocaleDateString()}</div>
+          {item.photoUrl && item.photoUrl.trim() !== '' && (
+            <img src={item.photoUrl} alt="리뷰 이미지" css={cardImg} onError={handleImageError} />
+          )}
         </div>
       </div>
+      {/* 수정 버튼 */}
+      <div css={editBtnWrapper}>
+        <button css={editBtn}>수정</button>
+      </div>
+      {/* 삭제 모달 */}
+      {showDeleteModal && (
+        <div css={modalOverlay} onClick={(e) => e.stopPropagation()}>
+          <div css={modalBox}>
+            <div css={modalText}>리뷰를 삭제하시겠습니까?</div>
+            <div css={modalButtons}>
+              <button css={modalBtn} onClick={handleDeleteConfirm}>
+                예
+              </button>
+              <button css={modalBtn} onClick={handleDeleteCancel}>
+                아니요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -78,7 +124,6 @@ const cardTitleRow = css`
 
 const cardTitle = css`
   ${theme.typography.myr2};
-  padding-bottom: 4px;
 `;
 
 const cardBottomRow = css`
@@ -92,6 +137,7 @@ const cardBottomRow = css`
 const cardImg = css`
   width: 30%;
   height: auto;
+  margin-top: 8px;
   object-fit: cover;
   border-radius: 8px;
   background: #fafafa;
@@ -146,8 +192,87 @@ const cardContent = css`
 
 const cardDate = css`
   margin-top: 4px;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #888;
+`;
+
+const deleteBtn = css`
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  z-index: 2;
+  &:hover {
+    color: #d76464;
+  }
+`;
+
+const editBtnWrapper = css`
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px 8px 16px;
+`;
+
+const editBtn = css`
+  background: ${theme.colors.button.blue};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  ${theme.typography.myr2};
+  cursor: pointer;
+`;
+
+const modalOverlay = css`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+`;
+
+const modalBox = css`
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 24px;
+  box-shadow: 0 2px 12px #2224;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const modalText = css`
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+`;
+
+const modalButtons = css`
+  display: flex;
+  gap: 16px;
+`;
+
+const modalBtn = css`
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #d76464;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:last-of-type {
+    background: #bbb;
+    color: #222;
+  }
 `;
 
 export default ReviewListCard;

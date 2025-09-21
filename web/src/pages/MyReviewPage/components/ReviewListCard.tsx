@@ -5,7 +5,6 @@ import theme from '@/styles/theme';
 import { FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
 
 interface MyReview {
   reviewId: number;
@@ -20,9 +19,11 @@ interface MyReview {
   updatedAt: string;
 }
 
+// ✅ 부모로 전달할 콜백 추가
 interface ReviewListCardProps {
   item: MyReview;
   onClick: (shelterId: number) => void;
+  onToast: (msg: string) => void; // ✅ 부모로 전달할 콜백
 }
 
 // 이미지 url이 유효하지 않을 경우 대체 이미지를 보여주는 함수
@@ -30,9 +31,8 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
+const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -49,15 +49,14 @@ const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
         method: 'DELETE',
       });
       if (res.status === 204) {
-        setToastMessage('리뷰가 삭제되었습니다');
+        onToast('리뷰가 삭제되었습니다'); // 부모로 전달
         //TODO: 리뷰 삭제 후 목록 표시 수정 필요
       } else {
-        setToastMessage('삭제에 실패했습니다');
+        onToast('삭제에 실패했습니다');
       }
     } catch {
-      setToastMessage('삭제에 실패했습니다');
+      onToast('삭제에 실패했습니다');
     }
-    setTimeout(() => setToastMessage(''), 2000);
   };
 
   const handleDeleteCancel = (e: React.MouseEvent) => {
@@ -125,8 +124,7 @@ const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
           </div>
         </div>
       )}
-      {/* ToastMessage: 리뷰 삭제 결과 안내 */}
-      <ToastMessage message={toastMessage} />
+      {/* ToastMessage는 부모에서 관리 */}
     </div>
   );
 };

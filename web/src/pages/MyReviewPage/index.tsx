@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import emptyReviewImg from '@/assets/images/empty-review.png';
 import theme from '@/styles/theme';
 import ReviewListCard from './components/ReviewListCard';
+import { useState, useEffect } from 'react';
+import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
 
 // API 명세에 맞는 타입 정의
 interface MyReview {
@@ -53,6 +55,16 @@ const MyReviewPage = () => {
   const reviews = mockReviews; // TODO: 추후 API 연결 시 변경
   const navigate = useNavigate();
 
+  const [toastMessage, setToastMessage] = useState('');
+
+  // ✅ 2초 후 토스트 메시지 자동 사라짐
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(''), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);
   };
@@ -68,7 +80,12 @@ const MyReviewPage = () => {
           </div>
           <div css={listBox}>
             {reviews.map((item) => (
-              <ReviewListCard key={item.reviewId} item={item} onClick={handleCardClick} />
+              <ReviewListCard
+                key={item.reviewId}
+                item={item}
+                onClick={handleCardClick}
+                onToast={setToastMessage} // ToastMessage 콜백 전달
+              />
             ))}
           </div>
         </div>
@@ -85,6 +102,8 @@ const MyReviewPage = () => {
           </div>
         </div>
       )}
+      {/*페이지 단 ToastMessage */}
+      <ToastMessage message={toastMessage} />
     </>
   );
 };

@@ -165,8 +165,6 @@ const cardRating = css`
   display: flex;
   align-items: center;
   gap: 3px;
-  ${theme.typography.myr3};
-  color: ${theme.colors.text.gray500};
 `;
 
 const ratingNumber = css`
@@ -194,14 +192,16 @@ const emptyStar = css`
 `;
 
 const cardContent = css`
-  margin-top: 8px;
+  margin-top: 16px;
   ${theme.typography.myr3};
+  padding-left: 4px;
   text-align: left;
   color: #3c3a3aff;
 `;
 
 const cardDate = css`
   margin-top: 4px;
+  padding-left: 4px;
   font-size: 1rem;
   color: #888;
 `;

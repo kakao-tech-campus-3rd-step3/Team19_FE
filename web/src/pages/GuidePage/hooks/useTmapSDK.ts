@@ -10,7 +10,7 @@ export const useTmapSDK = (mapRef: RefObject<HTMLDivElement | null>) => {
     return new Promise((resolve) => {
       let attempts = 0;
       const maxAttempts = 50;
-      
+
       const checkSDK = () => {
         if (window.Tmapv3 && window.Tmapv3.Map) {
           console.log('TMAP SDK 준비 완료');
@@ -23,7 +23,7 @@ export const useTmapSDK = (mapRef: RefObject<HTMLDivElement | null>) => {
           resolve(false);
         }
       };
-      
+
       checkSDK();
     });
   };
@@ -31,10 +31,9 @@ export const useTmapSDK = (mapRef: RefObject<HTMLDivElement | null>) => {
   // 지도가 완전히 로드되었는지 확인
   const isMapFullyLoaded = (mapInstance: any): boolean => {
     try {
-      return mapInstance && 
-             mapInstance.getZoom && 
-             mapInstance.getCenter && 
-             mapInstance.getZoom() > 0;
+      return (
+        mapInstance && mapInstance.getZoom && mapInstance.getCenter && mapInstance.getZoom() > 0
+      );
     } catch (err) {
       console.warn('지도 상태 확인 중 오류:', err);
       return false;
@@ -45,7 +44,7 @@ export const useTmapSDK = (mapRef: RefObject<HTMLDivElement | null>) => {
   const initializeMapWithLocation = (location?: LocationState | null): Promise<void> => {
     return new Promise((resolve, reject) => {
       console.log('지도 초기화 시작', location ? '- 현재 위치 기준' : '- 서울 기준');
-      
+
       if (!mapRef.current) {
         reject(new Error('지도 컨테이너를 찾을 수 없습니다.'));
         return;
@@ -58,17 +57,17 @@ export const useTmapSDK = (mapRef: RefObject<HTMLDivElement | null>) => {
 
       try {
         // 현재 위치가 있으면 그 위치를, 없으면 서울시청을 기본 좌표로 사용
-        const center = location 
+        const center = location
           ? new window.Tmapv3.LatLng(location.latitude, location.longitude)
           : new window.Tmapv3.LatLng(37.566481622437934, 126.98502302169841);
-        
+
         const mapInstance = new window.Tmapv3.Map(mapRef.current, {
           center: center,
           width: '100%',
           height: '100%',
           zoom: location ? 17 : 15, // 현재 위치가 있으면 더 가깝게
           zoomControl: true,
-          scrollwheel: true
+          scrollwheel: true,
         });
 
         // 지도 로드 완료 이벤트 대기
@@ -86,7 +85,6 @@ export const useTmapSDK = (mapRef: RefObject<HTMLDivElement | null>) => {
 
         // 지도 로드 완료 체크 시작 (약간의 딜레이 후)
         setTimeout(checkMapLoaded, 500);
-
       } catch (err) {
         console.error('지도 초기화 실패:', err);
         reject(err);
@@ -98,6 +96,6 @@ export const useTmapSDK = (mapRef: RefObject<HTMLDivElement | null>) => {
     map,
     waitForTmapSDK,
     isMapFullyLoaded,
-    initializeMapWithLocation
+    initializeMapWithLocation,
   };
 };

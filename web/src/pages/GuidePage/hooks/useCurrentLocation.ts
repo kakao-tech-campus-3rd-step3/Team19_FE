@@ -15,7 +15,7 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
   const getCurrentLocation = (): Promise<LocationState> => {
     return new Promise((resolve, reject) => {
       console.log('현재 위치 획득 시작');
-      
+
       if (!navigator.geolocation) {
         reject(new Error('이 브라우저는 위치 서비스를 지원하지 않습니다.'));
         return;
@@ -31,7 +31,7 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
           const locationData: LocationState = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
+            accuracy: position.coords.accuracy,
           };
           console.log('현재 위치 획득 성공:', locationData);
           resolve(locationData);
@@ -40,7 +40,7 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
           clearTimeout(timeoutId);
           console.error('위치 획득 실패:', error);
           let errorMessage = '위치를 가져올 수 없습니다.';
-          
+
           switch (error.code) {
             case error.PERMISSION_DENIED:
               errorMessage = '위치 접근 권한이 거부되었습니다.';
@@ -52,14 +52,14 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
               errorMessage = '위치 요청이 시간 초과되었습니다.';
               break;
           }
-          
+
           reject(new Error(errorMessage));
         },
         {
           enableHighAccuracy: true,
           timeout: 8000,
-          maximumAge: 300000
-        }
+          maximumAge: 300000,
+        },
       );
     });
   };
@@ -88,9 +88,9 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
     try {
       const marker = new window.Tmapv3.Marker({
         position: new window.Tmapv3.LatLng(location.latitude, location.longitude),
-        color: "#007bff", // Blue for current location
+        color: '#007bff', // Blue for current location
         iconSize: new window.Tmapv3.Size(24, 24),
-        map: map
+        map: map,
       });
 
       setCurrentLocationMarker(marker);
@@ -117,7 +117,7 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
         const locationData: LocationState = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy
+          accuracy: position.coords.accuracy,
         };
 
         setCurrentLocation(locationData);
@@ -134,8 +134,8 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
         timeout: 10000,
         // 일부 브라우저에서는 지원되지 않지만, 지원 시 이동 임계치 설정 가능
         // @ts-expect-error: non-standard but widely supported on Android Chrome
-        distanceFilter: 3
-      }
+        distanceFilter: 3,
+      },
     );
 
     watchIdRef.current = id as unknown as number;
@@ -157,6 +157,6 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
     getCurrentLocation,
     updateCurrentLocationMarker,
     startWatchingPosition,
-    stopWatchingPosition
+    stopWatchingPosition,
   };
 };

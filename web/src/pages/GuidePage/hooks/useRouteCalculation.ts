@@ -22,7 +22,10 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
   const [guidancePoints, setGuidancePoints] = useState<GuidancePoint[]>([]);
 
   // 보행자 경로 계산 API 호출
-  const calculatePedestrianRoute = async (start: LocationState, destination: Shelter): Promise<RouteData> => {
+  const calculatePedestrianRoute = async (
+    start: LocationState,
+    destination: Shelter,
+  ): Promise<RouteData> => {
     console.log('보행자 경로 계산 시작:', { start, destination });
 
     const requestBody = {
@@ -30,11 +33,11 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
       startY: start.latitude,
       endX: destination.longitude,
       endY: destination.latitude,
-      startName: "현재위치",
+      startName: '현재위치',
       endName: destination.name,
       searchOption: 0, // 추천 경로
-      reqCoordType: "WGS84GEO",
-      resCoordType: "WGS84GEO"
+      reqCoordType: 'WGS84GEO',
+      resCoordType: 'WGS84GEO',
     };
 
     console.log('API 요청 데이터:', requestBody);
@@ -42,10 +45,10 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
     const response = await fetch('https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1', {
       method: 'POST',
       headers: {
-        'appKey': import.meta.env.VITE_TMAP_APP_KEY,
-        'Content-Type': 'application/json'
+        appKey: import.meta.env.VITE_TMAP_APP_KEY,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -79,7 +82,7 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
     if (routePolyline) {
       try {
         if (Array.isArray(routePolyline)) {
-          routePolyline.forEach(polyline => {
+          routePolyline.forEach((polyline) => {
             if (polyline && polyline.setMap) {
               polyline.setMap(null);
             }
@@ -96,10 +99,10 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
     const pathCoordinates: any[] = [];
 
     // GeoJSON features에서 LineString만 추출
-    routeData.features.forEach(feature => {
+    routeData.features.forEach((feature) => {
       if (feature.geometry.type === 'LineString') {
         const coordinates = feature.geometry.coordinates as number[][];
-        coordinates.forEach(coord => {
+        coordinates.forEach((coord) => {
           // [경도, 위도] 형태를 Tmapv3.LatLng로 변환
           pathCoordinates.push(new window.Tmapv3.LatLng(coord[1], coord[0]));
         });
@@ -113,20 +116,20 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
         // 파란색 경로선
         const polyline = new window.Tmapv3.Polyline({
           path: pathCoordinates,
-          strokeColor: "#2B70F9", // 파란색
+          strokeColor: '#2B70F9', // 파란색
           strokeWeight: 14,
           strokeOpacity: 0.9,
-          map: map
+          map: map,
         });
 
         // 검은색색 화살표 (파란선 위에 겹쳐서)
         const arrowPolyline = new window.Tmapv3.Polyline({
           path: pathCoordinates,
-          strokeColor: "#FFFFFF", // 흰색
+          strokeColor: '#FFFFFF', // 흰색
           strokeWeight: 9,
           strokeOpacity: 1,
           direction: true,
-          map: map
+          map: map,
         });
 
         // // 후보. 파란선에 검은색 화살표
@@ -214,10 +217,9 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
       displayRouteOnMap(routeResult);
 
       console.log('경로 계산 및 표시 완료');
-
     } catch (err: any) {
       console.error('경로 계산 실패:', err);
-      
+
       // 특정 에러에 대한 재시도 로직
       const errorMessage = err?.message || err?.toString() || '';
       if (errorMessage.includes('No style loaded')) {
@@ -231,6 +233,6 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
     handleCalculateRoute,
     routeData: routeDataState,
     guidanceSteps,
-    guidancePoints
+    guidancePoints,
   };
 };

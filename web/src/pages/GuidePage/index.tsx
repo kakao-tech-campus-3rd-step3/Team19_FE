@@ -15,24 +15,31 @@ const GuidePage = () => {
   const navigate = useNavigate();
   const mapRef = useRef<HTMLDivElement>(null);
   const reachedPointIndexRef = useRef<number>(-1);
-  
+
   // TMAP SDK Hook 사용
   const { map, waitForTmapSDK, isMapFullyLoaded, initializeMapWithLocation } = useTmapSDK(mapRef);
-  
+
   // 현재 위치 Hook 사용
-  const { currentLocation, setCurrentLocation, getCurrentLocation, updateCurrentLocationMarker, startWatchingPosition, stopWatchingPosition } = useCurrentLocation({
+  const {
+    currentLocation,
+    setCurrentLocation,
+    getCurrentLocation,
+    updateCurrentLocationMarker,
+    startWatchingPosition,
+    stopWatchingPosition,
+  } = useCurrentLocation({
     map,
-    isMapFullyLoaded
+    isMapFullyLoaded,
   });
 
   // 경로 계산 Hook 사용
   const { handleCalculateRoute, guidanceSteps, guidancePoints } = useRouteCalculation({
     map,
-    isMapFullyLoaded
+    isMapFullyLoaded,
   });
   const [activeGuidance, setActiveGuidance] = useState<string | null>(null);
   const [hasArrived, setHasArrived] = useState<boolean>(false);
-  
+
   // 타겟 대피소 정보 상태
   const [targetShelter, setTargetShelter] = useState<Shelter | null>(null);
   const [shelterMarker, setShelterMarker] = useState<any>(null);
@@ -41,7 +48,7 @@ const GuidePage = () => {
   // 타겟 대피소 초기화
   useEffect(() => {
     const routerState = location.state as { targetShelter?: Shelter } | null;
-    
+
     if (routerState?.targetShelter) {
       console.log('전달받은 타겟 대피소:', routerState.targetShelter);
       setTargetShelter(routerState.targetShelter);
@@ -78,7 +85,7 @@ const GuidePage = () => {
         position: new window.Tmapv3.LatLng(shelter.latitude, shelter.longitude),
         iconSize: new window.Tmapv3.Size(40, 53.33),
         icon: window.Tmapv3.asset.Icon.get('arrival'),
-        map: map
+        map: map,
       });
 
       setShelterMarker(marker);
@@ -110,7 +117,7 @@ const GuidePage = () => {
         top: 50,
         right: 50,
         bottom: 50,
-        left: 50
+        left: 50,
       };
 
       map.fitBounds(bounds, padding);
@@ -127,17 +134,17 @@ const GuidePage = () => {
     const setupMap = async () => {
       try {
         if (!isMounted) return;
-        
+
         // TMAP SDK 준비 상태 확인
         await waitForTmapSDK();
-        
+
         if (!isMounted) return;
-        
+
         // DOM이 준비될 때까지 약간 대기
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         if (!isMounted) return;
-        
+
         // 먼저 현재 위치 획득 시도
         let currentLocationData: LocationState | null = null;
         try {
@@ -148,14 +155,14 @@ const GuidePage = () => {
         } catch (locationErr) {
           console.warn('초기 위치 획득 실패, 서울로 기본 설정:', locationErr);
         }
-        
+
         if (!isMounted) return;
-        
+
         // 현재 위치 기반으로 지도 초기화
         await initializeMapWithLocation(currentLocationData);
-        
+
         if (!isMounted) return;
-        
+
         // 현재 위치가 있으면 즉시 마커 표시
         if (currentLocationData) {
           updateCurrentLocationMarker(currentLocationData);
@@ -164,7 +171,6 @@ const GuidePage = () => {
         // 실시간 위치 추적 시작 (마운트 동안 유지)
         // 위치 변경은 별도 effect에서 처리하여 최신 guidancePoints를 사용
         startWatchingPosition();
-        
       } catch (err) {
         console.error('지도 설정 실패:', err);
       }
@@ -246,7 +252,7 @@ const GuidePage = () => {
     const target = points[nextIndex];
     const distance = haversineDistanceMeters(
       { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy },
-      { latitude: target.latitude, longitude: target.longitude, accuracy: 0 }
+      { latitude: target.latitude, longitude: target.longitude, accuracy: 0 },
     );
 
     const THRESHOLD_M = 15; // 15m 이내 접근 시 도달로 간주
@@ -275,7 +281,7 @@ const GuidePage = () => {
   const checkArrival = (loc: LocationState, shelter: Shelter) => {
     const distance = haversineDistanceMeters(
       { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy },
-      { latitude: shelter.latitude, longitude: shelter.longitude, accuracy: 0 }
+      { latitude: shelter.latitude, longitude: shelter.longitude, accuracy: 0 },
     );
     const ARRIVAL_THRESHOLD_M = 20; // 20m 이내 도착으로 간주
     return distance <= ARRIVAL_THRESHOLD_M;
@@ -292,10 +298,7 @@ const GuidePage = () => {
   return (
     <div css={containerStyle}>
       <div css={mapContainerStyle}>
-        <div 
-          ref={mapRef} 
-          css={mapStyle}
-        />
+        <div ref={mapRef} css={mapStyle} />
         {(activeGuidance || guidanceSteps.length > 0) && (
           <div css={guidanceBarStyle}>
             <div css={guidanceContentStyle}>
@@ -374,11 +377,11 @@ const confirmButtonStyle = css`
   white-space: nowrap;
   transition: background-color 0.2s ease;
   align-self: center;
-  
+
   &:hover {
     background: #b71c1c;
   }
-  
+
   &:active {
     background: #d32f2f;
   }

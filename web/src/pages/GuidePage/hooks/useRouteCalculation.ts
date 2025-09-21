@@ -122,7 +122,7 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
           map: map,
         });
 
-        // 검은색색 화살표 (파란선 위에 겹쳐서)
+        // 검은색 화살표 (파란선 위에 겹쳐서)
         const arrowPolyline = new window.Tmapv3.Polyline({
           path: pathCoordinates,
           strokeColor: '#FFFFFF', // 흰색

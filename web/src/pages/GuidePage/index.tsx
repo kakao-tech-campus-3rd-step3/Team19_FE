@@ -8,6 +8,7 @@ import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
 import { useRouteCalculation } from './hooks/useRouteCalculation';
 import { useGuidanceLogic } from './hooks/useGuidanceLogic';
+import { GuideBar } from './components/GuideBar';
 import theme from '@/styles/theme';
 
 const GuidePage = () => {
@@ -254,16 +255,11 @@ const GuidePage = () => {
       <div css={mapContainerStyle}>
         <div ref={mapRef} css={mapStyle} />
         {(activeGuidance || guidanceSteps.length > 0) && (
-          <div css={guidanceBarStyle}>
-            <div css={guidanceContentStyle}>
-              <div css={guidanceTextStyle}>{activeGuidance || guidanceSteps[0]}</div>
-              {hasArrived && (
-                <button css={confirmButtonStyle} onClick={handleArrivalConfirm}>
-                  확인
-                </button>
-              )}
-            </div>
-          </div>
+          <GuideBar
+            message={activeGuidance || guidanceSteps[0] || null}
+            hasArrived={hasArrived}
+            onArrivalConfirm={handleArrivalConfirm}
+          />
         )}
       </div>
     </div>
@@ -287,58 +283,6 @@ const mapStyle = css`
   height: 100%;
   border: none;
   outline: none;
-`;
-
-const guidanceBarStyle = css`
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  background: ${theme.colors.button.black};
-  color: ${theme.colors.text.white};
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  min-height: 48px;
-`;
-
-const guidanceContentStyle = css`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const guidanceTextStyle = css`
-  font-size: ${theme.typography.guide1.fontSize};
-  font-weight: ${theme.typography.guide1.fontWeight};
-  line-height: ${theme.typography.guide1.lineHeight};
-  white-space: pre-line;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-`;
-
-const confirmButtonStyle = css`
-  background: ${theme.colors.button.red};
-  color: ${theme.colors.text.white};
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: ${theme.typography.guide2.fontSize};
-  font-weight: ${theme.typography.guide2.fontWeight};
-  line-height: ${theme.typography.guide2.lineHeight};
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.2s ease;
-  align-self: center;
-
-  &:hover {
-    background: #b71c1c;
-  }
-
-  &:active {
-    background: #d32f2f;
-  }
 `;
 
 export default GuidePage;

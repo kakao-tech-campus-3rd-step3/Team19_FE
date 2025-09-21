@@ -7,15 +7,13 @@ import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
 import { useRouteCalculation } from './hooks/useRouteCalculation';
-import type { GuidancePoint } from './hooks/useRouteCalculation';
-import { haversineDistanceMeters } from './utils/geoUtils';
+import { useGuidanceLogic } from './hooks/useGuidanceLogic';
 import theme from '@/styles/theme';
 
 const GuidePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const mapRef = useRef<HTMLDivElement>(null);
-  const reachedPointIndexRef = useRef<number>(-1);
 
   // TMAP SDK Hook 사용
   const { map, waitForTmapSDK, isMapFullyLoaded, initializeMapWithLocation } = useTmapSDK(mapRef);
@@ -38,6 +36,10 @@ const GuidePage = () => {
     map,
     isMapFullyLoaded,
   });
+
+  // 안내 로직 Hook 사용
+  const { getReachableGuidancePoint, checkArrival } = useGuidanceLogic();
+
   const [activeGuidance, setActiveGuidance] = useState<string | null>(null);
   const [hasArrived, setHasArrived] = useState<boolean>(false);
 
@@ -219,11 +221,6 @@ const GuidePage = () => {
     }
   }, [guidanceSteps]);
 
-  // 새 경로 포인트가 설정되면 진행 상태 초기화
-  useEffect(() => {
-    reachedPointIndexRef.current = -1;
-  }, [guidancePoints]);
-
   // 현재 위치 또는 안내 포인트 변경 시, 도달 여부를 평가하여 안내 문구 갱신
   useEffect(() => {
     if (!currentLocation) return;
@@ -243,36 +240,6 @@ const GuidePage = () => {
       }
     }
   }, [currentLocation, guidancePoints, guidanceSteps, targetShelter]);
-
-  // 사용자가 도달한 안내 포인트를 계산
-  const getReachableGuidancePoint = (loc: LocationState, points: GuidancePoint[]) => {
-    // 다음 목표 포인트만 체크(이미 지난 포인트는 건너뜀)
-    const nextIndex = Math.min(reachedPointIndexRef.current + 1, points.length - 1);
-    if (nextIndex < 0 || nextIndex >= points.length) return null;
-
-    const target = points[nextIndex];
-    const distance = haversineDistanceMeters(
-      { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy },
-      { latitude: target.latitude, longitude: target.longitude, accuracy: 0 },
-    );
-
-    const THRESHOLD_M = 15; // 15m 이내 접근 시 도달로 간주
-    if (distance <= THRESHOLD_M) {
-      reachedPointIndexRef.current = nextIndex;
-      return target;
-    }
-    return null;
-  };
-
-  // 목적지 도착 여부 확인
-  const checkArrival = (loc: LocationState, shelter: Shelter) => {
-    const distance = haversineDistanceMeters(
-      { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy },
-      { latitude: shelter.latitude, longitude: shelter.longitude, accuracy: 0 },
-    );
-    const ARRIVAL_THRESHOLD_M = 20; // 20m 이내 도착으로 간주
-    return distance <= ARRIVAL_THRESHOLD_M;
-  };
 
   // 도착 확인 버튼 클릭 핸들러
   const handleArrivalConfirm = () => {

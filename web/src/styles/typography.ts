@@ -148,6 +148,18 @@ export const typography = {
     fontWeight: 500,
     lineHeight: '3.39vh',
   },
+
+  // 길찾기 페이지 (GuidePage)
+  guide1: {
+    fontSize: '2.8vh', // 하단 경로안내 바 텍스트
+    fontWeight: 700,
+    lineHeight: '3.4vh',
+  },
+  guide2: {
+    fontSize: '3vh', // 도착 팝업 텍스트
+    fontWeight: 700,
+    lineHeight: '3.4vh',
+  },
 } as const;
 
 /*

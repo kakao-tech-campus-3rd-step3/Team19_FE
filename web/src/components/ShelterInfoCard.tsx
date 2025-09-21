@@ -38,7 +38,7 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
   };
 
   const handleStartNavigation = () => {
-    navigate('/guide'); // 길안내 페이지로 이동
+    navigate('/guide', { state: { targetShelter: shelter } }); // 선택한 쉼터로 길안내 페이지로 이동
   };
 
   const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {

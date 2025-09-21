@@ -5,6 +5,7 @@ import theme from '@/styles/theme';
 import { FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
 
 interface MyReview {
   reviewId: number;
@@ -31,6 +32,7 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
 
 const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -38,10 +40,24 @@ const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
     setShowDeleteModal(true);
   };
 
-  const handleDeleteConfirm = (e: React.MouseEvent) => {
+  // 찜 삭제와 동일한 패턴으로 리뷰 삭제
+  const handleDeleteConfirm = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(false);
-    // TODO: 실제 삭제 API 호출 및 처리
+    try {
+      const res = await fetch(`/api/reviews/${item.reviewId}`, {
+        method: 'DELETE',
+      });
+      if (res.status === 204) {
+        setToastMessage('리뷰가 삭제되었습니다');
+        //TODO: 리뷰 삭제 후 목록 표시 수정 필요
+      } else {
+        setToastMessage('삭제에 실패했습니다');
+      }
+    } catch {
+      setToastMessage('삭제에 실패했습니다');
+    }
+    setTimeout(() => setToastMessage(''), 2000);
   };
 
   const handleDeleteCancel = (e: React.MouseEvent) => {
@@ -109,6 +125,8 @@ const ReviewListCard = ({ item, onClick }: ReviewListCardProps) => {
           </div>
         </div>
       )}
+      {/* ToastMessage: 리뷰 삭제 결과 안내 */}
+      <ToastMessage message={toastMessage} />
     </div>
   );
 };

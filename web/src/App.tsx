@@ -14,6 +14,7 @@ import MyPage from './pages/MyPage';
 import WishListPage from './pages/WishListPage';
 import MyReviewPage from './pages/MyReviewPage';
 import EditProfilePage from './pages/EditProfilePage';
+import EditReviewPage from './pages/EditReviewPage';
 
 const App = () => {
   const location = useLocation();
@@ -91,6 +92,8 @@ const App = () => {
             <Route path="/myreviews" element={<MyReviewPage />} />
             {/* path="/edit-profile": 프로필 수정 페이지 추가 */}
             <Route path="/edit-profile" element={<EditProfilePage />} />
+            {/* path="/edit-review/:id": 리뷰 수정 페이지 추가 */}
+            <Route path="/edit-review/:id" element={<EditReviewPage />} />
           </Routes>
         </main>
         <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}

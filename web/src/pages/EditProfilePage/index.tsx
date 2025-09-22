@@ -108,10 +108,10 @@ const EditProfilePage = () => {
             onChange={(e) => setNewPassword(e.target.value)}
           />
         </div>
+        <button css={saveBtn} type="submit">
+          저장
+        </button>
       </form>
-      <button css={saveBtn} type="submit">
-        저장
-      </button>
       {/* 수정 완료 모달 */}
       {showModal && (
         <div css={modalOverlay}>
@@ -136,14 +136,16 @@ const container = css`
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: calc(100vh - ${theme.spacing.spacing16});
+  position: relative;
+  overflow: hidden;
 `;
 
 const titleRow = css`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 32px;
-  margin-bottom: 16px;
+  padding: 4% 5%;
 `;
 
 const emoji = css`
@@ -164,8 +166,8 @@ const profileBox = css`
 `;
 
 const profileImg = css`
-  width: 140px;
-  height: 140px;
+  width: 35%;
+  height: auto;
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid #eee;
@@ -174,7 +176,7 @@ const profileImg = css`
 
 const editIcon = css`
   position: absolute;
-  right: 4px;
+  right: 30%;
   top: 105px;
   font-size: 2.2rem;
   background: #fff;
@@ -186,6 +188,7 @@ const formBox = css`
   display: flex;
   flex-direction: column;
   gap: 18px;
+  flex: 1; // 남은 공간을 모두 차지
 `;
 
 const inputRow = css`
@@ -246,16 +249,15 @@ const labelLong = css`
 `;
 
 const saveBtn = css`
-  ${theme.typography.edit2};
-  width: 90%;
+  ${theme.typography.edit4};
+  width: 100%;
+  margin: auto auto 5% auto; // mypage의 로그아웃 버튼과 동일
   background: #111;
   color: #fff;
   border: none;
   border-radius: 12px;
   padding: 12px 0;
   cursor: pointer;
-  margin-top: auto;
-
   /* 버튼 반응 없애기 */
   outline: none;
   box-shadow: none;

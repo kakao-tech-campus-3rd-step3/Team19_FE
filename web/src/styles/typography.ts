@@ -163,6 +163,11 @@ export const typography = {
     fontWeight: 500,
     lineHeight: '2.9vh',
   },
+  edit4: {
+    fontSize: '3vh', // 저장 버튼
+    fontWeight: 700,
+    lineHeight: '3.4vh',
+  },
 
   //버튼 (Button)
   button1: {

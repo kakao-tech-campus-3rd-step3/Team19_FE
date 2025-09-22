@@ -146,6 +146,24 @@ export const typography = {
     fontWeight: 550,
     lineHeight: '2.84vh',
   },
+
+  //프로필 수정 페이지 (EditProfilePage)
+  edit1: {
+    fontSize: '4.5vh', // "프로필 수정" 타이틀
+    fontWeight: 700,
+    lineHeight: '6vh',
+  },
+  edit2: {
+    fontSize: '2.8vh', // 라벨 (이름, 이메일)
+    fontWeight: 600,
+    lineHeight: '3.2vh',
+  },
+  edit3: {
+    fontSize: '2.4vh', // 인풋 (이름, 이메일)
+    fontWeight: 500,
+    lineHeight: '2.9vh',
+  },
+
   //버튼 (Button)
   button1: {
     fontSize: '3.38vh', // "더보기" 버튼

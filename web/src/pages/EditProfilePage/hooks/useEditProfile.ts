@@ -52,6 +52,32 @@ export const useEditProfile = () => {
       }
       console.log('PATCH /api/users/me/password', patchPassword);
     }
+    /*
+    // 비밀번호 변경 API 연결 예시
+    if (oldPassword && newPassword) {
+        try {
+        const res = await fetch('/api/users/me/password', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+            currentPassword: oldPassword,
+            newPassword,
+            }),
+        });
+
+        if (res.ok) {
+            setOldPasswordError(false);
+            setShowModal(true); // 성공 시 모달
+        } else {
+            // 400, 401 등 실패 시
+            setOldPasswordError(true); // 에러 표시
+        }
+        } catch {
+        setOldPasswordError(true); // 네트워크 에러 등
+        }
+        return;
+    }
+     */
 
     // 프로필 PATCH는 항상 성공 처리
     console.log('PATCH /api/users/me', patchProfile);

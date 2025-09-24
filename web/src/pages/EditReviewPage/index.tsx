@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaRegCommentDots } from 'react-icons/fa';
-import { IoMdClose } from 'react-icons/io';
+import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
 
@@ -91,9 +91,7 @@ const EditReviewPage = () => {
           {showImage && photoUrl && (
             <div css={imgWrapper}>
               <img src={photoUrl} alt="리뷰" css={reviewImg} />
-              <button type="button" css={imgRemoveBtn} onClick={handleRemoveImage}>
-                <IoMdClose size={24} />
-              </button>
+              <IoCloseCircleSharp css={imgRemoveBtn} onClick={handleRemoveImage} />
             </div>
           )}
           <label css={imgAddBtn}>
@@ -203,7 +201,7 @@ const imgRow = css`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 32px;
+  margin-bottom: 20%;
 `;
 
 const imgWrapper = css`
@@ -220,18 +218,13 @@ const reviewImg = css`
 `;
 
 const imgRemoveBtn = css`
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: #eee;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 2rem;
+  color: #222;
   cursor: pointer;
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  z-index: 2;
 `;
 
 const imgAddBtn = css`

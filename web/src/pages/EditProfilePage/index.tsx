@@ -28,6 +28,7 @@ const EditProfilePage = () => {
   const [imgError, setImgError] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false); // 이전 비밀번호 보기
   const [showNewPassword, setShowNewPassword] = useState(false); // 새로운 비밀번호 보기
+  const [oldPasswordError, setOldPasswordError] = useState(false); // 기존 비밀번호 에러 상태 추가
 
   // 입력값 변경 감지
   // const [profileImageInput] = useState(''); // TODO: 사진 편집은 앱에서만 가능
@@ -39,25 +40,32 @@ const EditProfilePage = () => {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 닉네임만 수정하는 경우
-    const patchProfile = {
-      nickname: nicknameInput && nicknameInput !== mockUser.nickname ? nicknameInput : null,
-      // TODO: 프로필 이미지는 앱에서만 변경 가능하므로 null로 넘김
-      profileImageUrl: null,
-    };
-
     // 비밀번호 수정: 둘 다 입력되어야만 PATCH
     const patchPassword =
       oldPassword && newPassword ? { currentPassword: oldPassword, newPassword } : null;
 
-    // 목데이터로 PATCH 요청 시 넘길 데이터 예시
-    // 실제 API 연동 시 fetch로 보내면 됨
-    console.log('PATCH /api/users/me', patchProfile);
+    // 닉네임만 수정하는 경우
+    const patchProfile = {
+      nickname: nicknameInput && nicknameInput !== mockUser.nickname ? nicknameInput : null,
+      profileImageUrl: null,
+    };
+
+    // TODO: API 연결 필요
+    // 목데이터: 기존 비밀번호가 'password123'일 때만 성공, 아니면 에러
     if (patchPassword) {
+      if (oldPassword !== 'password123') {
+        setOldPasswordError(true); // 에러 상태 true
+        return; // 모달 띄우지 않음
+      } else {
+        setOldPasswordError(false); // 에러 해제
+      }
       console.log('PATCH /api/users/me/password', patchPassword);
     }
 
-    setShowModal(true);
+    // 프로필 PATCH는 항상 성공 처리
+    console.log('PATCH /api/users/me', patchProfile);
+
+    setShowModal(true); // 성공 시에만 모달
   };
 
   const handleModalClose = () => {
@@ -98,10 +106,13 @@ const EditProfilePage = () => {
           <label css={labelLong}>이전 비밀번호</label>
           <div css={passwordInputWrapper}>
             <input
-              css={inputLong}
+              css={[inputLong, oldPasswordError && errorInput]}
               type={showOldPassword ? 'text' : 'password'}
               value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
+              onChange={(e) => {
+                setOldPassword(e.target.value);
+                setOldPasswordError(false); // 입력 시 에러 해제
+              }}
             />
             <button
               type="button"
@@ -112,6 +123,7 @@ const EditProfilePage = () => {
               {showOldPassword ? <IoEyeOff /> : <IoEye />}
             </button>
           </div>
+          {oldPasswordError && <div css={errorMsg}>기존 비밀번호와 일치하지 않습니다.</div>}
         </div>
         <div css={inputRowVertical}>
           <label css={labelLong}>새로운 비밀번호</label>
@@ -352,4 +364,17 @@ const eyeBtn = css`
   cursor: pointer;
   padding: 0;
   color: #888;
+`;
+
+// 스타일 추가
+const errorInput = css`
+  border: 2px solid #e74c3c !important;
+  background: #fff0f0;
+`;
+
+const errorMsg = css`
+  color: #e74c3c;
+  font-size: 0.98rem;
+  margin-top: 4px;
+  margin-left: 2px;
 `;

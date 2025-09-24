@@ -1,23 +1,26 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NoProfile from '@/assets/images/NoProfile.png';
 
 // 목데이터: 기존 회원 정보
 const mockUser = {
   userId: 1,
   email: 'ksh58@gmail.com',
   nickname: '김선희',
-  profileImageUrl:
-    'https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png',
+  profileImageUrl: typeof NoProfile === 'string' ? NoProfile : '',
 };
 
 export const useEditProfile = () => {
+  const [profileImageUrl, setProfileImageUrl] = useState<string>(mockUser.profileImageUrl);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imgError, setImgError] = useState(false);
+
   // 기존 정보
   // TODO: 닉네임, 프로필 이미지는 실제로 수정 시에만 사용하도록 변경 필요
-  const [profileImageUrl] = useState(mockUser.profileImageUrl); // TODO: 사진 편집은 앱에서만 가능
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [imgError, setImgError] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false); // 이전 비밀번호 보기
   const [showNewPassword, setShowNewPassword] = useState(false); // 새로운 비밀번호 보기
   const [oldPasswordError, setOldPasswordError] = useState(false); // 기존 비밀번호 에러 상태 추가
@@ -26,6 +29,32 @@ export const useEditProfile = () => {
   const [nicknameInput, setNicknameInput] = useState('');
 
   const navigate = useNavigate();
+
+  // 프로필 편집 버튼 클릭
+  const handleEditProfileImg = () => setShowProfileModal(true);
+
+  // 앨범에서 사진 선택
+  const handleProfileImgSelect = () => {
+    setShowProfileModal(false);
+    fileInputRef.current?.click();
+  };
+
+  // 기본 이미지로 변경
+  const handleSetDefaultProfile = () => {
+    setShowProfileModal(false);
+    setImgError(false);
+    setProfileImageUrl(mockUser.profileImageUrl);
+  };
+
+  // 파일 선택 시 프로필 이미지 변경
+  const handleProfileImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setProfileImageUrl(url);
+      setImgError(false);
+    }
+  };
 
   // 저장 버튼 클릭 시
   const handleSave = (e: React.FormEvent) => {
@@ -93,6 +122,7 @@ export const useEditProfile = () => {
   return {
     mockUser,
     profileImageUrl,
+    setProfileImageUrl,
     oldPassword,
     setOldPassword,
     newPassword,
@@ -111,5 +141,12 @@ export const useEditProfile = () => {
     setOldPasswordError,
     handleSave,
     handleModalClose,
+    handleEditProfileImg,
+    handleProfileImgSelect,
+    handleSetDefaultProfile,
+    handleProfileImgChange,
+    fileInputRef,
+    showProfileModal,
+    setShowProfileModal,
   };
 };

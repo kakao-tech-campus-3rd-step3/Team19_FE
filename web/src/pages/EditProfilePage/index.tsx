@@ -3,7 +3,6 @@ import { css } from '@emotion/react';
 import { FaRegEdit } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { useEditProfile } from './hooks/useEditProfile';
-import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 
 // 목데이터: 기존 회원 정보
@@ -14,22 +13,29 @@ const EditProfilePage = () => {
   const {
     mockUser,
     profileImageUrl,
+    imgError,
+    setImgError,
+    handleEditProfileImg,
+    handleProfileImgSelect,
+    handleSetDefaultProfile,
+    handleProfileImgChange,
+    fileInputRef,
+    showProfileModal,
+    setShowProfileModal,
     oldPassword,
     setOldPassword,
     newPassword,
     setNewPassword,
     setNicknameInput,
     showModal,
-    imgError,
-    setImgError,
-    showOldPassword,
-    setShowOldPassword,
-    showNewPassword,
-    setShowNewPassword,
     oldPasswordError,
     setOldPasswordError,
     handleSave,
     handleModalClose,
+    showOldPassword,
+    setShowOldPassword,
+    showNewPassword,
+    setShowNewPassword,
   } = useEditProfile();
 
   return (
@@ -40,12 +46,39 @@ const EditProfilePage = () => {
       </div>
       <div css={profileBox}>
         <img
-          src={imgError ? NoProfile : profileImageUrl}
+          src={imgError ? mockUser.profileImageUrl : profileImageUrl}
           alt="프로필"
           css={profileImg}
           onError={() => setImgError(true)}
         />
-        <FaRegEdit css={editIcon} /> {/* TODO: 프로필 이미지 편집은 앱에서만 가능 */}
+        <FaRegEdit css={editIcon} onClick={handleEditProfileImg} />
+        {/* 프로필 이미지 편집 모달 */}
+        {showProfileModal && (
+          <div css={modalOverlay}>
+            <div css={modalBox}>
+              <div css={modalText}>프로필 이미지 변경</div>
+              <button css={modalBtn} onClick={handleProfileImgSelect}>
+                앨범에서 사진 선택
+              </button>
+              {profileImageUrl !== mockUser.profileImageUrl && (
+                <button css={modalBtn} onClick={handleSetDefaultProfile}>
+                  기본 프로필로 변경
+                </button>
+              )}
+              <button css={modalBtn} onClick={() => setShowProfileModal(false)}>
+                닫기
+              </button>
+            </div>
+          </div>
+        )}
+        {/* 숨겨진 파일 input */}
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleProfileImgChange}
+        />
       </div>
       <form css={formBox} onSubmit={handleSave}>
         <div css={inputRow}>

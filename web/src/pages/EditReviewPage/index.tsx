@@ -122,7 +122,6 @@ const container = css`
   height: calc(100vh - ${theme.spacing.spacing16});
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 `;
 
 const header = css`
@@ -130,8 +129,8 @@ const header = css`
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding-top: 5%;
+  padding-bottom: 5%;
   box-sizing: border-box;
 `;
 
@@ -142,14 +141,15 @@ const headerTitle = css`
 
 const shelterName = css`
   ${theme.typography.myr4};
-  margin-bottom: 18px;
+  margin-bottom: 4%;
+  margin-top: 3%;
 `;
 
 const starRow = css`
   display: flex;
   gap: 12px;
   font-size: 3.5rem;
-  margin-bottom: 18px;
+  margin-bottom: 2%;
   justify-content: center;
 `;
 
@@ -170,17 +170,16 @@ const formBox = css`
   flex-direction: column;
   flex: 1;
   align-items: center;
-  gap: 24px;
 `;
 
 const contentBox = css`
   width: 90%;
   ${theme.typography.myr5};
-  height: 40%;
+  height: 30%;
   border-radius: 18px;
   border: none;
   background: #ddddddb9;
-  padding: 18px 24px;
+  padding: 3% 4%;
   resize: none;
   font-family: inherit;
 `;
@@ -190,7 +189,6 @@ const charCount = css`
   text-align: right;
   font-size: 1.1rem;
   color: #888;
-  margin-top: -18px;
   margin-bottom: 8px;
   position: relative;
   right: 0;
@@ -201,7 +199,8 @@ const imgRow = css`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 20%;
+  margin-bottom: auto;
+  position: relative;
 `;
 
 const imgWrapper = css`
@@ -243,11 +242,12 @@ const imgAddBtn = css`
 const saveBtn = css`
   width: 100%;
   margin: auto auto 5% auto;
+  bottom: 3%;
   background: #111;
   color: #fff;
   border: none;
   border-radius: 12px;
-  ${theme.typography.my1};
+  ${theme.typography.myr1};
 
   cursor: pointer;
   /* 버튼 반응 없애기 */

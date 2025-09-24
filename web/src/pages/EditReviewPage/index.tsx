@@ -6,6 +6,7 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
+import ToastMessage from '../FindSheltersPage/components/ToastMessage'; // 경로에 맞게 import
 
 const mockReview = {
   reviewId: 101,
@@ -31,6 +32,7 @@ const EditReviewPage = () => {
   const [modalText, setModalText] = useState('');
   const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => () => {});
   const [onModalCancel, setOnModalCancel] = useState<() => void>(() => () => {});
+  const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
 
   // 리뷰 단건 조회 (목데이터)
@@ -106,6 +108,29 @@ const EditReviewPage = () => {
     setShowModal(true);
   };
 
+  // 이미지 추가 핸들러
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (showImage && photoUrl) {
+      setToastMessage('사진 첨부는 최대 1장만 가능합니다');
+      setTimeout(() => setToastMessage(''), 2000);
+      return;
+    }
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPhotoUrl(url);
+      setShowImage(true);
+    }
+  };
+
+  const handleAddImageClick = (e: React.MouseEvent<HTMLLabelElement>) => {
+    if (showImage && photoUrl) {
+      e.preventDefault(); // 파일 선택창이 뜨지 않도록 막음
+      setToastMessage('사진 첨부는 최대 1장만 가능합니다');
+      setTimeout(() => setToastMessage(''), 2000);
+    }
+  };
+
   if (!review) return <div>로딩 중...</div>;
 
   return (
@@ -146,9 +171,14 @@ const EditReviewPage = () => {
               <IoCloseCircleSharp css={imgRemoveBtn} onClick={handleRemoveImage} />
             </div>
           )}
-          <label css={imgAddBtn}>
+          <label css={imgAddBtn} onClick={handleAddImageClick}>
             <MdImage size={48} />
-            <input type="file" accept="image/*" style={{ display: 'none' }} />
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleImageChange}
+            />
           </label>
         </div>
         <button css={saveBtn} type="submit">
@@ -171,6 +201,7 @@ const EditReviewPage = () => {
           </div>
         </div>
       )}
+      <ToastMessage message={toastMessage} />
     </div>
   );
 };

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 import { FaRegEdit } from 'react-icons/fa';
+import { IoEye, IoEyeOff } from 'react-icons/io5';
+
 import { useNavigate } from 'react-router-dom';
 
 // 목데이터: 기존 회원 정보
@@ -24,6 +26,8 @@ const EditProfilePage = () => {
   const [newPassword, setNewPassword] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false); // 이전 비밀번호 보기
+  const [showNewPassword, setShowNewPassword] = useState(false); // 새로운 비밀번호 보기
 
   // 입력값 변경 감지
   // const [profileImageInput] = useState(''); // TODO: 사진 편집은 앱에서만 가능
@@ -92,21 +96,41 @@ const EditProfilePage = () => {
         </div>
         <div css={inputRowVertical}>
           <label css={labelLong}>이전 비밀번호</label>
-          <input
-            css={inputLong}
-            type="password"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-          />
+          <div css={passwordInputWrapper}>
+            <input
+              css={inputLong}
+              type={showOldPassword ? 'text' : 'password'}
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              css={eyeBtn}
+              onClick={() => setShowOldPassword((prev) => !prev)}
+              tabIndex={-1}
+            >
+              {showOldPassword ? <IoEyeOff /> : <IoEye />}
+            </button>
+          </div>
         </div>
         <div css={inputRowVertical}>
           <label css={labelLong}>새로운 비밀번호</label>
-          <input
-            css={inputLong}
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
+          <div css={passwordInputWrapper}>
+            <input
+              css={inputLong}
+              type={showNewPassword ? 'text' : 'password'}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              css={eyeBtn}
+              onClick={() => setShowNewPassword((prev) => !prev)}
+              tabIndex={-1}
+            >
+              {showNewPassword ? <IoEyeOff /> : <IoEye />}
+            </button>
+          </div>
         </div>
         <button css={saveBtn} type="submit">
           저장
@@ -308,4 +332,24 @@ const modalBtn = css`
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
+`;
+
+const passwordInputWrapper = css`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+`;
+
+const eyeBtn = css`
+  background: none;
+  border: none;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  color: #888;
 `;

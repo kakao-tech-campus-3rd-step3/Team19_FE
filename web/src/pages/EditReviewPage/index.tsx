@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
@@ -27,6 +27,7 @@ const EditReviewPage = () => {
   const [rating, setRating] = useState(0);
   const [photoUrl, setPhotoUrl] = useState('');
   const [showImage, setShowImage] = useState(true);
+  const navigate = useNavigate();
 
   // 리뷰 단건 조회 (목데이터)
   useEffect(() => {
@@ -64,7 +65,9 @@ const EditReviewPage = () => {
         <FaRegCommentDots size={36} />
         <span css={headerTitle}>리뷰 수정</span>
       </div>
-      <div css={shelterName}>{review.name}</div>
+      <div css={shelterName} onClick={() => navigate(`/shelter-detail/${review.shelterId}`)}>
+        {review.name}
+      </div>
       <div css={starRow}>
         {Array.from({ length: 5 }).map((_, i) => (
           <span
@@ -195,7 +198,7 @@ const charCount = css`
 `;
 
 const imgRow = css`
-  width: 100%;
+  width: 95%;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;

@@ -27,7 +27,10 @@ const EditReviewPage = () => {
   const [rating, setRating] = useState(0);
   const [photoUrl, setPhotoUrl] = useState('');
   const [showImage, setShowImage] = useState(true);
-  const [showSaveModal, setShowSaveModal] = useState(false); // 저장 확인 모달
+  const [showModal, setShowModal] = useState(false);
+  const [modalText, setModalText] = useState('');
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => () => {});
+  const [onModalCancel, setOnModalCancel] = useState<() => void>(() => () => {});
   const navigate = useNavigate();
 
   // 리뷰 단건 조회 (목데이터)
@@ -45,21 +48,18 @@ const EditReviewPage = () => {
     setRating(idx + 1);
   };
 
-  // 이미지 삭제
-  const handleRemoveImage = () => {
-    setShowImage(false);
-    setPhotoUrl('');
-  };
-
   // 저장 버튼 클릭
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowSaveModal(true); // 저장 확인 모달 표시
+    setModalText('저장 하시겠습니까?');
+    setOnModalConfirm(() => handleSaveConfirm);
+    setOnModalCancel(() => () => setShowModal(false));
+    setShowModal(true);
   };
 
   // 저장 모달에서 "예" 클릭 시
   const handleSaveConfirm = async () => {
-    setShowSaveModal(false);
+    setShowModal(false);
 
     // TODO: 실제 API 연동 시 아래 fetch 코드 사용
     /*
@@ -94,9 +94,16 @@ const EditReviewPage = () => {
     navigate('/myreviews');
   };
 
-  // 저장 모달에서 "아니요" 클릭 시
-  const handleSaveCancel = () => {
-    setShowSaveModal(false);
+  // 사진 삭제 버튼 클릭
+  const handleRemoveImage = () => {
+    setModalText('사진을 삭제하시겠습니까?');
+    setOnModalConfirm(() => () => {
+      setShowImage(false);
+      setPhotoUrl('');
+      setShowModal(false);
+    });
+    setOnModalCancel(() => () => setShowModal(false));
+    setShowModal(true);
   };
 
   if (!review) return <div>로딩 중...</div>;
@@ -149,15 +156,15 @@ const EditReviewPage = () => {
         </button>
       </form>
       {/* 저장 확인 모달 */}
-      {showSaveModal && (
+      {showModal && (
         <div css={modalOverlay}>
           <div css={modalBox}>
-            <div css={modalText}>저장 하시겠습니까?</div>
+            <div css={modalTextStyle}>{modalText}</div>
             <div css={modalBtnRow}>
-              <button css={modalBtn} type="button" onClick={handleSaveConfirm}>
+              <button css={modalBtn} type="button" onClick={onModalConfirm}>
                 예
               </button>
-              <button css={modalBtn} type="button" onClick={handleSaveCancel}>
+              <button css={modalBtn} type="button" onClick={onModalCancel}>
                 아니요
               </button>
             </div>
@@ -341,7 +348,7 @@ const modalBox = css`
   align-items: center;
 `;
 
-const modalText = css`
+const modalTextStyle = css`
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 24px;

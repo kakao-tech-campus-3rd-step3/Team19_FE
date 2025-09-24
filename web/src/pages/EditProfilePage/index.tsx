@@ -194,8 +194,8 @@ const profileBox = css`
 `;
 
 const profileImg = css`
-  width: 35%;
-  height: auto;
+  width: 125px;
+  height: 125px;
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid #eee;
@@ -204,8 +204,8 @@ const profileImg = css`
 
 const editIcon = css`
   position: absolute;
-  right: 30%;
-  top: 105px;
+  right: 5%;
+  top: 95px;
   font-size: 2.2rem;
   background: #fff;
   padding: 4px;

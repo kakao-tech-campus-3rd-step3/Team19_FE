@@ -334,7 +334,7 @@ const modalBtn = css`
   border: none;
   background: #222;
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 600;
   cursor: pointer;
 `;
@@ -346,7 +346,7 @@ const modalBtnS = css`
   border: none;
   background: #818181ff;
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.3rem;
   font-weight: 500;
   cursor: pointer;
 `;

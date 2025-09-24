@@ -80,9 +80,13 @@ const EditReviewPage = () => {
         <textarea
           css={contentBox}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          maxLength={100}
+          onChange={(e) => {
+            if (e.target.value.length <= 100) setContent(e.target.value);
+          }}
           rows={4}
         />
+        <div css={charCount}>{content.length}/100</div>
         <div css={imgRow}>
           {showImage && photoUrl && (
             <div css={imgWrapper}>
@@ -181,6 +185,17 @@ const contentBox = css`
   padding: 18px 24px;
   resize: none;
   font-family: inherit;
+`;
+
+const charCount = css`
+  width: 90%;
+  text-align: right;
+  font-size: 1.1rem;
+  color: #888;
+  margin-top: -18px;
+  margin-bottom: 8px;
+  position: relative;
+  right: 0;
 `;
 
 const imgRow = css`

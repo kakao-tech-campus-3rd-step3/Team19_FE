@@ -14,7 +14,7 @@ const mockReview = {
   userId: 1,
   content: '에어컨이 참. 시원.하네요~^^',
   rating: 4,
-  photoUrl: 'https://example.com/review1.jpg',
+  photoUrl: 'https://plus.cnu.ac.kr/images/kr/sub01/ci_simbol_v2.png',
   profileImageUrl: 'https://example.com/users/1.jpg',
   createdAt: '2025-08-19T09:00:00Z',
   updatedAt: '2025-08-19T09:00:00Z',

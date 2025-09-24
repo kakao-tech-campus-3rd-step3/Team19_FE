@@ -57,11 +57,11 @@ const EditProfilePage = () => {
           <div css={modalOverlay}>
             <div css={modalBox}>
               <div css={modalText}>프로필 이미지 변경</div>
-              <button css={modalBtn} onClick={handleProfileImgSelect}>
+              <button css={modalBtnS} onClick={handleProfileImgSelect}>
                 앨범에서 사진 선택
               </button>
               {profileImageUrl !== mockUser.profileImageUrl && (
-                <button css={modalBtn} onClick={handleSetDefaultProfile}>
+                <button css={modalBtnS} onClick={handleSetDefaultProfile}>
                   기본 프로필로 변경
                 </button>
               )}
@@ -314,7 +314,7 @@ const modalOverlay = css`
 const modalBox = css`
   background: #fff;
   border-radius: 18px;
-  padding: 38px 32px;
+  padding: 24px 32px;
   box-shadow: 0 2px 12px #2224;
   display: flex;
   flex-direction: column;
@@ -322,19 +322,32 @@ const modalBox = css`
 `;
 
 const modalText = css`
-  font-size: 1.3rem;
-  font-weight: 700;
+  ${theme.typography.edit2};
   margin-bottom: 24px;
 `;
 
 const modalBtn = css`
   padding: 10px 38px;
+  margin-top: 24px;
+  bottom: 12px;
   border-radius: 8px;
   border: none;
   background: #222;
   color: #fff;
   font-size: 1.1rem;
   font-weight: 600;
+  cursor: pointer;
+`;
+
+const modalBtnS = css`
+  padding: 10px 28px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #818181ff;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
 `;
 

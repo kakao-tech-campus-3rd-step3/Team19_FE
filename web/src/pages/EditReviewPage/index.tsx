@@ -237,6 +237,17 @@ const shelterName = css`
   ${theme.typography.myr4};
   margin-bottom: 4%;
   margin-top: 3%;
+  user-select: none; // 텍스트 선택 방지
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  &:focus,
+  &:active,
+  &:focus-visible {
+    outline: none;
+    background: none;
+    color: inherit;
+    box-shadow: none;
+  }
 `;
 
 const starRow = css`
@@ -251,11 +262,33 @@ const filledStar = css`
   color: #ffd600;
   cursor: pointer;
   text-shadow: 1px 1px 3px #bbb;
+  user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  &:focus,
+  &:active,
+  &:focus-visible {
+    outline: none;
+    color: #ffd600;
+    background: none;
+    box-shadow: none;
+  }
 `;
 
 const emptyStar = css`
   color: #ccc;
   cursor: pointer;
+  user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  &:focus,
+  &:active,
+  &:focus-visible {
+    outline: none;
+    color: #ccc;
+    background: none;
+    box-shadow: none;
+  }
 `;
 
 const formBox = css`
@@ -301,6 +334,7 @@ const imgWrapper = css`
   position: relative;
   width: 80px;
   height: 80px;
+  user-select: none; // 클릭/드래그 반응 제거
 `;
 
 const reviewImg = css`
@@ -308,6 +342,9 @@ const reviewImg = css`
   height: 80px;
   border-radius: 8px;
   object-fit: cover;
+  user-select: none; // 이미지 드래그/선택 방지
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent; // 모바일 클릭 반응 제거
 `;
 
 const imgRemoveBtn = css`
@@ -318,6 +355,19 @@ const imgRemoveBtn = css`
   top: -12px;
   right: -12px;
   z-index: 2;
+  background: none;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  &:focus,
+  &:active,
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+    background: none;
+  }
 `;
 
 const imgAddBtn = css`
@@ -331,6 +381,17 @@ const imgAddBtn = css`
   background: #fff;
   cursor: pointer;
   font-size: 2.5rem;
+  user-select: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+  &:focus,
+  &:active,
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+    background: #fff;
+  }
 `;
 
 const saveBtn = css`
@@ -342,17 +403,17 @@ const saveBtn = css`
   border: none;
   border-radius: 12px;
   ${theme.typography.myr1};
-
   cursor: pointer;
-  /* 버튼 반응 없애기 */
   outline: none;
   box-shadow: none;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
   &:focus,
   &:active,
   &:focus-visible {
     outline: none;
     box-shadow: none;
+    background: #111;
   }
 `;
 

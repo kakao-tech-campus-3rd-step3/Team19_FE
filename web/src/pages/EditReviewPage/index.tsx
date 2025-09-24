@@ -27,11 +27,12 @@ const EditReviewPage = () => {
   const [rating, setRating] = useState(0);
   const [photoUrl, setPhotoUrl] = useState('');
   const [showImage, setShowImage] = useState(true);
+  const [showSaveModal, setShowSaveModal] = useState(false); // 저장 확인 모달
   const navigate = useNavigate();
 
   // 리뷰 단건 조회 (목데이터)
   useEffect(() => {
-    // 실제 API 연동 시 fetch(`/api/reviews/${reviewId}`) 사용
+    // TODO: 실제 API 연동 시 fetch(`/api/reviews/${id}`)로 변경
     setReview(mockReview);
     setContent(mockReview.content);
     setRating(mockReview.rating);
@@ -53,8 +54,49 @@ const EditReviewPage = () => {
   // 저장 버튼 클릭
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    // PATCH /api/reviews/{reviewId}로 수정 요청
-    alert('리뷰가 수정되었습니다!');
+    setShowSaveModal(true); // 저장 확인 모달 표시
+  };
+
+  // 저장 모달에서 "예" 클릭 시
+  const handleSaveConfirm = async () => {
+    setShowSaveModal(false);
+
+    // TODO: 실제 API 연동 시 아래 fetch 코드 사용
+    /*
+    await fetch(`/api/reviews/${review?.reviewId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`, // JWT 토큰 필요시
+      },
+      body: JSON.stringify({
+        content,
+        // rating,
+        // photoUrl,
+      }),
+    });
+    */
+
+    // 목데이터로 동작: 리뷰 상태를 임시로 업데이트
+    setReview((prev) =>
+      prev
+        ? {
+            ...prev,
+            content,
+            // rating,
+            // photoUrl,
+            updatedAt: new Date().toISOString(),
+          }
+        : prev,
+    );
+
+    // 저장 후 내가 쓴 리뷰 목록 페이지로 이동
+    navigate('/myreviews');
+  };
+
+  // 저장 모달에서 "아니요" 클릭 시
+  const handleSaveCancel = () => {
+    setShowSaveModal(false);
   };
 
   if (!review) return <div>로딩 중...</div>;
@@ -79,7 +121,7 @@ const EditReviewPage = () => {
           </span>
         ))}
       </div>
-      <div css={formBox} onSubmit={handleSave}>
+      <form css={formBox} onSubmit={handleSave}>
         <textarea
           css={contentBox}
           value={content}
@@ -99,18 +141,29 @@ const EditReviewPage = () => {
           )}
           <label css={imgAddBtn}>
             <MdImage size={48} />
-            <input
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              // TODO: 내파일 접근 가능한지 확인 후 이미지 업로드 처리
-            />
+            <input type="file" accept="image/*" style={{ display: 'none' }} />
           </label>
         </div>
         <button css={saveBtn} type="submit">
           저&nbsp;장
         </button>
-      </div>
+      </form>
+      {/* 저장 확인 모달 */}
+      {showSaveModal && (
+        <div css={modalOverlay}>
+          <div css={modalBox}>
+            <div css={modalText}>저장 하시겠습니까?</div>
+            <div css={modalBtnRow}>
+              <button css={modalBtn} type="button" onClick={handleSaveConfirm}>
+                예
+              </button>
+              <button css={modalBtn} type="button" onClick={handleSaveCancel}>
+                아니요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -263,4 +316,49 @@ const saveBtn = css`
     outline: none;
     box-shadow: none;
   }
+`;
+
+const modalOverlay = css`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+`;
+
+const modalBox = css`
+  background: #fff;
+  border-radius: 18px;
+  padding: 38px 32px;
+  box-shadow: 0 2px 12px #2224;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const modalText = css`
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+`;
+
+const modalBtnRow = css`
+  display: flex;
+  gap: 24px;
+`;
+
+const modalBtn = css`
+  padding: 10px 38px;
+  border-radius: 8px;
+  border: none;
+  background: #222;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
 `;

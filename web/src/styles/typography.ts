@@ -155,6 +155,27 @@ export const typography = {
     fontSize: '2.8vh', // 리뷰 수정 페이지 내 리뷰 내용
     fontWeight: 500,
     lineHeight: '3.39vh',
+
+  //프로필 수정 페이지 (EditProfilePage)
+  edit1: {
+    fontSize: '4.5vh', // "프로필 수정" 타이틀
+    fontWeight: 700,
+    lineHeight: '6vh',
+  },
+  edit2: {
+    fontSize: '2.8vh', // 라벨 (이름, 이메일)
+    fontWeight: 600,
+    lineHeight: '3.2vh',
+  },
+  edit3: {
+    fontSize: '2.4vh', // 인풋 (이름, 이메일)
+    fontWeight: 500,
+    lineHeight: '2.9vh',
+  },
+  edit4: {
+    fontSize: '3vh', // 저장 버튼
+    fontWeight: 700,
+    lineHeight: '3.4vh',
   },
 
   //버튼 (Button)

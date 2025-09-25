@@ -130,7 +130,7 @@ export const typography = {
     lineHeight: '2.84vh',
   },
 
-  //내가 쓴 리뷰 페이지 (MyReviewPage)
+  //내가 쓴 리뷰 페이지 (MyReviewPage) & 리뷰 수정 페이지 (EditReviewPage)
   myr1: {
     fontSize: '4.5vh', // "내가 쓴 리뷰" 타이틀
     fontWeight: 700,
@@ -145,6 +145,16 @@ export const typography = {
     fontSize: '2.26vh', // 내가 쓴 리뷰 내 거리, 운영시간
     fontWeight: 550,
     lineHeight: '2.84vh',
+  },
+  myr4: {
+    fontSize: '3.8vh', // 리뷰 수정 페이지 내 쉼터 이름
+    fontWeight: 600,
+    lineHeight: '4.2vh',
+  },
+  myr5: {
+    fontSize: '2.8vh', // 리뷰 수정 페이지 내 리뷰 내용
+    fontWeight: 500,
+    lineHeight: '3.39vh',
   },
 
   //프로필 수정 페이지 (EditProfilePage)

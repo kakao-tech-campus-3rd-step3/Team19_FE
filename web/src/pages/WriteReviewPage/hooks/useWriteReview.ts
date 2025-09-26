@@ -113,5 +113,6 @@ export const useWriteReview = () => {
     handleImageChange,
     handleAddImageClick,
     navigate,
+    shelterId,
   };
 };

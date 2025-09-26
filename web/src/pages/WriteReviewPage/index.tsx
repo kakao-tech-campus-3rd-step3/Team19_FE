@@ -7,12 +7,12 @@ import theme from '@/styles/theme';
 import ToastMessage from '../FindSheltersPage/components/ToastMessage';
 import { useWriteReview } from './hooks/useWriteReview';
 import { useLocation } from 'react-router-dom';
-// import { useParams } from 'react-router-dom';
+//import { useParams } from 'react-router-dom';
 //TODO: 저장 후 이동할 때도 /shelter-detail/${shelterId} 등으로 활용할 수 있기 때문에 남겨둠 (필요시 삭제)
 
 const WriteReviewPage = () => {
   const location = useLocation();
-  // const { shelterId } = useParams();
+  //const { shelterId } = useParams();
   // TODO: 저장 후 이동할 때도 /shelter-detail/${shelterId} 등으로 활용할 수 있기 때문에 남겨둠 (필요시 삭제)
   // URL 파라미터로 shelterId 받기
   const shelterName = location.state?.shelterName;
@@ -32,6 +32,8 @@ const WriteReviewPage = () => {
     handleRemoveImage,
     handleImageChange,
     handleAddImageClick,
+    navigate,
+    shelterId,
   } = useWriteReview();
 
   return (
@@ -41,7 +43,18 @@ const WriteReviewPage = () => {
         <span css={headerTitle}>리뷰 작성</span>
       </div>
       {/* 쉼터 이름 표시 */}
-      {shelterName && <div css={shelterNameStyle}>{shelterName}</div>}
+      {/*
+        쉼터 이름 클릭 시 상세 정보 페이지로 이동
+      */}
+      {shelterName && (
+        <div
+          css={shelterNameStyle}
+          onClick={() => navigate(`/shelter-detail/${shelterId}`)}
+          style={{ cursor: 'pointer' }}
+        >
+          {shelterName}
+        </div>
+      )}
       <div css={starRow}>
         {Array.from({ length: 5 }).map((_, i) => (
           <span

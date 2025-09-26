@@ -69,6 +69,7 @@ export const useWriteReview = () => {
     if (showImage && photoUrl) {
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
       setTimeout(() => setToastMessage(''), 2000);
+      e.target.value = ''; //input value 초기화 (중복 선택 가능)
       return;
     }
     const file = e.target.files?.[0];
@@ -76,6 +77,7 @@ export const useWriteReview = () => {
       const url = URL.createObjectURL(file);
       setPhotoUrl(url);
       setShowImage(true);
+      e.target.value = ''; // input value 초기화 (중복 선택 가능)
     }
   };
 

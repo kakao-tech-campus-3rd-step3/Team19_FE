@@ -62,6 +62,7 @@ const WriteReviewPage = () => {
             if (e.target.value.length <= 100) setContent(e.target.value);
           }}
           rows={4}
+          placeholder={`쉼터의 상태, 혼잡도 등의 정보를\n다른 이용자들에게 알려주세요!`}
         />
         <div css={charCount}>{content.length}/100</div>
         <div css={imgRow}>
@@ -111,18 +112,19 @@ export default WriteReviewPage;
 // 스타일
 const container = css`
   background: #ffffffff;
-  padding: 0 24px;
+  padding: 0 0;
   font-family: 'Pretendard', sans-serif;
   height: calc(100vh - ${theme.spacing.spacing16});
   display: flex;
   flex-direction: column;
+  align-items: center;
 `;
 
 const header = css`
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  width: 90%;
   padding-top: 5%;
   padding-bottom: 5%;
   box-sizing: border-box;
@@ -142,6 +144,7 @@ const shelterNameStyle = css`
 `;
 
 const starRow = css`
+  width: 90%;
   display: flex;
   gap: 12px;
   font-size: 3.5rem;
@@ -183,7 +186,7 @@ const emptyStar = css`
 `;
 
 const formBox = css`
-  width: 100%;
+  width: 90%;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -200,6 +203,13 @@ const contentBox = css`
   padding: 3% 4%;
   resize: none;
   font-family: inherit;
+
+  &::placeholder {
+    color: #aaa; // 원하는 색상으로 변경
+    font-size: 1.3rem;
+    white-space: pre-line; // 줄바꿈 허용
+    text-align: center; // 가운데 정렬
+  }
 `;
 
 const charCount = css`

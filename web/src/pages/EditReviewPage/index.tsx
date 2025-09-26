@@ -108,18 +108,19 @@ export default EditReviewPage;
 // 스타일
 const container = css`
   background: #ffffffff;
-  padding: 0 24px;
+  padding: 0 0;
   font-family: 'Pretendard', sans-serif;
   height: calc(100vh - ${theme.spacing.spacing16});
   display: flex;
   flex-direction: column;
+  align-items: center;
 `;
 
 const header = css`
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  width: 90%;
   padding-top: 5%;
   padding-bottom: 5%;
   box-sizing: border-box;
@@ -149,6 +150,7 @@ const shelterName = css`
 
 const starRow = css`
   display: flex;
+  width: 90%;
   gap: 12px;
   font-size: 3.5rem;
   margin-bottom: 2%;
@@ -189,7 +191,7 @@ const emptyStar = css`
 `;
 
 const formBox = css`
-  width: 100%;
+  width: 90%;
   display: flex;
   flex-direction: column;
   flex: 1;

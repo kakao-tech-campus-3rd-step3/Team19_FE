@@ -82,7 +82,15 @@ const WriteReviewPage = () => {
             />
           </label>
         </div>
-        <button css={saveBtn} type="submit">
+        <button
+          css={saveBtn}
+          type="submit"
+          disabled={rating === 0} // 별점이 0일 때 비활성화
+          style={{
+            opacity: rating === 0 ? 0.5 : 1,
+            cursor: rating === 0 ? 'not-allowed' : 'pointer',
+          }}
+        >
           저&nbsp;장
         </button>
       </form>

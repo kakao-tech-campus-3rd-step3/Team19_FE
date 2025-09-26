@@ -79,7 +79,7 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
           if (onUpdateMyLocation) {
             onUpdateMyLocation(location.latitude, location.longitude, true);
           }
-          console.log('TMAP 지도 초기화 완료');
+          attachMapDismissHandlers(mapInstance);
         } else {
           setTimeout(checkMapLoaded, 100);
         }
@@ -112,11 +112,24 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
         console.error('마커 생성 실패:', err);
       }
     });
+  };
 
-    // 지도 클릭 시 선택 해제
-    map.on('click', () => {
-      setSelectedShelter(null);
-    });
+  // 지도 클릭/터치 시 정보창 닫기 핸들러 부착
+  const attachMapDismissHandlers = (map: any) => {
+    if (!map) return;
+
+    // DOM 레벨 보강: getDiv()에 네이티브 이벤트 바인딩 (가장 안정적)
+    try {
+      const container: HTMLElement | null = map.getDiv ? map.getDiv() : null;
+      if (container) {
+        const domDismiss = () => {
+          setSelectedShelter(null);
+        };
+        container.addEventListener('click', domDismiss, { passive: true });
+        container.addEventListener('touchend', domDismiss, { passive: true });
+        container.addEventListener('mousedown', domDismiss, { passive: true });
+      }
+    } catch {}
   };
 
   useEffect(() => {

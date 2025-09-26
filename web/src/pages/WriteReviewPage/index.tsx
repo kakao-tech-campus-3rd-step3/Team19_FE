@@ -4,12 +4,19 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
-import ToastMessage from '../FindSheltersPage/components/ToastMessage'; // 경로에 맞게 import
-import { useEditReview } from './hooks/useEditReview';
+import ToastMessage from '../FindSheltersPage/components/ToastMessage';
+import { useWriteReview } from './hooks/useWriteReview';
+import { useLocation } from 'react-router-dom';
+//import { useParams } from 'react-router-dom';
+//TODO: 저장 후 이동할 때도 /shelter-detail/${shelterId} 등으로 활용할 수 있기 때문에 남겨둠 (필요시 삭제)
 
-const EditReviewPage = () => {
+const WriteReviewPage = () => {
+  const location = useLocation();
+  //const { shelterId } = useParams();
+  // TODO: 저장 후 이동할 때도 /shelter-detail/${shelterId} 등으로 활용할 수 있기 때문에 남겨둠 (필요시 삭제)
+  // URL 파라미터로 shelterId 받기
+  const shelterName = location.state?.shelterName;
   const {
-    review,
     content,
     setContent,
     rating,
@@ -26,19 +33,28 @@ const EditReviewPage = () => {
     handleImageChange,
     handleAddImageClick,
     navigate,
-  } = useEditReview();
-
-  if (!review) return <div>로딩 중...</div>;
+    shelterId,
+  } = useWriteReview();
 
   return (
     <div css={container}>
       <div css={header}>
         <FaRegCommentDots size={36} />
-        <span css={headerTitle}>리뷰 수정</span>
+        <span css={headerTitle}>리뷰 작성</span>
       </div>
-      <div css={shelterName} onClick={() => navigate(`/shelter-detail/${review.shelterId}`)}>
-        {review.name}
-      </div>
+      {/* 쉼터 이름 표시 */}
+      {/*
+        쉼터 이름 클릭 시 상세 정보 페이지로 이동
+      */}
+      {shelterName && (
+        <div
+          css={shelterNameStyle}
+          onClick={() => navigate(`/shelter-detail/${shelterId}`)}
+          style={{ cursor: 'pointer' }}
+        >
+          {shelterName}
+        </div>
+      )}
       <div css={starRow}>
         {Array.from({ length: 5 }).map((_, i) => (
           <span
@@ -59,6 +75,7 @@ const EditReviewPage = () => {
             if (e.target.value.length <= 100) setContent(e.target.value);
           }}
           rows={4}
+          placeholder={`쉼터의 상태, 혼잡도 등의 정보를\n다른 이용자들에게 알려주세요!`}
         />
         <div css={charCount}>{content.length}/100</div>
         <div css={imgRow}>
@@ -78,7 +95,15 @@ const EditReviewPage = () => {
             />
           </label>
         </div>
-        <button css={saveBtn} type="submit">
+        <button
+          css={saveBtn}
+          type="submit"
+          disabled={rating === 0} // 별점이 0일 때 비활성화
+          style={{
+            opacity: rating === 0 ? 0.5 : 1,
+            cursor: rating === 0 ? 'not-allowed' : 'pointer',
+          }}
+        >
           저&nbsp;장
         </button>
       </form>
@@ -103,7 +128,7 @@ const EditReviewPage = () => {
   );
 };
 
-export default EditReviewPage;
+export default WriteReviewPage;
 
 // 스타일
 const container = css`
@@ -131,26 +156,17 @@ const headerTitle = css`
   text-shadow: 2px 2px 6px #bbb;
 `;
 
-const shelterName = css`
+const shelterNameStyle = css`
   ${theme.typography.myr4};
-  margin-bottom: 4%;
-  margin-top: 3%;
-  user-select: none; // 텍스트 선택 방지
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  &:focus,
-  &:active,
-  &:focus-visible {
-    outline: none;
-    background: none;
-    color: inherit;
-    box-shadow: none;
-  }
+  text-align: center;
+  margin-bottom: 16px;
+  margin-top: 8px;
+  font-weight: 700;
 `;
 
 const starRow = css`
-  display: flex;
   width: 90%;
+  display: flex;
   gap: 3%;
   font-size: 3.5rem;
   margin-bottom: 2%;
@@ -208,6 +224,13 @@ const contentBox = css`
   padding: 3% 4%;
   resize: none;
   font-family: inherit;
+
+  &::placeholder {
+    color: #aaa; // 원하는 색상으로 변경
+    font-size: 1.3rem;
+    white-space: pre-line; // 줄바꿈 허용
+    text-align: center; // 가운데 정렬
+  }
 `;
 
 const charCount = css`

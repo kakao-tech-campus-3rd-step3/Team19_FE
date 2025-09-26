@@ -2,6 +2,7 @@
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Review 타입 정의
 interface Review {
@@ -22,6 +23,8 @@ interface ShelterReviewSectionProps {
   visibleCount: number;
   onMore: () => void;
   handleImageError: (e: React.SyntheticEvent<HTMLImageElement>) => void;
+  shelterName: string; // props로 쉼터 이름 받기
+  shelterId: number; // props로 쉼터 id 받기
 }
 
 // 날짜 포맷팅 함수
@@ -39,11 +42,14 @@ const ShelterReviewSection = ({
   visibleCount,
   onMore,
   handleImageError,
+  shelterName, // props로 쉼터 이름 받기
+  shelterId, // props로 쉼터 id 받기
 }: ShelterReviewSectionProps) => {
   const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
 
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
+  const navigate = useNavigate();
 
   // 줄 수 감지 함수
   const checkLineClamp = (reviewId: number) => {
@@ -69,7 +75,12 @@ const ShelterReviewSection = ({
     <section css={reviewSectionStyle}>
       <div css={reviewHeader}>
         <div css={reviewTitle}>리뷰({reviews ? reviews.length : 0})</div>
-        <button css={reviewWriteButton}>리뷰 작성</button>
+        <button
+          css={reviewWriteButton}
+          onClick={() => navigate(`/write-review/${shelterId}`, { state: { shelterName } })}
+        >
+          리뷰 작성
+        </button>
       </div>
 
       {loading ? (

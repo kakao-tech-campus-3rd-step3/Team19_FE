@@ -15,6 +15,7 @@ import WishListPage from './pages/WishListPage';
 import MyReviewPage from './pages/MyReviewPage';
 import EditProfilePage from './pages/EditProfilePage';
 import EditReviewPage from './pages/EditReviewPage';
+import WriteReviewPage from './pages/WriteReviewPage';
 
 const App = () => {
   const location = useLocation();
@@ -47,11 +48,20 @@ const App = () => {
             background: white;
           }
 
+          * {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+
           button,
-          img {
-            outline: none; /* 클릭 시 나타나는 윤곽선 제거 */
-            box-shadow: none; /* 클릭 시 나타나는 그림자 제거 */
-            -webkit-tap-highlight-color: transparent; /* 모바일 클릭 반응 제거 */
+          img,
+          input,
+          textarea,
+          a {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
           }
 
           button:focus,
@@ -94,6 +104,8 @@ const App = () => {
             <Route path="/edit-profile" element={<EditProfilePage />} />
             {/* path="/edit-review/:id": 리뷰 수정 페이지 추가 */}
             <Route path="/edit-review/:id" element={<EditReviewPage />} />
+            {/* path="/write-review": 리뷰 작성 페이지 추가 */}
+            <Route path="/write-review/:shelterId" element={<WriteReviewPage />} />
           </Routes>
         </main>
         <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}

@@ -65,7 +65,7 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
         center: center,
         width: '100%',
         height: '100%',
-        zoom: 17,
+        zoom: 15, // TODO: 반응형 줌 - 인접 쉼터(예: 3개) 좌표를 bounds로 계산해 모두 화면에 보이도록 fitBounds 적용. 사용자의 현재 위치도 포함해 margin(상하좌우) 고려하여 자동 줌/센터 설정할 것.
         zoomControl: true,
         scrollwheel: true,
       });

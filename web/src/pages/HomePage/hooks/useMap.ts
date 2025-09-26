@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
 import myLocationMarker from '@/assets/images/myLocationMarker.png';
-import type { LocationState } from '../../GuidePage/types/tmap';
 
 export const useMap = () => {
   // TMAP SDK 타입으로 변경

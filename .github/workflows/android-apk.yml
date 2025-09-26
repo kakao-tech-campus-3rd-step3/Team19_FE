@@ -35,6 +35,9 @@ jobs:
         with:
           build-root-directory: app
 
+      - name: Ensure gradlew is executable
+        run: chmod +x ./gradlew
+
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
@@ -44,3 +47,19 @@ jobs:
           name: app-debug-apk
           path: app/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+  release-on-tag:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-debug-apk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-debug-apk
+          path: apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apk/*.apk

@@ -151,7 +151,7 @@ const shelterName = css`
 const starRow = css`
   display: flex;
   width: 90%;
-  gap: 12px;
+  gap: 3%;
   font-size: 3.5rem;
   margin-bottom: 2%;
   justify-content: center;

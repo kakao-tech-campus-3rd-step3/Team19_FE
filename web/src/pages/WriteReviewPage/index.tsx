@@ -154,7 +154,7 @@ const shelterNameStyle = css`
 const starRow = css`
   width: 90%;
   display: flex;
-  gap: 12px;
+  gap: 3%;
   font-size: 3.5rem;
   margin-bottom: 2%;
   justify-content: center;

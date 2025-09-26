@@ -5,6 +5,7 @@ import ShelterInfoCard from '@/components/ShelterInfoCard';
 import theme from '@/styles/theme';
 import { typography } from '@/styles/typography';
 import markerImage from '@/assets/images/marker.png';
+import myLocationMarker from '@/assets/images/myLocationMarker.png';
 import type { LocationState, Shelter } from '../../GuidePage/types/tmap';
 
 interface Props {
@@ -76,6 +77,8 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
           mapInstanceRef.current = mapInstance;
           if (onMapReady) onMapReady(mapInstance);
           addShelterMarkers(mapInstance);
+          // 지도 로드 완료 후 내 위치 마커도 즉시 추가
+          addInitialMyLocationMarker(mapInstance, location);
           console.log('TMAP 지도 초기화 완료');
         } else {
           setTimeout(checkMapLoaded, 100);
@@ -114,6 +117,27 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
     map.on('click', () => {
       setSelectedShelter(null);
     });
+  };
+
+  // 초기 내 위치 마커 추가
+  const addInitialMyLocationMarker = (map: any, location: LocationState) => {
+    if (!map || !window.Tmapv3 || !location) return;
+
+    try {
+      console.log('초기 내 위치 마커 추가:', location);
+      const locPosition = new window.Tmapv3.LatLng(location.latitude, location.longitude);
+
+      new window.Tmapv3.Marker({
+        position: locPosition,
+        iconSize: new window.Tmapv3.Size(50, 50),
+        icon: myLocationMarker, // 내 위치 마커 이미지 사용
+        map: map,
+      });
+
+      console.log('초기 내 위치 마커 추가 완료');
+    } catch (err) {
+      console.error('초기 내 위치 마커 생성 실패:', err);
+    }
   };
 
   useEffect(() => {

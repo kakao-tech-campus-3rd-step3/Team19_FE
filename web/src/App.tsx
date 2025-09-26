@@ -48,11 +48,20 @@ const App = () => {
             background: white;
           }
 
+          * {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+
           button,
-          img {
-            outline: none; /* 클릭 시 나타나는 윤곽선 제거 */
-            box-shadow: none; /* 클릭 시 나타나는 그림자 제거 */
-            -webkit-tap-highlight-color: transparent; /* 모바일 클릭 반응 제거 */
+          img,
+          input,
+          textarea,
+          a {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
           }
 
           button:focus,

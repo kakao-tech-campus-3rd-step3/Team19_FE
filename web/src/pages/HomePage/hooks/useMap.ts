@@ -87,6 +87,29 @@ export const useMap = () => {
     mapInstanceRef.current = map;
   };
 
+  const handleInitialLocation = (lat?: number, lng?: number, moveCenter: boolean = true) => {
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      updateMyLocation(lat, lng, moveCenter);
+      return;
+    }
+
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        updateMyLocation(position.coords.latitude, position.coords.longitude, moveCenter);
+      },
+      (error) => {
+        console.warn('초기 위치 획득 실패:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 300000,
+      },
+    );
+  };
+
   // 위치 변경 시 내 위치 갱신 (watchPosition 사용)
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -131,33 +154,12 @@ export const useMap = () => {
 
   // 최초 1회 지도 중심 이동 (MapView에서 이미 마커를 추가하므로 여기서는 중심 이동만)
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // 지도 중심만 이동 (마커는 MapView에서 이미 추가됨)
-          const map = mapInstanceRef.current;
-          if (map && window.Tmapv3) {
-            const locPosition = new window.Tmapv3.LatLng(
-              position.coords.latitude,
-              position.coords.longitude,
-            );
-            map.setCenter(locPosition);
-          }
-        },
-        (error) => {
-          console.warn('초기 위치 획득 실패:', error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 8000,
-          maximumAge: 300000,
-        },
-      );
-    }
+    handleInitialLocation();
   }, []);
 
   return {
     handleMapReady,
     handleMyLocation,
+    handleInitialLocation,
   };
 };

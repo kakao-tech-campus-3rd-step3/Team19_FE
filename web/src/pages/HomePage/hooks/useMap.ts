@@ -66,20 +66,33 @@ export const useMap = () => {
     }
   };
 
-  // 내 위치 버튼 클릭 시
+  // 내 위치 버튼 클릭 시: 이미 표시 중인 내 위치 마커가 있으면 그 좌표로 센터 이동만 수행
+  // 마커가 없거나 초기화 전이면 1회 측위 후 보정
   const handleMyLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          updateMyLocation(position.coords.latitude, position.coords.longitude, true);
-        },
-        () => {
-          alert('위치 정보를 가져올 수 없습니다.');
-        },
-      );
-    } else {
+    const map = mapInstanceRef.current;
+    if (!map || !window.Tmapv3) return;
+
+    try {
+      if (myMarkerRef.current && myMarkerRef.current.getPosition) {
+        const pos = myMarkerRef.current.getPosition();
+        map.setCenter(pos);
+        return;
+      }
+    } catch {}
+
+    if (!navigator.geolocation) {
       alert('이 브라우저에서는 위치 정보가 지원되지 않습니다.');
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        updateMyLocation(position.coords.latitude, position.coords.longitude, true);
+      },
+      () => {
+        alert('위치 정보를 가져올 수 없습니다.');
+      },
+    );
   };
 
   // 지도 준비 완료 시

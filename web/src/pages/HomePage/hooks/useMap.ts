@@ -1,38 +1,31 @@
 import { useRef, useEffect } from 'react';
 import myLocationMarker from '@/assets/images/myLocationMarker.png';
+import type { LocationState } from '../../GuidePage/types/tmap';
 
 export const useMap = () => {
-  // 카카오맵 타입 명확히 지정
-  const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
-  const myMarkerRef = useRef<kakao.maps.Marker | null>(null);
+  // TMAP SDK 타입으로 변경
+  const mapInstanceRef = useRef<any>(null);
+  const myMarkerRef = useRef<any>(null);
   const watchIdRef = useRef<number | null>(null);
 
   // 내 위치 마커 생성 및 갱신 함수
   const updateMyLocation = (lat: number, lng: number, moveCenter = false) => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !window.Tmapv3) return;
 
-    const locPosition = new window.kakao.maps.LatLng(lat, lng);
+    const locPosition = new window.Tmapv3.LatLng(lat, lng);
 
     // 마커가 없으면 새로 생성
     if (!myMarkerRef.current) {
-      const myMarkerImage = new window.kakao.maps.MarkerImage(
-        myLocationMarker,
-        new window.kakao.maps.Size(50, 50),
-        { offset: new window.kakao.maps.Point(25, 50) },
-      );
-      myMarkerRef.current = new window.kakao.maps.Marker({
+      myMarkerRef.current = new window.Tmapv3.Marker({
         position: locPosition,
-        image: myMarkerImage,
+        iconSize: new window.Tmapv3.Size(50, 50),
+        icon: myLocationMarker,
+        map: map,
       });
-      if (myMarkerRef.current) {
-        myMarkerRef.current.setPosition(locPosition);
-      }
     } else {
       // 마커가 있으면 위치만 갱신
-      if (myMarkerRef.current) {
-        myMarkerRef.current.setPosition(locPosition);
-      }
+      myMarkerRef.current.setPosition(locPosition);
     }
 
     if (moveCenter) {
@@ -71,7 +64,7 @@ export const useMap = () => {
       () => {},
       {
         enableHighAccuracy: true,
-        maximumAge: 0,
+        maximumAge: 2000, // 배터리 절약을 위해 약간의 캐싱 허용
         timeout: 10000,
       },
     );

@@ -4,93 +4,161 @@ import { useEffect, useRef, useState } from 'react';
 import ShelterInfoCard from '@/components/ShelterInfoCard';
 import theme from '@/styles/theme';
 import { typography } from '@/styles/typography';
-import marker from '@/assets/images/marker.png';
-
-// Shelter 인터페이스
-interface Shelter {
-  shelterId: number;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  distance: string;
-  isOutdoors: boolean;
-  operatingHours: {
-    weekday: string;
-    weekend: string;
-  };
-  averageRating: number;
-  photoUrl: string;
-}
+import markerImage from '@/assets/images/marker.png';
+import type { LocationState, Shelter } from '../../GuidePage/types/tmap';
 
 interface Props {
-  onMapReady?: (map: kakao.maps.Map) => void;
+  onMapReady?: (map: any) => void;
   shelters?: Shelter[];
 }
 
 const MapView = ({ onMapReady, shelters = [] }: Props) => {
-  const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
+  const [, setCurrentLocation] = useState<LocationState | null>(null);
+
+  // TMAP SDK 준비 대기
+  const waitForTmapSDK = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 50;
+
+      const checkSDK = () => {
+        if (window.Tmapv3 && window.Tmapv3.Map) {
+          console.log('TMAP SDK 준비 완료');
+          resolve(true);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(checkSDK, 100);
+        } else {
+          console.error('TMAP SDK 로드 타임아웃');
+          resolve(false);
+        }
+      };
+
+      checkSDK();
+    });
+  };
+
+  // 지도가 완전히 로드되었는지 확인
+  const isMapFullyLoaded = (mapInstance: any): boolean => {
+    try {
+      return (
+        mapInstance && mapInstance.getZoom && mapInstance.getCenter && mapInstance.getZoom() > 0
+      );
+    } catch (err) {
+      console.warn('지도 상태 확인 중 오류:', err);
+      return false;
+    }
+  };
+
+  // 지도 초기화 함수
+  const initializeMap = async (location: LocationState) => {
+    if (!mapRef.current) return;
+
+    try {
+      const center = new window.Tmapv3.LatLng(location.latitude, location.longitude);
+
+      const mapInstance = new window.Tmapv3.Map(mapRef.current, {
+        center: center,
+        width: '100%',
+        height: '100%',
+        zoom: 17,
+        zoomControl: true,
+        scrollwheel: true,
+      });
+
+      // 지도 로드 완료 대기
+      const checkMapLoaded = () => {
+        if (isMapFullyLoaded(mapInstance)) {
+          mapInstanceRef.current = mapInstance;
+          if (onMapReady) onMapReady(mapInstance);
+          addShelterMarkers(mapInstance);
+          console.log('TMAP 지도 초기화 완료');
+        } else {
+          setTimeout(checkMapLoaded, 100);
+        }
+      };
+
+      setTimeout(checkMapLoaded, 500);
+    } catch (err) {
+      console.error('지도 초기화 실패:', err);
+    }
+  };
+
+  // 쉼터 마커 추가
+  const addShelterMarkers = (map: any) => {
+    if (!map || !window.Tmapv3) return;
+
+    shelters.forEach((shelter) => {
+      try {
+        const shelterMarker = new window.Tmapv3.Marker({
+          position: new window.Tmapv3.LatLng(shelter.latitude, shelter.longitude),
+          iconSize: new window.Tmapv3.Size(24, 35),
+          icon: markerImage, // 이미지 URL 사용
+          map: map,
+        });
+
+        // 마커 클릭 이벤트
+        shelterMarker.on('click', () => {
+          setSelectedShelter(shelter);
+        });
+      } catch (err) {
+        console.error('마커 생성 실패:', err);
+      }
+    });
+
+    // 지도 클릭 시 선택 해제
+    map.on('click', () => {
+      setSelectedShelter(null);
+    });
+  };
 
   useEffect(() => {
-    if (!window.kakao || !window.kakao.maps) return;
+    let isMounted = true;
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPermissionDenied(false);
-        const { latitude, longitude } = pos.coords;
+    const setupMap = async () => {
+      try {
+        if (!isMounted) return;
 
-        window.kakao.maps.load(() => {
-          const container = document.getElementById('map');
-          if (!container) return;
+        // TMAP SDK 준비 대기
+        await waitForTmapSDK();
+        if (!isMounted) return;
 
-          const mapOption = {
-            center: new window.kakao.maps.LatLng(latitude, longitude),
-            level: 3,
-            draggable: true,
-          };
+        // 현재 위치 획득
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            if (!isMounted) return;
 
-          const map = new window.kakao.maps.Map(container, mapOption);
-          mapInstanceRef.current = map;
-          if (onMapReady) onMapReady(map);
+            setPermissionDenied(false);
+            const locationData: LocationState = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+            };
 
-          // 쉼터 마커 이미지 설정
-          const imageSrc = marker;
-          const imageSize = new window.kakao.maps.Size(24, 35);
+            setCurrentLocation(locationData);
+            await initializeMap(locationData);
+          },
+          () => {
+            if (!isMounted) return;
+            setPermissionDenied(true);
+          },
+          { enableHighAccuracy: true, timeout: 10000 },
+        );
+      } catch (err) {
+        console.error('지도 설정 실패:', err);
+      }
+    };
 
-          shelters.forEach((shelter) => {
-            const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
-            const markerPosition = new window.kakao.maps.LatLng(
-              shelter.latitude,
-              shelter.longitude,
-            );
+    setupMap();
 
-            const marker = new window.kakao.maps.Marker({
-              map: map,
-              position: markerPosition,
-              title: shelter.name,
-              image: markerImage,
-            });
-
-            // 마커 클릭 시 해당 쉼터 정보 상태 업데이트
-            window.kakao.maps.event.addListener(marker, 'click', () => {
-              setSelectedShelter(shelter);
-            });
-          });
-
-          // 지도 클릭 시 선택 해제
-          window.kakao.maps.event.addListener(map, 'click', () => {
-            setSelectedShelter(null);
-          });
-        });
-      },
-      () => {
-        setPermissionDenied(true);
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }, [onMapReady, shelters]);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (permissionDenied) {
     return (
@@ -106,7 +174,7 @@ const MapView = ({ onMapReady, shelters = [] }: Props) => {
 
   return (
     <div css={mapStyle}>
-      <div id="map" css={mapCanvas}></div>
+      <div ref={mapRef} css={mapCanvas}></div>
 
       {selectedShelter && (
         <ShelterInfoCard

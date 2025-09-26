@@ -75,6 +75,8 @@ const ShelterDetailPage = () => {
         visibleCount={visibleCount}
         onMore={handleMore}
         handleImageError={handleImageError}
+        shelterName={shelter?.name ?? ''} // 쉼터 이름 추가
+        shelterId={shelter?.shelterId ?? 0} // 쉼터 id 추가
       />
     </div>
   );

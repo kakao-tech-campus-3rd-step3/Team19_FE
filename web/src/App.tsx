@@ -16,6 +16,7 @@ import MyReviewPage from './pages/MyReviewPage';
 import EditProfilePage from './pages/EditProfilePage';
 import EditReviewPage from './pages/EditReviewPage';
 import WriteReviewPage from './pages/WriteReviewPage';
+import ErrorPage from './pages/ErrorPage';
 
 const App = () => {
   const location = useLocation();
@@ -106,6 +107,17 @@ const App = () => {
             <Route path="/edit-review/:id" element={<EditReviewPage />} />
             {/* path="/write-review": 리뷰 작성 페이지 추가 */}
             <Route path="/write-review/:shelterId" element={<WriteReviewPage />} />
+            <Route
+              path="/error"
+              element={
+                <ErrorPage
+                  status={404}
+                  error={'Not Found'}
+                  message={'페이지를 찾을 수 없습니다.'}
+                  path={location.pathname}
+                />
+              }
+            />
           </Routes>
         </main>
         <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}

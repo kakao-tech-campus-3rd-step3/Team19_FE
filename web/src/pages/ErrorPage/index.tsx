@@ -14,11 +14,8 @@ const ErrorPage = ({ status, error, message, path }: ErrorProps) => {
   return (
     <div css={container}>
       <div css={errorBox}>
-        <div css={statusStyle}>
-          {status}
-          <br />
-          {error}
-        </div>
+        <div css={statusStyle}>{status}</div>
+        <div css={errorTextStyle}>{error}</div>
         <div css={messageStyle}>{message}</div>
         <div css={pathStyle}>요청 경로: {path}</div>
       </div>
@@ -53,6 +50,14 @@ const errorBox = css`
 `;
 
 const statusStyle = css`
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #d32f2f;
+  margin-bottom: 8px;
+  line-height: 1.1;
+`;
+
+const errorTextStyle = css`
   font-size: 2rem;
   font-weight: 700;
   color: #d32f2f;
@@ -76,7 +81,7 @@ const homeBtn = css`
   border: none;
   background: #222;
   color: #fff;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 18px;

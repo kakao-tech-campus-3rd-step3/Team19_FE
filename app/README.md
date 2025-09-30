@@ -77,3 +77,22 @@ app/
 - **하이브리드 앱**: WebView를 통한 웹 콘텐츠 표시
 - **무더위쉼터 정보**: 근처 무더위쉼터 검색 및 표시
 - **지도 연동**: 위치 기반 서비스 제공
+
+---
+
+## 🧪 성능 벤치마크 (Macrobenchmark)
+
+본 앱은 실제 서비스 코드와 분리된 테스트 전용 모듈 `app-macrobenchmark`를 통해 콜드 스타트 성능을 측정합니다. 이 모듈은 실제 릴리즈 앱 산출물에 포함되지 않습니다.
+
+### 로컬에서 실행 (에뮬레이터 또는 실기기)
+
+```bash
+cd app
+./gradlew :app-macrobenchmark:connectedCheck
+```
+
+### CI에서 실행 (GitHub Actions)
+
+- PR 생성/업데이트 시 `.github/workflows/android-performance.yml`가 자동 실행됩니다.
+- 워크플로우는 에뮬레이터에서 매크로벤치마크(콜드 스타트)를 수행하고 결과를 아티팩트로 업로드합니다.
+- 결과 다운로드: 해당 PR → Checks → android-performance → Artifacts → `android-perf-results`

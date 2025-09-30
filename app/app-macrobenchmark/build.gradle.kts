@@ -28,10 +28,9 @@ android {
 }
 
 dependencies {
-    // Macrobenchmark & testing deps (hardcoded versions for scaffolding; can be moved to version catalog later)
-    implementation("androidx.benchmark:benchmark-macro-junit4:1.2.4")
-    implementation("androidx.test.uiautomator:uiautomator:2.3.0")
-    implementation("androidx.test.ext:junit:1.1.5")
+    implementation(libs.androidx.benchmark.macro.junit4)
+    implementation(libs.androidx.uiautomator)
+    implementation(libs.androidx.test.ext.junit)
 }
 
 

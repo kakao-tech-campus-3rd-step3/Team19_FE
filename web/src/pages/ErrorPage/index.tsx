@@ -15,7 +15,9 @@ const ErrorPage = ({ status, error, message, path }: ErrorProps) => {
     <div css={container}>
       <div css={errorBox}>
         <div css={statusStyle}>
-          {status} {error}
+          {status}
+          <br />
+          {error}
         </div>
         <div css={messageStyle}>{message}</div>
         <div css={pathStyle}>요청 경로: {path}</div>
@@ -38,7 +40,6 @@ const container = css`
   align-items: center;
   background: #ffffffff;
   position: relative;
-  ovrerflow: hidden;
 `;
 
 const errorBox = css`

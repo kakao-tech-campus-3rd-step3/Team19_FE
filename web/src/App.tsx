@@ -17,6 +17,20 @@ import EditProfilePage from './pages/EditProfilePage';
 import EditReviewPage from './pages/EditReviewPage';
 import WriteReviewPage from './pages/WriteReviewPage';
 import ErrorPage from './pages/ErrorPage';
+import { ErrorBoundary } from 'react-error-boundary';
+import TestErrorPage from './pages/TestErrorPage';
+
+// 에러 발생 시 보여줄 fallback 컴포넌트
+function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
+  return (
+    <ErrorPage
+      status={500}
+      error={'Internal Server Error'}
+      message={error.message}
+      path={window.location.pathname}
+    />
+  );
+}
 
 const App = () => {
   const location = useLocation();
@@ -83,45 +97,60 @@ const App = () => {
           }
         `}
       />
-      <div css={appContainerStyle}>
-        <NavBar />
-        <main>
-          <Routes>
-            {/* path="/": 기본 주소일 때 HomePage를 보여줌 */}
-            <Route path="/" element={<HomePage />} />
-            {/* path="/find-shelters": 주소창에 /find-shelters를 입력하면 FindSheltersPage를 보여줌. */}
-            <Route path="/find-shelters" element={<FindSheltersPage />} />
-            {/* path="/guide": 주소창에 /guide를 입력하면 GuidePage를 보여줌. */}
-            <Route path="/guide" element={<GuidePage />} />
-            {/* path="/shelter-detail/:id": 쉼터 상세 페이지 추가 */}
-            <Route path="/shelter-detail/:id" element={<ShelterDetailPage />} />
-            {/* path="/my-page": 마이페이지 추가 */}
-            <Route path="/mypage" element={<MyPage />} />
-            {/* path="/wishlist": 찜 목록 페이지 라우트 추가 */}
-            <Route path="/wishlist" element={<WishListPage />} />
-            {/* path="/myreviews": 내가 쓴 리뷰 목록 페이지 라우트 추가 */}
-            <Route path="/myreviews" element={<MyReviewPage />} />
-            {/* path="/edit-profile": 프로필 수정 페이지 추가 */}
-            <Route path="/edit-profile" element={<EditProfilePage />} />
-            {/* path="/edit-review/:id": 리뷰 수정 페이지 추가 */}
-            <Route path="/edit-review/:id" element={<EditReviewPage />} />
-            {/* path="/write-review": 리뷰 작성 페이지 추가 */}
-            <Route path="/write-review/:shelterId" element={<WriteReviewPage />} />
-            <Route
-              path="/error"
-              element={
-                <ErrorPage
-                  status={404}
-                  error={'Not Found'}
-                  message={'페이지를 찾을 수 없습니다.'}
-                  path={location.pathname}
-                />
-              }
-            />
-          </Routes>
-        </main>
-        <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
-      </div>
+      <NavBar />
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <div css={appContainerStyle}>
+          <main>
+            <Routes>
+              {/* path="/": 기본 주소일 때 HomePage를 보여줌 */}
+              <Route path="/" element={<HomePage />} />
+              {/* path="/find-shelters": 주소창에 /find-shelters를 입력하면 FindSheltersPage를 보여줌. */}
+              <Route path="/find-shelters" element={<FindSheltersPage />} />
+              {/* path="/guide": 주소창에 /guide를 입력하면 GuidePage를 보여줌. */}
+              <Route path="/guide" element={<GuidePage />} />
+              {/* path="/shelter-detail/:id": 쉼터 상세 페이지 추가 */}
+              <Route path="/shelter-detail/:id" element={<ShelterDetailPage />} />
+              {/* path="/my-page": 마이페이지 추가 */}
+              <Route path="/mypage" element={<MyPage />} />
+              {/* path="/wishlist": 찜 목록 페이지 라우트 추가 */}
+              <Route path="/wishlist" element={<WishListPage />} />
+              {/* path="/myreviews": 내가 쓴 리뷰 목록 페이지 라우트 추가 */}
+              <Route path="/myreviews" element={<MyReviewPage />} />
+              {/* path="/edit-profile": 프로필 수정 페이지 추가 */}
+              <Route path="/edit-profile" element={<EditProfilePage />} />
+              {/* path="/edit-review/:id": 리뷰 수정 페이지 추가 */}
+              <Route path="/edit-review/:id" element={<EditReviewPage />} />
+              {/* path="/write-review/:shelterId": 리뷰 작성 페이지 추가 */}
+              <Route path="/write-review/:shelterId" element={<WriteReviewPage />} />
+              <Route
+                path="/error"
+                element={
+                  <ErrorPage
+                    status={404}
+                    error={'Not Found'}
+                    message={'페이지를 찾을 수 없습니다.'}
+                    path={location.pathname}
+                  />
+                }
+              />
+              <Route path="/test-error" element={<TestErrorPage />} />
+              {/* 404 Not Found 처리 */}
+              <Route
+                path="*"
+                element={
+                  <ErrorPage
+                    status={404}
+                    error={'Not Found'}
+                    message={'페이지를 찾을 수 없습니다.'}
+                    path={location.pathname}
+                  />
+                }
+              />
+            </Routes>
+          </main>
+          <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
+        </div>
+      </ErrorBoundary>
     </>
   );
 };

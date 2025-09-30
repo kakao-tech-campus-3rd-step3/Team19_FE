@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
-import ToastMessage from '../FindSheltersPage/components/ToastMessage';
+import ToastMessage from '../../components/ToastMessage';
 import ShelterDetailInfo from './components/ShelterDetailInfo';
 import ShelterReviewSection from './components/ShelterReviewSection';
 import { useShelterDetail } from './hooks/useShelterDetail';

@@ -4,7 +4,7 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
-import ToastMessage from '../FindSheltersPage/components/ToastMessage'; // 경로에 맞게 import
+import ToastMessage from '../../components/ToastMessage'; // 경로에 맞게 import
 import { useEditReview } from './hooks/useEditReview';
 import { useState } from 'react';
 

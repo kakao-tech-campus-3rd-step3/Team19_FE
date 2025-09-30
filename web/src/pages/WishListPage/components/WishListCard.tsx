@@ -5,7 +5,7 @@ import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { formatOperatingHours } from '@/utils/date';
 import { useState } from 'react';
-import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
+import ToastMessage from '@/components/ToastMessage';
 import { toggleWish } from '@/utils/wishApi';
 
 interface WishShelter {

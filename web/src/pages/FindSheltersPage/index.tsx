@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { nearbyShelters } from '@/mock/nearbyShelters';
 import ShelterList from './components/ShelterList';
 import BottomControls from './components/BottomControls';
-import ToastMessage from './components/ToastMessage';
+import ToastMessage from '../../components/ToastMessage';
 import { useShelters } from './hooks/useShelters';
 import emptyShelterImage from '@/assets/images/empty-shelter.png';
 import theme from '@/styles/theme';

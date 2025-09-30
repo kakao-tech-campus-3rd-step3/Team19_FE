@@ -6,7 +6,7 @@ import emptyReviewImg from '@/assets/images/empty-review.png';
 import theme from '@/styles/theme';
 import ReviewListCard from './components/ReviewListCard';
 import { useState, useEffect } from 'react';
-import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
+import ToastMessage from '@/components/ToastMessage';
 
 // API 명세에 맞는 타입 정의
 interface MyReview {

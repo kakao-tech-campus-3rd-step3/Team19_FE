@@ -4,7 +4,7 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
-import ToastMessage from '../FindSheltersPage/components/ToastMessage';
+import ToastMessage from '../../components/ToastMessage';
 import { useWriteReview } from './hooks/useWriteReview';
 import { useLocation } from 'react-router-dom';
 //import { useParams } from 'react-router-dom';

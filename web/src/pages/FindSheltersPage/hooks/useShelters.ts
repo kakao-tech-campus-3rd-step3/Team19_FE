@@ -1,67 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+//import { useQuery } from '@tanstack/react-query';
+//import { getNearbyShelters } from '@/api/shelterApi';
+// TODO: 추후 삭제 필요 - 개발 중 목데이터 import
 import { nearbyShelters } from '@/mock/nearbyShelters';
-import { toggleWish } from '@/utils/wishApi';
 
-const ITEMS_PER_PAGE = 3;
+export function useShelters() {
+  // TODO: 실제 위치 정보 연동 시 아래 값 변경
+  //const [latitude] = useState(37.5665);
+  //const [longitude] = useState(126.978);
 
-export const useShelters = () => {
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([2]);
-  const [toastMessage, setToastMessage] = useState<string>('');
-  const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
-  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  // TODO: 추후 삭제 필요 - 개발 중 목데이터 사용
+  const [shelters, _setShelters] = useState(nearbyShelters);
 
-  const hasMoreItems = visibleCount < nearbyShelters.length;
+  // TODO: react-query로 쉼터 데이터 가져오기 (API 연동 시 사용)
+  /*
+  const {
+    data: shelters = [],
+    error,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['nearbyShelters', latitude, longitude],
+    queryFn: () => getNearbyShelters({ latitude, longitude }),
+    retry: 1,
+  });
+  */
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 0) {
-        setShowScrollToTop(true);
-      } else {
-        setShowScrollToTop(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // 더보기: 3개씩 보여주기
+  const [visibleCount, setVisibleCount] = useState(3); // 초기값 3으로 변경
 
-  // wishApi를 활용한 찜 버튼 클릭 핸들러
-  // TODO: userId는 실제 서비스에서는 인증 정보에서 받아야 함
-  const handleToggleFavorite = async (shelterId: number, userId: number = 1) => {
-    const isAlreadyFavorite = favoriteIds.includes(shelterId);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+  const [toastMessage, setToastMessage] = useState('');
 
-    const result = await toggleWish({
-      shelterId,
-      userId,
-      isFavorite: isAlreadyFavorite,
-    });
-
-    if (result.success) {
-      if (isAlreadyFavorite) {
-        setFavoriteIds((prev) => prev.filter((id) => id !== shelterId));
-      } else {
-        setFavoriteIds((prev) => [...prev, shelterId]);
-      }
-    }
-    setToastMessage(result.message);
-    setTimeout(() => setToastMessage(''), 2000);
+  const handleToggleFavorite = (shelterId: number) => {
+    setFavoriteIds((prev) =>
+      prev.includes(shelterId) ? prev.filter((id) => id !== shelterId) : [...prev, shelterId],
+    );
+    setToastMessage('찜 목록이 변경되었습니다.');
+    setTimeout(() => setToastMessage(''), 1500);
   };
 
   const handleLoadMore = () => {
-    setVisibleCount((prevCount) => prevCount + ITEMS_PER_PAGE);
+    setVisibleCount((prev) => prev + 3); // 3개씩 증가
   };
 
-  const handleScrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const hasMoreItems = shelters.length > visibleCount;
+
+  // TODO: 추후 삭제 필요 - 목데이터 사용 시 isLoading, error는 false/undefined로 처리
+  const isLoading = false;
+  const error = undefined;
 
   return {
+    shelters: shelters.slice(0, visibleCount),
     favoriteIds,
     toastMessage,
     visibleCount,
-    showScrollToTop,
     hasMoreItems,
     handleToggleFavorite,
     handleLoadMore,
-    handleScrollToTop,
+    isLoading,
+    error,
+    // refetch: () => {}, // 필요시 목함수
   };
-};
+}

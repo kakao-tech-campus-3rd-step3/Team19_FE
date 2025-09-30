@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { nearbyShelters } from '@/mock/nearbyShelters';
 import ShelterList from './components/ShelterList';
 import BottomControls from './components/BottomControls';
 import ToastMessage from '../../components/ToastMessage';
@@ -10,15 +9,30 @@ import theme from '@/styles/theme';
 
 const FindSheltersPage = () => {
   const {
+    shelters,
     favoriteIds,
     toastMessage,
-    visibleCount,
+    // TODO: 추후 무한 스크롤 구현 시 사용
+    // visibleCount,
     hasMoreItems,
     handleToggleFavorite,
     handleLoadMore,
+    isLoading,
+    error,
   } = useShelters();
 
-  const shelters = nearbyShelters.slice(0, visibleCount);
+  if (isLoading) {
+    return <div css={emptyStateStyle}>쉼터 정보를 불러오는 중입니다...</div>;
+  }
+
+  if (error) {
+    // TODO: 실제 에러 메시지 및 에러 페이지로 대체 가능
+    return (
+      <div css={emptyStateStyle}>
+        <p css={emptyTextStyle}>쉼터 정보를 불러오지 못했습니다.</p>
+      </div>
+    );
+  }
 
   return (
     <>

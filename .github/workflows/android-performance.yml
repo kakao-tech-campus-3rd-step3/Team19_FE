@@ -2,6 +2,13 @@ name: android-performance
 
 on:
   pull_request:
+    branches: [main, develop]
+    paths:
+      - "app/**"
+      - "app-macrobenchmark/**"
+      - ".github/workflows/android-performance.yml"
+  push:
+    branches: [main, develop]
     paths:
       - "app/**"
       - "app-macrobenchmark/**"

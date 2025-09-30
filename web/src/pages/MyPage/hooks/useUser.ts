@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getUserProfile } from '@/api/userApi';
 
 // 사용자 조회 API 응답 타입
 export interface UserResponse {
@@ -9,22 +10,16 @@ export interface UserResponse {
 }
 
 export const useUser = (userId: number) => {
-  const [user, setUser] = useState<UserResponse | null>(null);
+  // react-query로 사용자 정보 조회 및 에러 처리
+  const {
+    data: user,
+    error,
+    isLoading,
+  } = useQuery<UserResponse>({
+    queryKey: ['userProfile', userId],
+    queryFn: () => getUserProfile(userId),
+    retry: 1,
+  });
 
-  useEffect(() => {
-    fetch(`/api/users/${userId}`)
-      .then((res) => res.json())
-      // TODO: https://github.com/kakao-tech-campus-3rd-step3/Team19_FE/pull/40#discussion_r2347400930
-      .then((data) => setUser(data))
-      .catch(() => {
-        setUser({
-          userId,
-          email: '',
-          nickname: '사용자',
-          profileImageUrl: '/assets/images/app-logo.png',
-        });
-      });
-  }, [userId]);
-
-  return user;
+  return { user, error, isLoading };
 };

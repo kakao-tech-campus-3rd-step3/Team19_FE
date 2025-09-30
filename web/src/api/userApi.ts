@@ -1,4 +1,4 @@
-//EditProfilePage에서 사용된 api 함수들
+//EditProfilePage, MyPage에서 사용된 api 함수들
 
 // 내 정보 조회
 export async function getMyProfile() {

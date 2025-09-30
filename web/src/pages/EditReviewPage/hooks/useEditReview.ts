@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
+
+// TODO: 실제 API 연동 시 아래 import 사용
+// import { getReview, patchReview } from '@/api/reviewApi';
 
 const mockReview = {
   reviewId: 101,
@@ -26,17 +30,34 @@ export const useEditReview = () => {
   const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => () => {});
   const [onModalCancel, setOnModalCancel] = useState<() => void>(() => () => {});
   const [toastMessage, setToastMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   // 리뷰 단건 조회 (목데이터)
   useEffect(() => {
-    // TODO: 실제 API 연동 시 fetch(`/api/reviews/${id}`)로 변경
     setReview(mockReview);
     setContent(mockReview.content);
     setRating(mockReview.rating);
     setPhotoUrl(mockReview.photoUrl || '');
     setShowImage(!!mockReview.photoUrl);
   }, [id]);
+
+  // TODO: 실제 API 연동 시 아래 코드로 교체
+  /*
+  useEffect(() => {
+    async function fetchReview() {
+      const data = await getReview(Number(id));
+      if (data) {
+        setReview(data);
+        setContent(data.content);
+        setRating(data.rating);
+        setPhotoUrl(data.photoUrl || '');
+        setShowImage(!!data.photoUrl);
+      }
+    }
+    fetchReview();
+  }, [id]);
+  */
 
   // 별점 클릭 핸들러
   const handleStarClick = (idx: number) => {
@@ -52,41 +73,30 @@ export const useEditReview = () => {
     setShowModal(true);
   };
 
+  // TODO: 실제 API 연동 시 useMutation 사용
+  const patchReviewMutation = useMutation({
+    // TODO: api 연동 시 params 파라미터 추가('_' 제거)
+    mutationFn: async (_params: { reviewId: number; content: string }) => {
+      // TODO: 실제 연동 시 patchReview(reviewId, { content, ... }) 사용
+      // await patchReview(params.reviewId, { content: params.content });
+      // 개발 중에는 성공만 반환
+      return Promise.resolve();
+    },
+    onError: (error: any) => {
+      setErrorMessage(error?.message || '리뷰 수정 중 오류가 발생했습니다.');
+    },
+    onSuccess: () => {
+      // 성공 시 이동
+      navigate('/myreviews');
+    },
+  });
+
   // 저장 모달에서 "예" 클릭 시
   const handleSaveConfirm = async () => {
     setShowModal(false);
 
-    // TODO: 실제 API 연동 시 아래 fetch 코드 사용
-    /*
-    await fetch(`/api/reviews/${review?.reviewId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`, // JWT 토큰 필요시
-      },
-      body: JSON.stringify({
-        content,
-        // rating,
-        // photoUrl,
-      }),
-    });
-    */
-
-    // 목데이터로 동작: 리뷰 상태를 임시로 업데이트
-    setReview((prev) =>
-      prev
-        ? {
-            ...prev,
-            content,
-            // rating,
-            // photoUrl,
-            updatedAt: new Date().toISOString(),
-          }
-        : prev,
-    );
-
-    // 저장 후 내가 쓴 리뷰 목록 페이지로 이동
-    navigate('/myreviews');
+    // TODO: 실제 API 연동 시 아래 코드로 교체
+    patchReviewMutation.mutate({ reviewId: Number(id), content });
   };
 
   // 사진 삭제 버튼 클릭
@@ -147,6 +157,8 @@ export const useEditReview = () => {
     setOnModalCancel,
     toastMessage,
     setToastMessage,
+    errorMessage,
+    patchReviewMutation,
     handleStarClick,
     handleSave,
     handleSaveConfirm,

@@ -17,14 +17,6 @@ android {
     // This module tests the :app module without being bundled into the release APK.
     targetProjectPath = ":app"
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-        }
-        debug {
-            isDebuggable = true
-        }
-    }
 }
 
 dependencies {

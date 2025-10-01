@@ -18,7 +18,7 @@ export async function getNearbyShelters(
   );
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || '쉼터 정보를 불러오지 못했습니다.');
+    throw errorData; // 에러 페이지로 이동하기 위함
   }
   return res.json();
   */
@@ -48,7 +48,7 @@ export async function getShelterDetail(
   const res = await fetch(`/api/shelters/${shelterId}${query}`);
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || '쉼터 상세 정보를 불러오지 못했습니다.');
+    throw errorData; // 에러 페이지로 이동하기 위함
   }
   return res.json();
   */
@@ -84,8 +84,7 @@ export async function getShelterReviews(_shelterId: number) {
   const res = await fetch(`/api/shelters/${shelterId}/reviews`);
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || '쉼터 리뷰를 불러오지 못했습니다.');
-  }
+    throw errorData; // 에러 페이지로 이동하기 위함
   return res.json();
   */
   // 개발 중 목데이터 반환, TODO: 실제 API 연동 시 삭제

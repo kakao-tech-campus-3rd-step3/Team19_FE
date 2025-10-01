@@ -30,8 +30,8 @@ export async function getWishList(_userId: number) {
   const res = await fetch(`/api/users/${userId}/wishes`);
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || '찜 목록을 불러오지 못했습니다.');
-  }
+    throw errorData; // 에러 페이지로 이동하기 위함
+    }
   return res.json();
   */
   // 개발 중 목데이터

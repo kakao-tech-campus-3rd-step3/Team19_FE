@@ -5,7 +5,7 @@ export async function getMyProfile() {
   const res = await fetch('/api/users/me');
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.message || '내 정보를 불러오지 못했습니다.');
+    throw errorData; // 에러 페이지로 이동하기 위함
   }
   return res.json();
 }

@@ -23,6 +23,8 @@ const ShelterDetailPage = () => {
     handleMore,
     onGuideStart,
     setIsFavorite,
+    shelterError,
+    reviewsError,
   } = useShelterDetail(id);
 
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
@@ -53,6 +55,12 @@ const ShelterDetailPage = () => {
   if (isLoading) {
     return <div>로딩 중...</div>;
   }
+  if (shelterError) {
+    return <div>쉼터 정보를 불러오지 못했습니다.</div>;
+  }
+  if (reviewsError) {
+    return <div>리뷰 정보를 불러오지 못했습니다.</div>;
+  }
 
   return (
     <div css={container}>
@@ -75,8 +83,8 @@ const ShelterDetailPage = () => {
         visibleCount={visibleCount}
         onMore={handleMore}
         handleImageError={handleImageError}
-        shelterName={shelter?.name ?? ''} // 쉼터 이름 추가
-        shelterId={shelter?.shelterId ?? 0} // 쉼터 id 추가
+        shelterName={shelter?.name ?? ''}
+        shelterId={shelter?.shelterId ?? 0}
       />
     </div>
   );

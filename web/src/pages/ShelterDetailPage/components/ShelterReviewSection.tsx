@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NoProfile from '@/assets/images/NoProfile.png'; // 추가
 
 // Review 타입 정의
 interface Review {
@@ -11,8 +12,8 @@ interface Review {
   nickname: string;
   rating: number;
   content: string;
-  photoUrl: string;
-  userProfileUrl: string;
+  photoUrl: string | null;
+  profileImageUrl: string;
   createdAt: string;
 }
 
@@ -42,14 +43,17 @@ const ShelterReviewSection = ({
   visibleCount,
   onMore,
   handleImageError,
-  shelterName, // props로 쉼터 이름 받기
-  shelterId, // props로 쉼터 id 받기
+  shelterName,
+  shelterId,
 }: ShelterReviewSectionProps) => {
   const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
 
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
   const navigate = useNavigate();
+
+  // 프로필 이미지 에러 핸들링용 state
+  const [profileImgErrorMap, setProfileImgErrorMap] = useState<{ [reviewId: number]: boolean }>({});
 
   // 줄 수 감지 함수
   const checkLineClamp = (reviewId: number) => {
@@ -91,15 +95,22 @@ const ShelterReviewSection = ({
             <article css={reviewCardStyle} key={r.reviewId}>
               <div css={reviewLeft}>
                 <div css={avatarRow}>
-                  {r.userProfileUrl ? (
+                  {r.profileImageUrl &&
+                  r.profileImageUrl !== '' &&
+                  !profileImgErrorMap[r.reviewId] ? (
                     <img
-                      src={r.userProfileUrl}
+                      src={r.profileImageUrl}
                       alt={r.nickname}
                       css={avatarImgStyle}
-                      onError={handleImageError}
+                      onError={() =>
+                        setProfileImgErrorMap((prev) => ({
+                          ...prev,
+                          [r.reviewId]: true,
+                        }))
+                      }
                     />
                   ) : (
-                    <div css={avatarStyle}>{(r.nickname && r.nickname.charAt(0)) || '유'}</div>
+                    <img src={NoProfile} alt="NoProfile" css={avatarImgStyle} />
                   )}
                   <div css={avatarInfoCol}>
                     <span css={reviewNickname}>{r.nickname}</span>
@@ -256,20 +267,6 @@ const avatarInfoCol = css`
   gap: 2px;
 `;
 
-const avatarStyle = css`
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: ${theme.colors.text.gray500};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  ${theme.typography.detail2};
-  font-size: 25px;
-  font-weight: 700;
-`;
-
 const avatarImgStyle = css`
   width: 50px;
   height: 50px;
@@ -317,7 +314,7 @@ const reviewMeta = css`
 `;
 
 const reviewPhoto = css`
-  width: 40%;
+  width: 35%;
   max-width: 180px;
   height: auto;
   border-radius: 8px;

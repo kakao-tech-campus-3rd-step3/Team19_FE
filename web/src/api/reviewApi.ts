@@ -1,3 +1,5 @@
+// EditReviewPage, MyReviewPage에서 사용하는 API 함수들
+
 // 리뷰 단건 조회
 // TODO: api 연동 시 reviewId 파라미터 추가('_' 제거)
 export async function getReview(_reviewId: number) {
@@ -73,19 +75,18 @@ export async function patchReview(
   */
 }
 
-// 리뷰 삭제
-// TODO: api 연동 시 reviewId 파라미터 추가('_' 제거)
-export async function deleteReview(_reviewId: number) {
-  // 실제 API 연동 전에는 빈 Promise 반환
-  return Promise.resolve();
-  /* TODO: 실제 연동 시 아래 주석 코드 사용
+// 리뷰 삭제 API
+export async function deleteReview(reviewId: number) {
   const res = await fetch(`/api/reviews/${reviewId}`, {
     method: 'DELETE',
   });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || '리뷰 삭제에 실패했습니다.');
+  if (!res.ok && res.status !== 204) {
+    let errorMsg = '리뷰 삭제에 실패했습니다.';
+    try {
+      const errorData = await res.json();
+      errorMsg = errorData.message || errorMsg;
+    } catch {}
+    throw new Error(errorMsg);
   }
   return;
-  */
 }

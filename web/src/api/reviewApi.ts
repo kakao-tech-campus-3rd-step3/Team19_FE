@@ -1,11 +1,10 @@
 // EditReviewPage, MyReviewPage에서 사용하는 API 함수들
 
 // 리뷰 단건 조회
-// TODO: api 연동 시 reviewId 파라미터 추가('_' 제거)
+// TODO: 실제 API 연동 시 reviewId 사용
 export async function getReview(_reviewId: number) {
-  // 실제 API 연동 전에는 빈 Promise 또는 목데이터 반환
-  return Promise.resolve(null);
-  /* TODO: 실제 연동 시 아래 주석 코드 사용
+  // TODO: 실제 API 연동 시 아래 주석 해제
+  /*
   const res = await fetch(`/api/reviews/${reviewId}`);
   if (!res.ok) {
     const errorData = await res.json();
@@ -13,13 +12,25 @@ export async function getReview(_reviewId: number) {
   }
   return res.json();
   */
+  // 개발 중 목데이터
+  return Promise.resolve({
+    reviewId: 101,
+    shelterId: 1,
+    userId: 1,
+    content: '에어컨도 잘 나오고 깨끗했어요',
+    rating: 5,
+    photoUrl: 'https://example.com/review1.jpg',
+    profileImageUrl: 'https://example.com/users/1.jpg',
+    createdAt: '2025-08-19T09:00:00Z',
+    updatedAt: '2025-08-19T09:00:00Z',
+  });
 }
 
 // 리뷰 작성
 export async function postReview(
-  //TODO: api 연동 시 shelterId 파라미터 추가
-  //shelterId: number,
+  shelterId: number,
   {
+    // TODO: 실제 api 연동 시 주석 삭제
     //content,
     //rating,
     //photoUrl,
@@ -29,9 +40,8 @@ export async function postReview(
     photoUrl?: string;
   },
 ) {
-  // 실제 API 연동 전에는 빈 Promise 반환
-  return Promise.resolve();
-  /* TODO: 실제 연동 시 아래 주석 코드 사용
+  // TODO: 실제 API 연동 시 아래 주석 해제
+  /*
   const res = await fetch(`/api/shelters/${shelterId}/reviews`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,25 +53,31 @@ export async function postReview(
   }
   return res.json();
   */
+  // 개발 중 목데이터
+  return Promise.resolve({
+    reviewId: 103,
+    shelterId,
+    userId: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 // 리뷰 수정
 export async function patchReview(
-  //TODO: api 연동 시 reviewId 파라미터 추가
-  //reviewId: number,
+  reviewId: number,
   {
-    //content,
-    //rating,
-    //photoUrl,
+    content,
+    rating,
+    photoUrl,
   }: {
     content: string;
     rating?: number;
     photoUrl?: string;
   },
 ) {
-  // 실제 API 연동 전에는 빈 Promise 반환
-  return Promise.resolve();
-  /* TODO: 실제 연동 시 아래 주석 코드 사용
+  // TODO: 실제 API 연동 시 아래 주석 해제
+  /*
   const res = await fetch(`/api/reviews/${reviewId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -73,14 +89,27 @@ export async function patchReview(
   }
   return res.json();
   */
+  // 개발 중 목데이터
+  return Promise.resolve({
+    reviewId,
+    shelterId: 1,
+    content,
+    rating: rating ?? 5,
+    photoUrl: photoUrl ?? 'https://example.com/review1.jpg',
+    createdAt: '2025-08-19T09:00:00Z',
+    updatedAt: new Date().toISOString(),
+  });
 }
 
-// 리뷰 삭제 API
-export async function deleteReview(reviewId: number) {
+// 리뷰 삭제
+// TODO: 실제 API 연동 시 reviewId 사용
+export async function deleteReview(_reviewId: number) {
+  // TODO: 실제 API 연동 시 아래 주석 해제
+  /*
   const res = await fetch(`/api/reviews/${reviewId}`, {
     method: 'DELETE',
   });
-  if (!res.ok && res.status !== 204) {
+  if (res.status !== 204) {
     let errorMsg = '리뷰 삭제에 실패했습니다.';
     try {
       const errorData = await res.json();
@@ -89,4 +118,7 @@ export async function deleteReview(reviewId: number) {
     throw new Error(errorMsg);
   }
   return;
+  */
+  // 개발 중 목데이터
+  return Promise.resolve();
 }

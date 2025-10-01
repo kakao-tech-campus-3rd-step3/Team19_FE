@@ -1,9 +1,22 @@
 /** @jsxImportSource @emotion/react */
 import theme from '@/styles/theme';
 import { css } from '@emotion/react';
+import { useEffect, useState } from 'react';
 
 const ToastMessage = ({ message }: { message: string }) => {
-  if (!message) return null;
+  const [show, setShow] = useState(!!message);
+
+  useEffect(() => {
+    if (message) {
+      setShow(true);
+      const timer = setTimeout(() => setShow(false), 2000); // 2초 뒤 사라짐
+      return () => clearTimeout(timer);
+    } else {
+      setShow(false);
+    }
+  }, [message]);
+
+  if (!show) return null;
 
   return <div css={toastStyle}>{message}</div>;
 };

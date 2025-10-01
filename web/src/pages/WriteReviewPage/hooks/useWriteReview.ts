@@ -63,7 +63,6 @@ export const useWriteReview = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (showImage && photoUrl) {
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
       e.target.value = ''; //input value 초기화 (중복 선택 가능)
       return;
     }
@@ -80,7 +79,6 @@ export const useWriteReview = () => {
     if (showImage && photoUrl) {
       e.preventDefault();
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
     }
   };
 

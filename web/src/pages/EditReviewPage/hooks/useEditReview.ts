@@ -115,7 +115,6 @@ export const useEditReview = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (showImage && photoUrl) {
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
       e.target.value = ''; //input value 초기화 (중복 선택 가능)
 
       return;
@@ -133,7 +132,6 @@ export const useEditReview = () => {
     if (showImage && photoUrl) {
       e.preventDefault(); // 파일 선택창이 뜨지 않도록 막음
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
     }
   };
 

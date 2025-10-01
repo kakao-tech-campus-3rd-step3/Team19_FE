@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import emptyReviewImg from '@/assets/images/empty-review.png';
 import theme from '@/styles/theme';
 import ReviewListCard from './components/ReviewListCard';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ToastMessage from '@/components/ToastMessage';
 
 // API 명세에 맞는 타입 정의
@@ -56,14 +56,6 @@ const MyReviewPage = () => {
   const navigate = useNavigate();
 
   const [toastMessage, setToastMessage] = useState('');
-
-  // ✅ 2초 후 토스트 메시지 자동 사라짐
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => setToastMessage(''), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
 
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);

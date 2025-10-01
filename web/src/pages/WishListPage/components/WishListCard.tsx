@@ -6,7 +6,8 @@ import theme from '@/styles/theme';
 import { formatOperatingHours } from '@/utils/date';
 import { useState } from 'react';
 import ToastMessage from '@/components/ToastMessage';
-import { toggleWish } from '@/utils/wishApi';
+import { useMutation } from '@tanstack/react-query';
+import { addWish, deleteWish } from '@/api/wishApi';
 
 interface WishShelter {
   shelterId: number;
@@ -21,45 +22,57 @@ interface WishShelter {
 interface WishListCardProps {
   item: WishShelter;
   onClick: (shelterId: number) => void;
+  userId: number;
+  refetchWishList: () => void;
 }
 
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-const WishListCard = ({ item, onClick }: WishListCardProps) => {
+const WishListCard = ({ item, onClick, userId, refetchWishList }: WishListCardProps) => {
   const [isFavorite, setIsFavorite] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const handleHeartClick = async (e: React.MouseEvent) => {
+  // 찜 삭제 mutation
+  const deleteWishMutation = useMutation({
+    mutationFn: () => deleteWish({ userId, shelterId: item.shelterId }),
+    onSuccess: () => {
+      setIsFavorite(false);
+      setToastMessage('찜 목록에서\n삭제되었습니다');
+      refetchWishList();
+    },
+    onError: () => {
+      setToastMessage('삭제에 실패했습니다');
+    },
+  });
+
+  // 찜 추가 mutation
+  const addWishMutation = useMutation({
+    mutationFn: () => addWish({ userId, shelterId: item.shelterId }),
+    onSuccess: () => {
+      setIsFavorite(true);
+      setToastMessage('찜 목록에\n추가되었습니다');
+      refetchWishList();
+    },
+    onError: () => {
+      setToastMessage('추가에 실패했습니다');
+    },
+  });
+
+  const handleHeartClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isFavorite) {
       setShowModal(true);
     } else {
-      // wishApi를 사용해 찜 추가
-      const result = await toggleWish({
-        shelterId: item.shelterId,
-        userId: 1, // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
-        isFavorite: false,
-      });
-      if (result.success) setIsFavorite(true);
-      setToastMessage(result.message);
-      setTimeout(() => setToastMessage(''), 2000);
+      addWishMutation.mutate();
     }
   };
 
-  const handleConfirm = async (e: React.MouseEvent) => {
+  const handleConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // wishApi를 사용해 찜 삭제
-    const result = await toggleWish({
-      shelterId: item.shelterId,
-      userId: 1,
-      isFavorite: true,
-    });
-    if (result.success) setIsFavorite(false);
-    setToastMessage(result.message);
-    setTimeout(() => setToastMessage(''), 2000);
+    deleteWishMutation.mutate();
     setShowModal(false);
   };
 

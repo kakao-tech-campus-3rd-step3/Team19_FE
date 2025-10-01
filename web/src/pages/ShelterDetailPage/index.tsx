@@ -6,7 +6,7 @@ import ToastMessage from '../../components/ToastMessage';
 import ShelterDetailInfo from './components/ShelterDetailInfo';
 import ShelterReviewSection from './components/ShelterReviewSection';
 import { useShelterDetail } from './hooks/useShelterDetail';
-import { toggleWish } from '@/utils/wishApi';
+import { toggleWish } from '@/api/wishApi';
 
 const ShelterDetailPage = () => {
   const { id } = useParams();

@@ -2,50 +2,37 @@
 import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getWishList } from '@/api/wishApi';
 import emptyWishImg from '@/assets/images/empty-wish.png';
 import theme from '@/styles/theme';
 import WishListCard from './components/WishListCard';
 
-// API 명세에 맞는 타입 정의
-interface WishShelter {
-  shelterId: number;
-  name: string;
-  address: string;
-  operatingHours: string;
-  averageRating: number;
-  photoUrl: string;
-  distance: string;
-}
-
-// 목데이터 (API 응답 형태와 동일)
-const mockWishList: WishShelter[] = [
-  {
-    shelterId: 1,
-    name: '종로 무더위 쉼터',
-    address: '서울 종로구 세종대로 175',
-    operatingHours: '09:00~18:00',
-    averageRating: 4.5,
-    photoUrl: 'https://example.com/shelter1.jpg',
-    distance: '250m',
-  },
-  {
-    shelterId: 2,
-    name: '강남 무더위 쉼터',
-    address: '서울 강남구 테헤란로 123',
-    operatingHours: '09:00~18:00',
-    averageRating: 4.2,
-    photoUrl: '',
-    distance: '1.2km',
-  },
-];
-
 const WishListPage = () => {
-  const wishList = mockWishList; // TODO: 추후 API 연결 시 변경
+  const userId = 1; // TODO: 실제 로그인 정보로 교체
+  const {
+    data: wishList = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['wishList', userId],
+    queryFn: () => getWishList(userId),
+    retry: 1,
+  });
   const navigate = useNavigate();
 
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);
   };
+
+  if (isLoading) return <div css={pageContainerStyle}>로딩 중...</div>;
+  if (error)
+    return (
+      <div css={pageContainerStyle}>
+        <div css={emptyText}>찜 목록을 불러오지 못했습니다.</div>
+      </div>
+    );
 
   return (
     <>
@@ -58,7 +45,13 @@ const WishListPage = () => {
           </div>
           <div css={listBox}>
             {wishList.map((item) => (
-              <WishListCard key={item.shelterId} item={item} onClick={handleCardClick} />
+              <WishListCard
+                key={item.shelterId}
+                item={item}
+                onClick={handleCardClick}
+                userId={userId}
+                refetchWishList={refetch}
+              />
             ))}
           </div>
         </div>

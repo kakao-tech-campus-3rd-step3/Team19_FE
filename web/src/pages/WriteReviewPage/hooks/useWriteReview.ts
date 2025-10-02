@@ -18,6 +18,24 @@ export const useWriteReview = () => {
 
   // 리뷰 작성 mutation
   const { mutate: writeReviewMutate, isPending } = useMutation({
+    // TODO: 실제 API 연동 시 shelterId 유효성 검사 코드 추가
+    /*
+    mutationFn: () => {
+      const id = Number(shelterId);
+      if (!shelterId || isNaN(id)) {
+        setToastMessage('유효하지 않은 쉼터 ID입니다.');
+        return Promise.reject(new Error('Invalid shelterId'));
+      }
+      return postReview(id, { content, rating, photoUrl });
+    },
+    onSuccess: () => {
+      if (!shelterId) {
+        setToastMessage('유효하지 않은 쉼터 ID입니다.');
+        return;
+      }
+      navigate('/shelter-detail/' + shelterId);
+    },
+    */
     mutationFn: () => postReview(Number(shelterId), { content, rating, photoUrl }),
     onSuccess: () => {
       navigate('/shelter-detail/' + shelterId);

@@ -130,6 +130,55 @@ export const typography = {
     lineHeight: '2.84vh',
   },
 
+  //내가 쓴 리뷰 페이지 (MyReviewPage) & 리뷰 수정 페이지 (EditReviewPage)
+  myr1: {
+    fontSize: '4.5vh', // "내가 쓴 리뷰" 타이틀
+    fontWeight: 700,
+    lineHeight: '6vh',
+  },
+  myr2: {
+    fontSize: '2.8vh', // 내가 쓴 리뷰 내 쉼터 이름
+    fontWeight: 800,
+    lineHeight: '3.2vh',
+  },
+  myr3: {
+    fontSize: '2.26vh', // 내가 쓴 리뷰 내 거리, 운영시간
+    fontWeight: 550,
+    lineHeight: '2.84vh',
+  },
+  myr4: {
+    fontSize: '3.8vh', // 리뷰 수정 페이지 내 쉼터 이름
+    fontWeight: 600,
+    lineHeight: '4.2vh',
+  },
+  myr5: {
+    fontSize: '2.8vh', // 리뷰 수정 페이지 내 리뷰 내용
+    fontWeight: 500,
+    lineHeight: '3.39vh',
+  },
+
+  //프로필 수정 페이지 (EditProfilePage)
+  edit1: {
+    fontSize: '4.5vh', // "프로필 수정" 타이틀
+    fontWeight: 700,
+    lineHeight: '6vh',
+  },
+  edit2: {
+    fontSize: '2.8vh', // 라벨 (이름, 이메일)
+    fontWeight: 600,
+    lineHeight: '3.2vh',
+  },
+  edit3: {
+    fontSize: '2.4vh', // 인풋 (이름, 이메일)
+    fontWeight: 500,
+    lineHeight: '2.9vh',
+  },
+  edit4: {
+    fontSize: '3vh', // 저장 버튼
+    fontWeight: 700,
+    lineHeight: '3.4vh',
+  },
+
   //버튼 (Button)
   button1: {
     fontSize: '3.38vh', // "더보기" 버튼
@@ -147,6 +196,18 @@ export const typography = {
     fontSize: '2.8vh', // 찜 toast 메시지
     fontWeight: 500,
     lineHeight: '3.39vh',
+  },
+
+  // 길찾기 페이지 (GuidePage)
+  guide1: {
+    fontSize: '2.8vh', // 하단 경로안내 바 텍스트
+    fontWeight: 700,
+    lineHeight: '3.4vh',
+  },
+  guide2: {
+    fontSize: '3vh', // 도착 팝업 텍스트
+    fontWeight: 700,
+    lineHeight: '3.4vh',
   },
 } as const;
 

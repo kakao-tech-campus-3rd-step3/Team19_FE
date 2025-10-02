@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NoProfile from '@/assets/images/NoProfile.png';
 
 // Review 타입 정의
 interface Review {
@@ -22,7 +23,7 @@ interface ShelterReviewSectionProps {
   loading: boolean;
   visibleCount: number;
   onMore: () => void;
-  handleImageError: (e: React.SyntheticEvent<HTMLImageElement>) => void;
+  handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   shelterName: string; // props로 쉼터 이름 받기
   shelterId: number; // props로 쉼터 id 받기
 }
@@ -48,6 +49,7 @@ const ShelterReviewSection = ({
   const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
   const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
+  const [profileImgErrorMap, setProfileImgErrorMap] = useState<{ [reviewId: number]: boolean }>({});
 
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
   const navigate = useNavigate();
@@ -92,15 +94,22 @@ const ShelterReviewSection = ({
             <article css={reviewCardStyle} key={r.reviewId}>
               <div css={reviewLeft}>
                 <div css={avatarRow}>
-                  {r.userProfileUrl ? (
+                  {r.userProfileUrl &&
+                  r.userProfileUrl !== '' &&
+                  !profileImgErrorMap[r.reviewId] ? (
                     <img
                       src={r.userProfileUrl}
                       alt={r.nickname}
                       css={avatarImgStyle}
-                      onError={handleImageError}
+                      onError={() =>
+                        setProfileImgErrorMap((prev) => ({
+                          ...prev,
+                          [r.reviewId]: true,
+                        }))
+                      }
                     />
                   ) : (
-                    <div css={avatarStyle}>{(r.nickname && r.nickname.charAt(0)) || '유'}</div>
+                    <img src={NoProfile} alt="NoProfile" css={avatarImgStyle} />
                   )}
                   <div css={avatarInfoCol}>
                     <span css={reviewNickname}>{r.nickname}</span>
@@ -275,20 +284,6 @@ const avatarInfoCol = css`
   gap: 2px;
 `;
 
-const avatarStyle = css`
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: ${theme.colors.text.gray500};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  ${theme.typography.detail2};
-  font-size: 25px;
-  font-weight: 700;
-`;
-
 const avatarImgStyle = css`
   width: 50px;
   height: 50px;
@@ -431,6 +426,6 @@ const modalCloseBtn = css`
   border-radius: 6px;
   padding: 6px 18px;
   font-size: 1.5rem;
-  font-weight: 600;
+  f
   cursor: pointer;
 `;

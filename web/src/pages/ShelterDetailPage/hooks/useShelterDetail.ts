@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NoImage from '@/assets/images/NoImage.png';
+import NoProfile from '@/assets/images/NoProfile.png';
 
 // 타입 정의
 interface ShelterDetail {
@@ -121,6 +122,11 @@ export const useShelterDetail = (id: string | undefined) => {
     e.currentTarget.src = NoImage;
   };
 
+  // 프로필 이미지 에러 핸들러 추가
+  const handleProfileImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src = NoProfile;
+  };
+
   // 평균 별점 계산
   const averageRating =
     shelter && shelter.reviewCount > 0 ? shelter.totalRating / shelter.reviewCount : 0;
@@ -144,14 +150,15 @@ export const useShelterDetail = (id: string | undefined) => {
   // 컴포넌트에서 필요한 모든 상태와 함수를 반환
   return {
     shelter,
-    isLoading: !shelter, // 쉼터 정보가 로드되기 전까지 로딩 상태로 간주
+    isLoading: !shelter,
     isFavorite,
-    setIsFavorite, //isFavorite 상태를 직접 변경할 수 있도록 반환
+    setIsFavorite,
     reviews,
     loadingReviews,
     visibleCount,
     averageRating,
     handleImageError,
+    handleProfileImageError,
     handleMore,
     onToggleFavorite,
     onGuideStart,

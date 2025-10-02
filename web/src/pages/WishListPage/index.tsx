@@ -10,6 +10,8 @@ import WishListCard from './components/WishListCard';
 
 const WishListPage = () => {
   const userId = 1; // TODO: 실제 로그인 정보로 교체
+
+  // TODO: 실제 API 연동 시 onError에서 공통 에러 응답 처리
   const {
     data: wishList = [],
     isLoading,
@@ -19,6 +21,15 @@ const WishListPage = () => {
     queryKey: ['wishList', userId],
     queryFn: () => getWishList(userId),
     retry: 1,
+    // TODO: 실제 API 연동 시 아래 onError 추가
+    /*
+    onError: (err: any) => {
+      // 공통 에러 응답이면 에러 페이지로 이동
+      if (err && err.status && err.error && err.message) {
+        navigate('/error', { state: err });
+      }
+    },
+    */
   });
   const navigate = useNavigate();
 

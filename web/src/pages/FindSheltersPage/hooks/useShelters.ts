@@ -19,6 +19,15 @@ export function useShelters() {
     error,
     isLoading,
     refetch,
+    
+    // TODO: 실제 API 연동 시 아래 onError 추가
+    onError: (err: any) => {
+      // 공통 에러 응답이면 에러 페이지로 이동
+      if (err && err.status && err.error && err.message) {
+        navigate('/error', { state: err });
+      }
+    },
+    
   } = useQuery({
     queryKey: ['nearbyShelters', latitude, longitude],
     queryFn: () => getNearbyShelters({ latitude, longitude }),

@@ -12,6 +12,14 @@ export const useShelterDetail = (id: string | undefined) => {
     data: shelter,
     isLoading: isShelterLoading,
     error: shelterError,
+    // TODO: 실제 API 연동 시 아래 onError에서 공통 에러 응답 처리
+    /*
+    onError: (err: any) => {
+      if (err && err.status && err.error && err.message) {
+        navigate('/error', { state: err });
+      }
+    },
+    */
   } = useQuery({
     queryKey: ['shelterDetail', id],
     queryFn: () => getShelterDetail({ shelterId: Number(id) }),
@@ -23,6 +31,14 @@ export const useShelterDetail = (id: string | undefined) => {
     data: reviews = [],
     isLoading: loadingReviews,
     error: reviewsError,
+    // TODO: 실제 API 연동 시 아래 onError에서 공통 에러 응답 처리
+    /*
+    onError: (err: any) => {
+      if (err && err.status && err.error && err.message) {
+        navigate('/error', { state: err });
+      }
+    },
+    */
   } = useQuery({
     queryKey: ['shelterReviews', id],
     queryFn: () => getShelterReviews(Number(id)),

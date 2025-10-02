@@ -42,6 +42,22 @@ export const useEditReview = () => {
     setShowImage(!!mockReview.photoUrl);
   }, [id]);
 
+  /*TODO: 실제 API 연동 시 에러 처리
+  // 리뷰 단건 조회
+  const { data: review, error: reviewError, isLoading } = useQuery({
+    queryKey: ['review', id],
+    queryFn: () => getReview(Number(id)),
+    enabled: !!id,
+    // TODO: 실제 API 연동 시 아래 onError에서 공통 에러 응답 처리
+    /*
+    onError: (err: any) => {
+      // 공통 에러 응답이면 에러 페이지로 이동
+      if (err && err.status && err.error && err.message) {
+        navigate('/error', { state: err });
+      }
+    },
+    */
+
   // TODO: 실제 API 연동 시 아래 코드로 교체
   /*
   useEffect(() => {

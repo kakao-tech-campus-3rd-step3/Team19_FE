@@ -426,6 +426,6 @@ const modalCloseBtn = css`
   border-radius: 6px;
   padding: 6px 18px;
   font-size: 1.5rem;
-  f
+  font-weight: 600;
   cursor: pointer;
 `;

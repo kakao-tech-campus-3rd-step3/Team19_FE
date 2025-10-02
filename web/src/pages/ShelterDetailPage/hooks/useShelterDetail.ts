@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NoImage from '@/assets/images/NoImage.png';
-import NoProfile from '@/assets/images/NoProfile.png';
 
 // 타입 정의
 interface ShelterDetail {
@@ -122,11 +121,6 @@ export const useShelterDetail = (id: string | undefined) => {
     e.currentTarget.src = NoImage;
   };
 
-  // 프로필 이미지 에러 핸들러 추가
-  const handleProfileImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = NoProfile;
-  };
-
   // 평균 별점 계산
   const averageRating =
     shelter && shelter.reviewCount > 0 ? shelter.totalRating / shelter.reviewCount : 0;
@@ -158,7 +152,6 @@ export const useShelterDetail = (id: string | undefined) => {
     visibleCount,
     averageRating,
     handleImageError,
-    handleProfileImageError,
     handleMore,
     onToggleFavorite,
     onGuideStart,

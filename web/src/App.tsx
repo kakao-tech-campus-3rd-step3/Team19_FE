@@ -132,7 +132,7 @@ const App = () => {
                   />
                 }
               />
-              
+            </Routes>
           </main>
           <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
         </div>

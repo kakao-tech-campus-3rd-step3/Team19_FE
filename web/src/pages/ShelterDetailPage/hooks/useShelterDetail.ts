@@ -89,8 +89,7 @@ export const useShelterDetail = (id: string | undefined) => {
           userId: 1,
           nickname: '사용자1',
           rating: 5,
-          content:
-            '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
+          content: '일이삼사오육칠팔구십일이삼사오',
           photoUrl: '',
           userProfileUrl: 'https://example.com/users/1.jpg',
           createdAt: '2023-10-01T12:00:00Z',
@@ -102,7 +101,8 @@ export const useShelterDetail = (id: string | undefined) => {
           rating: 4,
           content:
             '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
-          photoUrl: 'https://example.com/review2.jpg',
+          photoUrl:
+            'https://search.pstatic.net/common/?src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20150831_79%2F1441001240824HHu0e_JPEG%2F11591645_0.jpg',
           userProfileUrl: '',
           createdAt: '2023-10-02T12:00:00Z',
         },

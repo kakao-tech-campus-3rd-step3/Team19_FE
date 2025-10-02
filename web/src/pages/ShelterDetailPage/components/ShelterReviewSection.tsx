@@ -47,6 +47,7 @@ const ShelterReviewSection = ({
 }: ShelterReviewSectionProps) => {
   const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
+  const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
 
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
   const navigate = useNavigate();
@@ -137,7 +138,6 @@ const ShelterReviewSection = ({
                       }
                     >
                       {expandedMap[r.reviewId] ? '접기' : '더보기'}
-                      {/* TODO: 더보기 버튼 필요 없을 시 숨기기 */}
                     </button>
                   )}
                   {r.photoUrl && (
@@ -146,6 +146,8 @@ const ShelterReviewSection = ({
                       alt={`review-${r.reviewId}`}
                       css={reviewPhoto}
                       onError={handleImageError}
+                      onClick={() => setModalImg(r.photoUrl)} // 클릭 시 확대
+                      style={{ cursor: 'pointer' }}
                     />
                   )}
                   <div css={reviewMeta}>
@@ -166,6 +168,23 @@ const ShelterReviewSection = ({
           <button css={moreButton} onClick={onMore}>
             더보기
           </button>
+        </div>
+      )}
+
+      {/* 이미지 확대 모달 */}
+      {modalImg && (
+        <div css={modalOverlay}>
+          <div css={modalContent}>
+            <img
+              src={modalImg}
+              alt="리뷰 이미지 확대"
+              css={modalImgStyle}
+              onError={handleImageError}
+            />
+            <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
+              닫기
+            </button>
+          </div>
         </div>
       )}
     </section>
@@ -323,7 +342,6 @@ const reviewPhoto = css`
   border-radius: 8px;
   object-fit: cover;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.23);
-  pointer-events: none;
   align-self: flex-start;
   margin-top: 8px;
   background: ${theme.colors.text.white};
@@ -369,4 +387,50 @@ const moreTextButtonStyle = css`
   margin-top: 2px;
   ${theme.typography.review2};
   align-self: flex-end;
+`;
+
+// 모달 스타일 추가
+const modalOverlay = css`
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const modalContent = css`
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 16px 16px 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 90vw;
+  max-height: 80vh;
+`;
+
+const modalImgStyle = css`
+  width: 90vw;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fafafa;
+`;
+
+const modalCloseBtn = css`
+  align-self: center;
+  margin-top: 8px;
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
 `;

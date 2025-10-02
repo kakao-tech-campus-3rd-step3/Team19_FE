@@ -42,10 +42,16 @@ export function useShelters() {
   const [toastMessage, setToastMessage] = useState('');
 
   const handleToggleFavorite = (shelterId: number) => {
-    setFavoriteIds((prev) =>
-      prev.includes(shelterId) ? prev.filter((id) => id !== shelterId) : [...prev, shelterId],
-    );
-    setToastMessage('찜 목록이 변경되었습니다.');
+    setFavoriteIds((prev) => {
+      const isFavorite = prev.includes(shelterId);
+      if (isFavorite) {
+        setToastMessage('찜 목록에서\n삭제되었습니다');
+        return prev.filter((id) => id !== shelterId);
+      } else {
+        setToastMessage('찜 목록에\n추가되었습니다');
+        return [...prev, shelterId];
+      }
+    });
     setTimeout(() => setToastMessage(''), 1500);
   };
 

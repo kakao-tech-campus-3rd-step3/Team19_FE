@@ -18,7 +18,6 @@ import EditReviewPage from './pages/EditReviewPage';
 import WriteReviewPage from './pages/WriteReviewPage';
 import ErrorPage from './pages/ErrorPage';
 import { ErrorBoundary } from 'react-error-boundary';
-import TestErrorPage from './pages/TestErrorPage';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
@@ -133,20 +132,7 @@ const App = () => {
                   />
                 }
               />
-              <Route path="/test-error" element={<TestErrorPage />} />
-              {/* 404 Not Found 처리 */}
-              <Route
-                path="*"
-                element={
-                  <ErrorPage
-                    status={404}
-                    error={'Not Found'}
-                    message={'페이지를 찾을 수 없습니다.'}
-                    path={location.pathname}
-                  />
-                }
-              />
-            </Routes>
+              
           </main>
           <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
         </div>

@@ -21,5 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "musuimsa"
 include(":app")
-include(":app-macrobenchmark")
  

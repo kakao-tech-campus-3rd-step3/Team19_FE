@@ -18,12 +18,6 @@ android {
     }
 
     buildTypes {
-        // For macrobenchmark to run with release-like settings while being profileable by shell
-        create("benchmark") {
-            isDebuggable = false
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-        }
         release {
             isMinifyEnabled = false
             proguardFiles(

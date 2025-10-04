@@ -37,8 +37,8 @@ jobs:
           api-level: 30
           arch: x86_64
           profile: pixel_5
+          working-directory: app
           script: |
-            cd app
             ./gradlew :app-macrobenchmark:connectedCheck --stacktrace
 
       - name: Upload benchmark artifacts

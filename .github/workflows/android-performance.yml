@@ -1,0 +1,51 @@
+name: android-performance
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "app/**"
+      - "app-macrobenchmark/**"
+      - ".github/workflows/android-performance.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "app/**"
+      - "app-macrobenchmark/**"
+      - ".github/workflows/android-performance.yml"
+
+jobs:
+  macrobenchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Gradle cache
+        uses: gradle/gradle-build-action@v3
+
+      - name: Run Macrobenchmarks on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_5
+          working-directory: app
+          script: |
+            ./gradlew :app-macrobenchmark:connectedCheck --stacktrace
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-perf-results
+          path: |
+            app/app-macrobenchmark/build/outputs/**
+            app/app/build/outputs/**

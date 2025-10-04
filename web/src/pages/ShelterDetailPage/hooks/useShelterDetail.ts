@@ -89,7 +89,8 @@ export const useShelterDetail = (id: string | undefined) => {
           userId: 1,
           nickname: '사용자1',
           rating: 5,
-          content: '일이삼사오육칠팔구십일이삼사오',
+          content:
+            '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
           photoUrl: '',
           userProfileUrl: 'https://example.com/users/1.jpg',
           createdAt: '2023-10-01T12:00:00Z',
@@ -101,8 +102,7 @@ export const useShelterDetail = (id: string | undefined) => {
           rating: 4,
           content:
             '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
-          photoUrl:
-            'https://search.pstatic.net/common/?src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20150831_79%2F1441001240824HHu0e_JPEG%2F11591645_0.jpg',
+          photoUrl: 'https://example.com/review2.jpg',
           userProfileUrl: '',
           createdAt: '2023-10-02T12:00:00Z',
         },
@@ -144,9 +144,9 @@ export const useShelterDetail = (id: string | undefined) => {
   // 컴포넌트에서 필요한 모든 상태와 함수를 반환
   return {
     shelter,
-    isLoading: !shelter,
+    isLoading: !shelter, // 쉼터 정보가 로드되기 전까지 로딩 상태로 간주
     isFavorite,
-    setIsFavorite,
+    setIsFavorite, //isFavorite 상태를 직접 변경할 수 있도록 반환
     reviews,
     loadingReviews,
     visibleCount,

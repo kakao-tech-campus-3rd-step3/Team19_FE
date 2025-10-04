@@ -4,6 +4,7 @@ import { FaRegEdit } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { useEditProfile } from './hooks/useEditProfile';
 import { theme } from '@/styles/theme';
+import { useState } from 'react';
 
 // 목데이터: 기존 회원 정보
 // (mockUser는 useEditProfile에서 가져옴)
@@ -30,13 +31,23 @@ const EditProfilePage = () => {
     showModal,
     oldPasswordError,
     setOldPasswordError,
-    handleSave,
+    // handleSave,
     handleModalClose,
     showOldPassword,
     setShowOldPassword,
     showNewPassword,
     setShowNewPassword,
   } = useEditProfile();
+
+  const [showApiAlert, setShowApiAlert] = useState(false);
+
+  // 저장 버튼 클릭 시
+  const handleSaveWithAlert = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowApiAlert(true);
+    // TODO: 실제 handleSave 호출은 주석 처리 또는 조건부로
+    // handleSave(e);로 변경 필요
+  };
 
   return (
     <div css={container}>
@@ -80,7 +91,7 @@ const EditProfilePage = () => {
           onChange={handleProfileImgChange}
         />
       </div>
-      <form css={formBox} onSubmit={handleSave}>
+      <form css={formBox} onSubmit={handleSaveWithAlert}>
         <div css={inputRow}>
           <label css={labelShort}>이&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;름</label>
           <input
@@ -140,6 +151,17 @@ const EditProfilePage = () => {
           저장
         </button>
       </form>
+      {/* TODO: API 연동 후 제거, 개발 중 안내 팝업 */}
+      {showApiAlert && (
+        <div css={modalOverlay}>
+          <div css={modalBox}>
+            <div css={modalText}>아직 API가 연동되지 않음!</div>
+            <button css={modalBtn} onClick={() => setShowApiAlert(false)}>
+              확인
+            </button>
+          </div>
+        </div>
+      )}
       {/* 수정 완료 모달 */}
       {showModal && (
         <div css={modalOverlay}>

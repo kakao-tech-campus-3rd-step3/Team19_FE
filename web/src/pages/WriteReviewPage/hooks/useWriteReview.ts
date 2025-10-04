@@ -1,3 +1,5 @@
+import { postReview } from '@/api/reviewApi';
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -13,6 +15,35 @@ export const useWriteReview = () => {
   const [onModalCancel, setOnModalCancel] = useState<() => void>(() => () => {});
   const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
+
+  // 리뷰 작성 mutation
+  const { mutate: writeReviewMutate, isPending } = useMutation({
+    // TODO: 실제 API 연동 시 shelterId 유효성 검사 코드 추가
+    /*
+    mutationFn: () => {
+      const id = Number(shelterId);
+      if (!shelterId || isNaN(id)) {
+        setToastMessage('유효하지 않은 쉼터 ID입니다.');
+        return Promise.reject(new Error('Invalid shelterId'));
+      }
+      return postReview(id, { content, rating, photoUrl });
+    },
+    onSuccess: () => {
+      if (!shelterId) {
+        setToastMessage('유효하지 않은 쉼터 ID입니다.');
+        return;
+      }
+      navigate('/shelter-detail/' + shelterId);
+    },
+    */
+    mutationFn: () => postReview(Number(shelterId), { content, rating, photoUrl }),
+    onSuccess: () => {
+      navigate('/shelter-detail/' + shelterId);
+    },
+    onError: () => {
+      setToastMessage('리뷰 작성에 실패했습니다');
+    },
+  });
 
   // 별점 클릭 핸들러
   const handleStarClick = (idx: number) => {
@@ -31,25 +62,7 @@ export const useWriteReview = () => {
   // 저장 모달에서 "예" 클릭 시
   const handleSaveConfirm = async () => {
     setShowModal(false);
-
-    //TODO: 실제 API 연동 시 POST 요청
-    /*
-    await fetch(`/api/shelters/${shelterId}/reviews`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // 'Authorization': `Bearer ${accessToken}`, // 필요시
-      },
-      body: JSON.stringify({
-        content,
-        rating,
-        photoUrl,
-      }),
-    });
-    */
-
-    // 저장 후 쉼터 상세 페이지로 이동
-    navigate('/shelter-detail/' + shelterId);
+    writeReviewMutate();
   };
 
   // 사진 삭제 버튼 클릭
@@ -68,7 +81,6 @@ export const useWriteReview = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (showImage && photoUrl) {
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
       e.target.value = ''; //input value 초기화 (중복 선택 가능)
       return;
     }
@@ -85,7 +97,6 @@ export const useWriteReview = () => {
     if (showImage && photoUrl) {
       e.preventDefault();
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
     }
   };
 
@@ -116,5 +127,6 @@ export const useWriteReview = () => {
     handleAddImageClick,
     navigate,
     shelterId,
+    isPending,
   };
 };

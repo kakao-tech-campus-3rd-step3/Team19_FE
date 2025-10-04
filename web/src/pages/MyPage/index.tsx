@@ -5,15 +5,30 @@ import { useState } from 'react';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from './hooks/useUser';
+// TODO: 추후 API 연동 시 아래 코드로 교체
+// import { useUser } from './hooks/useUser';
+import { mockUser } from '@/mock/mockUser'; // TODO: 추후 삭제 필요 - 개발 중 목데이터 import
 
 const MyPage = () => {
-  const user = useUser(1); // TODO: userId를 실제 로그인 정보에 맞게 변경 필요
-  const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
-  // TODO: https://github.com/kakao-tech-campus-3rd-step3/Team19_FE/pull/40#discussion_r2347400932
+  const [imgError, setImgError] = useState(false);
 
-  if (!user) return <div css={container}>로딩 중...</div>;
+  // TODO: 추후 API 연동 시 아래 코드로 교체
+  // const { user, error, isLoading } = useUser(1); // userId는 실제 로그인 정보로 교체 필요
+  const user = mockUser[0];
+
+  // TODO: 추후 API 연동 시 아래 에러/로딩 처리 코드로 교체
+  /*
+  if (isLoading) return <div css={container}>로딩 중...</div>;
+  if (error)
+    return (
+      <div css={container}>
+        <div css={errorMsgStyle}>사용자 정보를 불러오지 못했습니다.</div>
+      </div>
+    );
+  if (!user) return <div css={container}>사용자 정보가 없습니다.</div>;
+  */
+  if (!user) return <div css={container}>사용자 정보가 없습니다.</div>;
 
   const profileImgUrl = !user.profileImageUrl || imgError ? NoProfile : user.profileImageUrl;
 
@@ -132,16 +147,6 @@ const menuBtn = css`
   justify-content: center;
   color: #222;
   cursor: pointer;
-  /* 버튼 반응 없애기 */
-  outline: none;
-  box-shadow: none;
-  -webkit-tap-highlight-color: transparent;
-  &:focus,
-  &:active,
-  &:focus-visible {
-    outline: none;
-    box-shadow: none;
-  }
 `;
 
 const logoutBtn = css`
@@ -155,14 +160,4 @@ const logoutBtn = css`
   font-weight: ${theme.typography.my4.fontWeight};
   line-height: ${theme.typography.my4.lineHeight};
   cursor: pointer;
-  /* 버튼 반응 없애기 */
-  outline: none;
-  box-shadow: none;
-  -webkit-tap-highlight-color: transparent;
-  &:focus,
-  &:active,
-  &:focus-visible {
-    outline: none;
-    box-shadow: none;
-  }
 `;

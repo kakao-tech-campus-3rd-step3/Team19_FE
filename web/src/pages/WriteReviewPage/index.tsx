@@ -4,7 +4,7 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
-import ToastMessage from '../FindSheltersPage/components/ToastMessage';
+import ToastMessage from '../../components/ToastMessage';
 import { useWriteReview } from './hooks/useWriteReview';
 import { useLocation } from 'react-router-dom';
 //import { useParams } from 'react-router-dom';
@@ -34,6 +34,7 @@ const WriteReviewPage = () => {
     handleAddImageClick,
     navigate,
     shelterId,
+    isPending, // 추가: 저장 상태
   } = useWriteReview();
 
   return (
@@ -98,13 +99,13 @@ const WriteReviewPage = () => {
         <button
           css={saveBtn}
           type="submit"
-          disabled={rating === 0} // 별점이 0일 때 비활성화
+          disabled={rating === 0 || isPending}
           style={{
-            opacity: rating === 0 ? 0.5 : 1,
-            cursor: rating === 0 ? 'not-allowed' : 'pointer',
+            opacity: rating === 0 || isPending ? 0.5 : 1,
+            cursor: rating === 0 || isPending ? 'not-allowed' : 'pointer',
           }}
         >
-          저&nbsp;장
+          {isPending ? '저장 중...' : '저장'}
         </button>
       </form>
       {/* 저장/삭제 모달 */}
@@ -123,6 +124,7 @@ const WriteReviewPage = () => {
           </div>
         </div>
       )}
+      {/* 에러 메시지 토스트 */}
       <ToastMessage message={toastMessage} />
     </div>
   );

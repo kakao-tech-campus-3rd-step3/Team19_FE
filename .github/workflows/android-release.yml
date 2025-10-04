@@ -46,10 +46,10 @@ jobs:
 
       - name: Rename APK with tag
         run: |
-          mv app/app/build/outputs/apk/debug/*.apk app/app/build/outputs/apk/debug/app-debug-${{ github.ref_name }}.apk
+          mv app/build/outputs/apk/debug/*.apk app/build/outputs/apk/debug/app-debug-${{ github.ref_name }}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app/app/build/outputs/apk/debug/app-debug-${{ github.ref_name }}.apk
+          files: app/build/outputs/apk/debug/app-debug-${{ github.ref_name }}.apk
           generate_release_notes: true

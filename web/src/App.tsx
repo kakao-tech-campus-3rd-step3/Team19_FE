@@ -125,9 +125,9 @@ const App = () => {
                 path="/error"
                 element={
                   <ErrorPage
-                    status={404}
-                    error={'Not Found'}
-                    message={'페이지를 찾을 수 없습니다.'}
+                    status={(location.state as any)?.status || 404}
+                    error={(location.state as any)?.error || 'Not Found'}
+                    message={(location.state as any)?.message || '페이지를 찾을 수 없습니다.'}
                     path={location.pathname}
                   />
                 }

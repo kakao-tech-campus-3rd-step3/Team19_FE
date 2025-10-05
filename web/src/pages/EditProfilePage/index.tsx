@@ -4,15 +4,12 @@ import { FaRegEdit } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { useEditProfile } from './hooks/useEditProfile';
 import { theme } from '@/styles/theme';
-import { useState } from 'react';
-
-// 목데이터: 기존 회원 정보
-// (mockUser는 useEditProfile에서 가져옴)
 
 const EditProfilePage = () => {
   // useEditProfile 훅 사용
   const {
     mockUser,
+    user,
     profileImageUrl,
     imgError,
     setImgError,
@@ -31,7 +28,7 @@ const EditProfilePage = () => {
     showModal,
     oldPasswordError,
     setOldPasswordError,
-    // handleSave,
+    handleSave,
     handleModalClose,
     showOldPassword,
     setShowOldPassword,
@@ -39,15 +36,8 @@ const EditProfilePage = () => {
     setShowNewPassword,
   } = useEditProfile();
 
-  const [showApiAlert, setShowApiAlert] = useState(false);
-
-  // 저장 버튼 클릭 시
-  const handleSaveWithAlert = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowApiAlert(true);
-    // TODO: 실제 handleSave 호출은 주석 처리 또는 조건부로
-    // handleSave(e);로 변경 필요
-  };
+  // displayUser: user가 있으면 API 데이터, 없으면 mockUser 사용
+  const displayUser = (user as any) ?? mockUser;
 
   return (
     <div css={container}>
@@ -57,7 +47,7 @@ const EditProfilePage = () => {
       </div>
       <div css={profileBox}>
         <img
-          src={imgError ? mockUser.profileImageUrl : profileImageUrl}
+          src={imgError ? displayUser.profileImageUrl : profileImageUrl}
           alt="프로필"
           css={profileImg}
           onError={() => setImgError(true)}
@@ -71,7 +61,7 @@ const EditProfilePage = () => {
               <button css={modalBtnS} onClick={handleProfileImgSelect}>
                 앨범에서 사진 선택
               </button>
-              {profileImageUrl !== mockUser.profileImageUrl && (
+              {profileImageUrl !== displayUser.profileImageUrl && (
                 <button css={modalBtnS} onClick={handleSetDefaultProfile}>
                   기본 프로필로 변경
                 </button>
@@ -91,19 +81,24 @@ const EditProfilePage = () => {
           onChange={handleProfileImgChange}
         />
       </div>
-      <form css={formBox} onSubmit={handleSaveWithAlert}>
+      <form css={formBox} onSubmit={handleSave}>
         <div css={inputRow}>
           <label css={labelShort}>이&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;름</label>
           <input
             css={inputShort}
-            defaultValue={mockUser.nickname}
+            defaultValue={displayUser.nickname}
             onChange={(e) => setNicknameInput(e.target.value)}
             placeholder="닉네임을 입력하세요"
           />
         </div>
         <div css={inputRow}>
           <label css={labelShort}>이&nbsp;메&nbsp;일</label>
-          <input css={inputShort} value={mockUser.email} readOnly style={{ background: '#eee' }} />
+          <input
+            css={inputShort}
+            value={displayUser.email}
+            readOnly
+            style={{ background: '#eee' }}
+          />
         </div>
         <div css={inputRowVertical}>
           <label css={labelLong}>이전 비밀번호</label>
@@ -114,7 +109,7 @@ const EditProfilePage = () => {
               value={oldPassword}
               onChange={(e) => {
                 setOldPassword(e.target.value);
-                setOldPasswordError(false); // 입력 시 에러 해제
+                setOldPasswordError(false);
               }}
             />
             <button
@@ -151,17 +146,7 @@ const EditProfilePage = () => {
           저장
         </button>
       </form>
-      {/* TODO: API 연동 후 제거, 개발 중 안내 팝업 */}
-      {showApiAlert && (
-        <div css={modalOverlay}>
-          <div css={modalBox}>
-            <div css={modalText}>아직 API가 연동되지 않음!</div>
-            <button css={modalBtn} onClick={() => setShowApiAlert(false)}>
-              확인
-            </button>
-          </div>
-        </div>
-      )}
+
       {/* 수정 완료 모달 */}
       {showModal && (
         <div css={modalOverlay}>

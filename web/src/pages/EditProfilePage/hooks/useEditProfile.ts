@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import NoProfile from '@/assets/images/NoProfile.png';
-import { patchProfile, patchPassword } from '@/api/userApi';
+// 타입 전용 import로 변경
+import type { UserProfile } from '@/api/userApi';
+import { patchProfile, patchPassword, getMyProfile } from '@/api/userApi';
 
 // 목데이터: 기존 회원 정보
 const mockUser = {
@@ -18,23 +20,50 @@ export const useEditProfile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imgError, setImgError] = useState(false);
 
-  // 기존 정보
-  // TODO: 닉네임, 프로필 이미지는 실제로 수정 시에만 사용하도록 변경 필요
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [showOldPassword, setShowOldPassword] = useState(false); // 이전 비밀번호 보기
-  const [showNewPassword, setShowNewPassword] = useState(false); // 새로운 비밀번호 보기
-  const [oldPasswordError, setOldPasswordError] = useState(false); // 기존 비밀번호 에러 상태 추가
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [oldPasswordError, setOldPasswordError] = useState(false);
 
-  // 입력값 변경 감지
   const [nicknameInput, setNicknameInput] = useState('');
 
   const navigate = useNavigate();
 
-  // react-query mutation
-  const profileMutation = useMutation({ mutationFn: patchProfile });
-  const passwordMutation = useMutation({ mutationFn: patchPassword });
+  // useQuery 제네릭 및 옵션 객체 형식 사용
+  const {
+    data: user,
+    error: _userError, // 사용 안하면 언더스코어로 무시
+    isLoading: userLoading,
+  } = useQuery<UserProfile | null, Error>({
+    queryKey: ['myProfile'],
+    queryFn: () => getMyProfile(),
+    staleTime: 2 * 60_000,
+    // TODO: 실제 API 연동 시 onError에서 공통 에러 포맷 처리 (navigate('/error', { state: err }))
+  });
+
+  // user 데이터가 도착하면 초기값 세팅
+  useEffect(() => {
+    if (user) {
+      setProfileImageUrl(user.profileImageUrl ?? mockUser.profileImageUrl);
+      setNicknameInput(user.nickname ?? '');
+      setImgError(false);
+    }
+  }, [user]);
+
+  // useMutation에 올바른 시그니처로 설정
+  const profileMutation = useMutation<any, Error, { nickname?: string; profileImageUrl?: string }>({
+    mutationFn: (vars) => patchProfile(vars),
+  });
+
+  const passwordMutation = useMutation<
+    any,
+    Error,
+    { currentPassword: string; newPassword: string }
+  >({
+    mutationFn: (vars) => patchPassword(vars),
+  });
 
   // 프로필 편집 버튼 클릭
   const handleEditProfileImg = () => setShowProfileModal(true);
@@ -75,7 +104,8 @@ export const useEditProfile = () => {
             setOldPasswordError(false);
             setShowModal(true);
           },
-          onError: () => {
+          onError: (_error: any) => {
+            // TODO: 실제 API 연동 시 공통 에러 포맷이면 에러 페이지로 이동하도록 처리 가능
             setOldPasswordError(true);
           },
         },
@@ -86,13 +116,20 @@ export const useEditProfile = () => {
     // 닉네임/프로필 이미지 수정
     profileMutation.mutate(
       {
-        nickname: nicknameInput && nicknameInput !== mockUser.nickname ? nicknameInput : undefined,
-        profileImageUrl: profileImageUrl !== mockUser.profileImageUrl ? profileImageUrl : undefined,
+        nickname:
+          nicknameInput && nicknameInput !== (user?.nickname ?? mockUser.nickname)
+            ? nicknameInput
+            : undefined,
+        profileImageUrl:
+          profileImageUrl !== (user?.profileImageUrl ?? mockUser.profileImageUrl)
+            ? profileImageUrl
+            : undefined,
       },
       {
         onSuccess: () => setShowModal(true),
-        onError: (error) => {
-          alert(error.message || '서버와 연결할 수 없습니다.');
+        onError: (error: any) => {
+          // TODO: 실제 API 연동 시 공통 에러 포맷이면 에러 페이지로 이동하도록 처리 가능
+          alert(error?.message || '서버와 연결할 수 없습니다.');
         },
       },
     );
@@ -100,11 +137,12 @@ export const useEditProfile = () => {
 
   const handleModalClose = () => {
     setShowModal(false);
-    navigate('/mypage'); // 확인 버튼 클릭 시 마이페이지로 이동
+    navigate('/mypage');
   };
 
   return {
     mockUser,
+    user, // 실제 API 데이터 (없으면 undefined)
     profileImageUrl,
     setProfileImageUrl,
     oldPassword,
@@ -132,6 +170,7 @@ export const useEditProfile = () => {
     fileInputRef,
     showProfileModal,
     setShowProfileModal,
-    // 필요시 profileMutation, passwordMutation의 isPending, error 등도 반환
+    userLoading,
+    userError: _userError,
   };
 };

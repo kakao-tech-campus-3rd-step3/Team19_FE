@@ -2,26 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 // 타입 전용 import로 변경
 import type { UserProfile } from '@/api/userApi';
 import { getUserProfile } from '@/api/userApi';
+import { mockUser } from '@/mock/mockUser';
 
-// TODO: 실제 API 연동 시 onError에서 공통 에러 응답 처리
 export const useUser = (userId: number) => {
+  // useQuery에 options 객체 한 개로 전달 (에러 리다이렉트는 client.ts에서 처리)
   const {
     data: user,
     error,
     isLoading,
-    // TODO: 실제 API 연동 시 아래 onError 추가
-    /*
-    onError: (err: any) => {
-      if (err && err.status && err.error && err.message) {
-        navigate('/error', { state: err });
-      }
-    },
-    */
-  } = useQuery<UserProfile, Error>({
-    queryKey: ['userProfile', userId],
+  } = useQuery({
+    queryKey: ['userProfile', userId] as const,
     queryFn: () => getUserProfile(userId),
     retry: 1,
-  });
+  } as any);
 
-  return { user, error, isLoading };
+  // user가 없으면 mockUser 폴백 사용 (로그인 미구현 개발 편의)
+  const resolvedUser: UserProfile | null = (user ??
+    (mockUser as unknown as UserProfile)) as UserProfile;
+
+  return { user: resolvedUser, error, isLoading, isMock: !user };
 };

@@ -8,7 +8,6 @@ import { theme } from '@/styles/theme';
 const EditProfilePage = () => {
   // useEditProfile 훅 사용
   const {
-    mockUser,
     user,
     profileImageUrl,
     imgError,
@@ -36,8 +35,8 @@ const EditProfilePage = () => {
     setShowNewPassword,
   } = useEditProfile();
 
-  // displayUser: user가 있으면 API 데이터, 없으면 mockUser 사용
-  const displayUser = (user as any) ?? mockUser;
+  // displayUser: user가 있으면 API 데이터, 없으면 에러 페이지로 이동
+  const displayUser = user as any;
 
   return (
     <div css={container}>

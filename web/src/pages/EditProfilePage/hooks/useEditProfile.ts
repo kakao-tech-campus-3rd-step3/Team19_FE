@@ -6,16 +6,9 @@ import NoProfile from '@/assets/images/NoProfile.png';
 import type { UserProfile } from '@/api/userApi';
 import { patchProfile, patchPassword, getMyProfile } from '@/api/userApi';
 
-// 목데이터: 기존 회원 정보
-const mockUser = {
-  userId: 1,
-  email: 'ksh58@gmail.com',
-  nickname: '김선희',
-  profileImageUrl: typeof NoProfile === 'string' ? NoProfile : '',
-};
-
 export const useEditProfile = () => {
-  const [profileImageUrl, setProfileImageUrl] = useState<string>(mockUser.profileImageUrl);
+  const defaultProfile = typeof NoProfile === 'string' ? NoProfile : '';
+  const [profileImageUrl, setProfileImageUrl] = useState<string>(defaultProfile);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imgError, setImgError] = useState(false);
@@ -40,13 +33,13 @@ export const useEditProfile = () => {
     queryKey: ['myProfile'],
     queryFn: () => getMyProfile(),
     staleTime: 2 * 60_000,
-    // TODO: 실제 API 연동 시 onError에서 공통 에러 포맷 처리 (navigate('/error', { state: err }))
+    // 에러 페이지 리다이렉트는 client.ts에서 처리합니다.
   });
 
   // user 데이터가 도착하면 초기값 세팅
   useEffect(() => {
     if (user) {
-      setProfileImageUrl(user.profileImageUrl ?? mockUser.profileImageUrl);
+      setProfileImageUrl(user.profileImageUrl ?? defaultProfile);
       setNicknameInput(user.nickname ?? '');
       setImgError(false);
     }
@@ -78,7 +71,7 @@ export const useEditProfile = () => {
   const handleSetDefaultProfile = () => {
     setShowProfileModal(false);
     setImgError(false);
-    setProfileImageUrl(mockUser.profileImageUrl);
+    setProfileImageUrl(defaultProfile);
   };
 
   // 파일 선택 시 프로필 이미지 변경
@@ -105,7 +98,7 @@ export const useEditProfile = () => {
             setShowModal(true);
           },
           onError: (_error: any) => {
-            // TODO: 실제 API 연동 시 공통 에러 포맷이면 에러 페이지로 이동하도록 처리 가능
+            // 서버측 에러 리다이렉트는 client.ts가 처리하므로 여기서는 에러 표시만 함
             setOldPasswordError(true);
           },
         },
@@ -117,18 +110,16 @@ export const useEditProfile = () => {
     profileMutation.mutate(
       {
         nickname:
-          nicknameInput && nicknameInput !== (user?.nickname ?? mockUser.nickname)
-            ? nicknameInput
-            : undefined,
+          nicknameInput && nicknameInput !== (user?.nickname ?? '') ? nicknameInput : undefined,
         profileImageUrl:
-          profileImageUrl !== (user?.profileImageUrl ?? mockUser.profileImageUrl)
+          profileImageUrl !== (user?.profileImageUrl ?? defaultProfile)
             ? profileImageUrl
             : undefined,
       },
       {
         onSuccess: () => setShowModal(true),
         onError: (error: any) => {
-          // TODO: 실제 API 연동 시 공통 에러 포맷이면 에러 페이지로 이동하도록 처리 가능
+          // 서버측 에러 리다이렉트는 client.ts가 처리하므로 여기서는 사용자에게 메시지 표시만 함
           alert(error?.message || '서버와 연결할 수 없습니다.');
         },
       },
@@ -141,7 +132,6 @@ export const useEditProfile = () => {
   };
 
   return {
-    mockUser,
     user, // 실제 API 데이터 (없으면 undefined)
     profileImageUrl,
     setProfileImageUrl,

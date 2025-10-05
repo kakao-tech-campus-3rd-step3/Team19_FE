@@ -6,6 +6,9 @@ on:
     paths:
       - "app/**"
 
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true

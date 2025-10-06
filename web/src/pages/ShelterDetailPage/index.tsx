@@ -31,6 +31,7 @@ const ShelterDetailPage = () => {
     open: false,
     message: '',
   });
+  const [toggling, setToggling] = useState(false);
 
   const showToast = (message: string) => {
     setToast({ open: true, message });
@@ -39,17 +40,27 @@ const ShelterDetailPage = () => {
 
   // wishApi를 활용한 찜 버튼 클릭 핸들러
   const handleToggleFavorite = async () => {
-    const userId = 1; // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
-    const result = await toggleWish({
-      shelterId: id ?? '',
-      userId,
-      isFavorite,
-    });
-    // 찜 추가/삭제 성공 시 하트 상태 변경
-    if (result.success) {
-      setIsFavorite(!isFavorite);
+    if (toggling) return; // 중복 호출 방지
+    setToggling(true);
+    try {
+      const userId = 1; // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
+      const result = await toggleWish({
+        shelterId: id ?? '',
+        userId,
+        isFavorite,
+      });
+
+      if (result?.success) {
+        setIsFavorite(!isFavorite);
+      }
+      showToast(result?.message ?? '처리되었습니다.');
+    } catch (err: any) {
+      console.error('[ShelterDetailPage] toggleWish error:', err);
+      // client.ts의 전역 리다이렉트가 주석처리된 상태라면 이 catch가 호출됩니다.
+      showToast(err?.message ?? '서버와 연결할 수 없습니다.');
+    } finally {
+      setToggling(false);
     }
-    showToast(result.message);
   };
 
   if (isLoading) {
@@ -72,6 +83,8 @@ const ShelterDetailPage = () => {
           averageRating={averageRating}
           isFavorite={isFavorite}
           onToggleFavorite={handleToggleFavorite}
+          // optional: 자식에서 버튼 비활성화 처리하려면 prop 추가 가능
+          // isToggling={toggling}
           onGuideStart={onGuideStart}
           handleImageError={handleImageError}
         />

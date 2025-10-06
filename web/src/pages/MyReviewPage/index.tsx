@@ -4,12 +4,12 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import emptyReviewImg from '@/assets/images/empty-review.png';
 import theme from '@/styles/theme';
-import ReviewListCard from './components/ReviewListCard';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getMyReviews } from '@/api/reviewApi';
 import ToastMessage from '@/components/ToastMessage';
+import ReviewListCard from './components/ReviewListCard';
 
-// API 명세에 맞는 타입 정의
-interface MyReview {
+type MyReview = {
   reviewId: number;
   shelterId: number;
   name: string;
@@ -20,46 +20,44 @@ interface MyReview {
   profileImageUrl: string;
   createdAt: string;
   updatedAt: string;
-}
-
-// 목데이터 (API 응답 형태와 동일)
-const mockReviews: MyReview[] = [
-  {
-    reviewId: 101,
-    shelterId: 1,
-    name: '종로 무더위 쉼터',
-    userId: 1,
-    content: '에어컨도 잘 나오고 깨끗했어요',
-    rating: 5,
-    photoUrl: 'https://example.com/review1.jpg',
-    profileImageUrl: 'https://example.com/users/1.jpg',
-    createdAt: '2025-08-19T09:00:00Z',
-    updatedAt: '2025-08-19T09:00:00Z',
-  },
-  {
-    reviewId: 102,
-    shelterId: 2,
-    name: '강남 무더위 쉼터',
-    userId: 1,
-    content:
-      '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
-    rating: 3,
-    photoUrl: null,
-    profileImageUrl: 'https://example.com/users/1.jpg',
-    createdAt: '2025-08-18T14:00:00Z',
-    updatedAt: '2025-08-18T14:00:00Z',
-  },
-];
+};
 
 const MyReviewPage = () => {
-  const reviews = mockReviews; // TODO: 추후 API 연결 시 변경
+  const [reviews, setReviews] = useState<MyReview[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<any>(null);
+  const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
 
-  const [toastMessage, setToastMessage] = useState('');
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    getMyReviews()
+      .then((res) => {
+        if (!mounted) return;
+        const data = Array.isArray(res) ? res : res && (res as any).data ? (res as any).data : [];
+        setReviews(Array.isArray(data) ? data : []);
+      })
+      .catch((e) => {
+        if (!mounted) return;
+        console.error('[MyReviewPage] getMyReviews error', e);
+        setError(e);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);
   };
+
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>내 리뷰를 불러올 수 없습니다.</div>;
 
   return (
     <>

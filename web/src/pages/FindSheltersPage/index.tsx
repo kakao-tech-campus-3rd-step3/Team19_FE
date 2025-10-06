@@ -2,70 +2,59 @@
 import { css } from '@emotion/react';
 import ShelterList from './components/ShelterList';
 import BottomControls from './components/BottomControls';
-import ToastMessage from '../../components/ToastMessage';
-import { useShelters } from './hooks/useShelters';
+import ToastMessage from '@/components/ToastMessage';
 import emptyShelterImage from '@/assets/images/empty-shelter.png';
-import theme from '@/styles/theme';
+import { useShelters } from './hooks/useShelters';
 import { toggleWish } from '@/api/wishApi';
+import theme from '@/styles/theme';
 
 const FindSheltersPage = () => {
   const {
     shelters,
     favoriteIds,
     toastMessage,
-    // TODO: 추후 무한 스크롤 구현 시 사용
-    // visibleCount,
-    hasMoreItems,
-    handleToggleFavorite,
-    handleLoadMore,
     isLoading,
     error,
+    hasMoreItems,
+    handleLoadMore,
+    handleToggleFavorite,
   } = useShelters();
 
-  // toggle API 호출을 래핑: 성공 시 로컬 훅의 handleToggleFavorite를 호출해 UI 갱신
+  // API 호출(toggleWish) -> 성공 시 훅의 로컬 토글 호출
   const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {
     try {
-      const userId = 1; // TODO: 인증 연동 시 실제 userId 사용
-      const res = await toggleWish({ shelterId, userId, isFavorite });
-      console.log('[FindSheltersPage] toggleWish result', res);
-      // 로컬 상태 갱신(훅의 핸들러 호출)
+      const userId = 1; // TODO: 로그인 연동 후 실제 userId 사용
+      await toggleWish({ shelterId, userId, isFavorite });
+      // 로컬 UI 즉시 반영
       handleToggleFavorite(shelterId);
     } catch (err) {
       console.error('[FindSheltersPage] toggleWish error', err);
-      // 필요하면 토스트 표시 추가
+      // 실패 시 사용자 알림
+      // ToastMessage는 상단에서 toastMessage로 보여주므로 set을 원하면 훅에 setToastMessage 추가 사용
     }
   };
 
-  if (isLoading) {
-    return <div css={emptyStateStyle}>쉼터 정보를 불러오는 중입니다...</div>;
-  }
-
-  if (error) {
-    // TODO: 실제 에러 메시지 및 에러 페이지로 대체 가능
+  if (isLoading) return <div css={pageContainerStyle}>로딩 중...</div>;
+  if (error)
     return (
-      <div css={emptyStateStyle}>
-        <p css={emptyTextStyle}>쉼터 정보를 불러오지 못했습니다.</p>
+      <div css={pageContainerStyle}>
+        <div css={emptyTextStyle}>근처 쉼터를 불러올 수 없습니다.</div>
       </div>
     );
-  }
 
   return (
     <>
       {shelters.length > 0 ? (
-        // 쉼터 목록이 있을 때의 전체 화면 컨테이너
         <div css={pageContainerStyle}>
           <ShelterList
             shelters={shelters}
             favoriteIds={favoriteIds}
-            // API 호출을 수행한 뒤 훅의 로컬 업데이트 호출
-            onToggleFavorite={handleToggleWithApi}
+            onToggleFavorite={handleToggleWithApi} // 시그니처: (shelterId, isFavorite)
           />
           <BottomControls hasMoreItems={hasMoreItems} onLoadMore={handleLoadMore} />
-          {/* ToastMessage 컴포넌트 사용 */}
-          <ToastMessage message={toastMessage} />
+          {toastMessage && <ToastMessage message={toastMessage} />}
         </div>
       ) : (
-        // 쉼터 목록이 없을 때의 전체 화면 컨테이너
         <div css={emptyStateStyle}>
           <p css={emptyTextStyle}>
             근처에 가까운 쉼터가

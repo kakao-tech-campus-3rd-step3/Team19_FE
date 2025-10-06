@@ -1,80 +1,108 @@
-import { useState } from 'react';
-//import { useQuery } from '@tanstack/react-query';
-//import { getNearbyShelters } from '@/api/shelterApi';
-// TODO: 추후 삭제 필요 - 개발 중 목데이터 import
-import { nearbyShelters } from '@/mock/nearbyShelters';
+import { useEffect, useState, useCallback } from 'react';
+import { getNearbyShelters } from '@/api/shelterApi';
 
-export function useShelters() {
-  // TODO: 실제 위치 정보 연동 시 아래 값 변경
-  //const [latitude] = useState(37.5665);
-  //const [longitude] = useState(126.978);
+export type Shelter = {
+  shelterId: number;
+  name: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  distance?: string;
+  isOutdoors?: boolean;
+  operatingHours?: any;
+  averageRating?: number;
+  photoUrl?: string;
+};
 
-  // TODO: 추후 삭제 필요 - 개발 중 목데이터 사용
-  const [shelters, _setShelters] = useState(nearbyShelters);
-
-  // TODO: react-query로 쉼터 데이터 가져오기 (API 연동 시 사용)
-  /*
-  const {
-    data: shelters = [],
-    error,
-    isLoading,
-    refetch,
-    
-    // TODO: 실제 API 연동 시 아래 onError 추가
-    onError: (err: any) => {
-      // 공통 에러 응답이면 에러 페이지로 이동
-      if (err && err.status && err.error && err.message) {
-        navigate('/error', { state: err });
-      }
-    },
-    
-  } = useQuery({
-    queryKey: ['nearbyShelters', latitude, longitude],
-    queryFn: () => getNearbyShelters({ latitude, longitude }),
-    retry: 1,
-  });
-  */
-
-  // 더보기: 3개씩 보여주기
-  const [visibleCount, setVisibleCount] = useState(3); // 초기값 3으로 변경
-
+export const useShelters = () => {
+  const [shelters, setShelters] = useState<Shelter[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
-  const [toastMessage, setToastMessage] = useState('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<any>(null);
+  const [hasMoreItems, setHasMoreItems] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
 
+  const fetchNearby = useCallback(async (latitude: number, longitude: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getNearbyShelters({ latitude, longitude });
+      // API가 배열을 반환한다고 가정
+      setShelters(Array.isArray(data) ? data : []);
+      // 단순히 더불어 사용할 플래그 (nearby는 페이징 없으므로 false)
+      setHasMoreItems(false);
+    } catch (err) {
+      console.error('[useShelters] fetchNearby error', err);
+      setError(err);
+      setShelters([]);
+      setHasMoreItems(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    // 브라우저 위치 사용 시도
+    if (!navigator?.geolocation) {
+      setError(new Error('Geolocation not available'));
+      setIsLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (!mounted) return;
+        const { latitude, longitude } = pos.coords;
+        fetchNearby(latitude, longitude);
+      },
+      (err) => {
+        console.warn('[useShelters] geolocation error', err);
+        setError(err);
+        setIsLoading(false);
+      },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 },
+    );
+    return () => {
+      mounted = false;
+    };
+  }, [fetchNearby]);
+
+  // 로컬에서 favorite 토글 (UI 즉시 반영)
   const handleToggleFavorite = (shelterId: number) => {
     setFavoriteIds((prev) => {
-      const isFavorite = prev.includes(shelterId);
-      if (isFavorite) {
-        setToastMessage('찜 목록에서\n삭제되었습니다');
+      if (prev.includes(shelterId)) {
         return prev.filter((id) => id !== shelterId);
-      } else {
-        setToastMessage('찜 목록에\n추가되었습니다');
-        return [...prev, shelterId];
       }
+      return [...prev, shelterId];
     });
-    setTimeout(() => setToastMessage(''), 1500);
   };
 
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + 3); // 3개씩 증가
+  const handleLoadMore = async () => {
+    // nearby API는 페이징이 없으므로 기본 noop
+    setToastMessage('더 불러올 항목이 없습니다.');
   };
-
-  const hasMoreItems = shelters.length > visibleCount;
-
-  // TODO: 추후 삭제 필요 - 목데이터 사용 시 isLoading, error는 false/undefined로 처리
-  const isLoading = false;
-  const error = undefined;
 
   return {
-    shelters: shelters.slice(0, visibleCount),
+    shelters,
     favoriteIds,
-    toastMessage,
-    visibleCount,
-    hasMoreItems,
-    handleToggleFavorite,
-    handleLoadMore,
     isLoading,
     error,
-    // refetch: () => {}, // 필요시 목함수
+    hasMoreItems,
+    toastMessage,
+    setToastMessage,
+    handleToggleFavorite,
+    handleLoadMore,
+    refresh: () => {
+      // 현재 위치로 재요청 수행
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          fetchNearby(latitude, longitude);
+        },
+        (err) => {
+          console.warn('[useShelters] refresh geolocation error', err);
+        },
+      );
+    },
   };
-}
+};

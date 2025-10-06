@@ -2,23 +2,24 @@
 import { css } from '@emotion/react';
 import ShelterInfoCard from '@/components/ShelterInfoCard';
 
+// API 응답과 호환되도록 optional 필드로 선언
 interface Shelter {
   shelterId: number;
   name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  distance: string;
-  isOutdoors: boolean;
-  operatingHours: {
-    weekday: string;
-    weekend: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  distance?: string;
+  isOutdoors?: boolean;
+  operatingHours?: {
+    weekday?: string;
+    weekend?: string;
   };
-  averageRating: number;
-  photoUrl: string;
+  averageRating?: number;
+  photoUrl?: string;
 }
 
-// 변경: onToggleFavorite에 isFavorite 플래그 추가
+// onToggleFavorite 시그니처은 (shelterId, isFavorite)
 interface Props {
   shelters: Shelter[];
   favoriteIds: number[];
@@ -33,7 +34,7 @@ const ShelterList = ({ shelters, favoriteIds, onToggleFavorite }: Props) => {
         return (
           <ShelterInfoCard
             key={shelter.shelterId}
-            shelter={shelter}
+            shelter={shelter as any} // ShelterInfoCard prop 타입이 엄격하면 매핑 필요
             variant="find"
             isFavorite={isFav}
             onToggleFavorite={() => onToggleFavorite(shelter.shelterId, isFav)}

@@ -11,7 +11,7 @@ const MyPage = () => {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
 
-  // userId는 개발 환경에서 임의로 1 사용. 실제 로그인 연동 시 변경 필요.
+  // TODO: userId는 개발 환경에서 임의로 1 사용. 실제 로그인 연동 시 변경 필요.
   const { user, error, isLoading, isMock } = useUser(1);
 
   if (isLoading) return <div css={container}>로딩 중...</div>;

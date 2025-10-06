@@ -4,9 +4,8 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
-import ToastMessage from '../../components/ToastMessage'; // 경로에 맞게 import
+import ToastMessage from '../../components/ToastMessage';
 import { useEditReview } from './hooks/useEditReview';
-import { useState } from 'react';
 
 const EditReviewPage = () => {
   const {
@@ -22,24 +21,14 @@ const EditReviewPage = () => {
     onModalCancel,
     toastMessage,
     handleStarClick,
-    //handleSave,
+    handleSave,
     handleRemoveImage,
     handleImageChange,
     handleAddImageClick,
     navigate,
     errorMessage,
-    patchReviewMutation,
+    saving, // 훅에서 반환된 saving 사용
   } = useEditReview();
-
-  const [showApiAlert, setShowApiAlert] = useState(false);
-
-  // 저장 버튼 클릭 시
-  const handleSaveWithAlert = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowApiAlert(true);
-    // 실제 handleSave 호출은 주석 처리 또는 조건부로
-    // TODO: handleSave(e); 로 변경 필요
-  };
 
   if (!review) return <div>로딩 중...</div>;
 
@@ -63,7 +52,7 @@ const EditReviewPage = () => {
           </span>
         ))}
       </div>
-      <form css={formBox} onSubmit={handleSaveWithAlert}>
+      <form css={formBox} onSubmit={handleSave}>
         <textarea
           css={contentBox}
           value={content}
@@ -93,21 +82,11 @@ const EditReviewPage = () => {
         </div>
         {/* 에러 메시지 표시 */}
         {errorMessage && <div css={errorMsgStyle}>{errorMessage}</div>}
-        <button css={saveBtn} type="submit" disabled={patchReviewMutation.isPending}>
-          {patchReviewMutation.isPending ? '저장 중...' : '저장'}
+        <button css={saveBtn} type="submit" disabled={saving}>
+          {saving ? '저장 중...' : '저장'}
         </button>
       </form>
-      {/* TODO: API 연동 후 제거, 개발 중 안내 팝업 */}
-      {showApiAlert && (
-        <div css={modalOverlay}>
-          <div css={modalBox}>
-            <div css={modalTextStyle}>아직 API가 연동되지 않음!</div>
-            <button css={modalBtn} onClick={() => setShowApiAlert(false)}>
-              확인
-            </button>
-          </div>
-        </div>
-      )}
+
       {/* 저장/삭제 모달 */}
       {showModal && (
         <div css={modalOverlay}>

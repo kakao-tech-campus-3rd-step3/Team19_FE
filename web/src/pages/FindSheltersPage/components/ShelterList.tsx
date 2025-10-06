@@ -18,25 +18,29 @@ interface Shelter {
   photoUrl: string;
 }
 
+// 변경: onToggleFavorite에 isFavorite 플래그 추가
 interface Props {
   shelters: Shelter[];
   favoriteIds: number[];
-  onToggleFavorite: (shelterId: number) => void;
+  onToggleFavorite: (shelterId: number, isFavorite: boolean) => void;
 }
 
 const ShelterList = ({ shelters, favoriteIds, onToggleFavorite }: Props) => {
   return (
     <div css={listContainerStyle}>
-      {shelters.map((shelter) => (
-        <ShelterInfoCard
-          key={shelter.shelterId}
-          shelter={shelter}
-          variant="find"
-          isFavorite={favoriteIds.includes(shelter.shelterId)}
-          onToggleFavorite={() => onToggleFavorite(shelter.shelterId)}
-          onStart={() => console.log(`${shelter.name} 안내 시작`)}
-        />
-      ))}
+      {shelters.map((shelter) => {
+        const isFav = favoriteIds.includes(shelter.shelterId);
+        return (
+          <ShelterInfoCard
+            key={shelter.shelterId}
+            shelter={shelter}
+            variant="find"
+            isFavorite={isFav}
+            onToggleFavorite={() => onToggleFavorite(shelter.shelterId, isFav)}
+            onStart={() => console.log(`${shelter.name} 안내 시작`)}
+          />
+        );
+      })}
     </div>
   );
 };

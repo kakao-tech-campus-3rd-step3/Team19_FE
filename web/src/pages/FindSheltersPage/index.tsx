@@ -6,6 +6,7 @@ import ToastMessage from '../../components/ToastMessage';
 import { useShelters } from './hooks/useShelters';
 import emptyShelterImage from '@/assets/images/empty-shelter.png';
 import theme from '@/styles/theme';
+import { toggleWish } from '@/api/wishApi';
 
 const FindSheltersPage = () => {
   const {
@@ -20,6 +21,20 @@ const FindSheltersPage = () => {
     isLoading,
     error,
   } = useShelters();
+
+  // toggle API 호출을 래핑: 성공 시 로컬 훅의 handleToggleFavorite를 호출해 UI 갱신
+  const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {
+    try {
+      const userId = 1; // TODO: 인증 연동 시 실제 userId 사용
+      const res = await toggleWish({ shelterId, userId, isFavorite });
+      console.log('[FindSheltersPage] toggleWish result', res);
+      // 로컬 상태 갱신(훅의 핸들러 호출)
+      handleToggleFavorite(shelterId);
+    } catch (err) {
+      console.error('[FindSheltersPage] toggleWish error', err);
+      // 필요하면 토스트 표시 추가
+    }
+  };
 
   if (isLoading) {
     return <div css={emptyStateStyle}>쉼터 정보를 불러오는 중입니다...</div>;
@@ -42,7 +57,8 @@ const FindSheltersPage = () => {
           <ShelterList
             shelters={shelters}
             favoriteIds={favoriteIds}
-            onToggleFavorite={handleToggleFavorite}
+            // API 호출을 수행한 뒤 훅의 로컬 업데이트 호출
+            onToggleFavorite={handleToggleWithApi}
           />
           <BottomControls hasMoreItems={hasMoreItems} onLoadMore={handleLoadMore} />
           {/* ToastMessage 컴포넌트 사용 */}

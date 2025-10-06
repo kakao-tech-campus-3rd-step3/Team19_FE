@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { getWishList } from '@/api/wishApi';
 import emptyWishImg from '@/assets/images/empty-wish.png';
 import theme from '@/styles/theme';
@@ -11,26 +11,28 @@ import WishListCard from './components/WishListCard';
 const WishListPage = () => {
   const userId = 1; // TODO: 실제 로그인 정보로 교체
 
-  // TODO: 실제 API 연동 시 onError에서 공통 에러 응답 처리
-  const {
-    data: wishList = [],
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['wishList', userId],
-    queryFn: () => getWishList(userId),
-    retry: 1,
-    // TODO: 실제 API 연동 시 아래 onError 추가
-    /*
-    onError: (err: any) => {
-      // 공통 에러 응답이면 에러 페이지로 이동
-      if (err && err.status && err.error && err.message) {
-        navigate('/error', { state: err });
-      }
-    },
-    */
-  });
+  const [wishList, setWishList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setIsLoading(true);
+    getWishList(userId)
+      .then((data: any) => {
+        if (mounted) setWishList(Array.isArray(data) ? data : []);
+      })
+      .catch((e) => {
+        if (mounted) setError(e);
+      })
+      .finally(() => {
+        if (mounted) setIsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [userId]);
+
   const navigate = useNavigate();
 
   const handleCardClick = (shelterId: number) => {
@@ -41,7 +43,10 @@ const WishListPage = () => {
   if (error)
     return (
       <div css={pageContainerStyle}>
-        <div css={emptyText}>찜 목록을 불러오지 못했습니다.</div>
+        <div css={emptyText}>
+          찜 목록을 <br />
+          불러오지 못했습니다.
+        </div>
       </div>
     );
 
@@ -55,13 +60,19 @@ const WishListPage = () => {
             <span css={title}>찜 목록</span>
           </div>
           <div css={listBox}>
-            {wishList.map((item) => (
+            {wishList.map((item: any) => (
               <WishListCard
                 key={item.shelterId}
                 item={item}
                 onClick={handleCardClick}
                 userId={userId}
-                refetchWishList={refetch}
+                refetchWishList={() =>
+                  getWishList(userId)
+                    .then((d: any) => setWishList(Array.isArray(d) ? d : []))
+                    .catch(() => {
+                      /* optional: set error state if needed */
+                    })
+                }
               />
             ))}
           </div>

@@ -30,8 +30,10 @@ async function parseResponse(res: Response) {
       } catch {
         // ignore
       }
-      // 즉시 리다이렉트
-      window.location.href = '/error';
+      // 개발 중 리다이렉트 비활성화: 콘솔로 에러 확인하기 위해 주석 처리
+      // TODO: 실제 서비스 시 주석 해제
+      // window.location.href = '/error';
+      console.error('[apiClient] 서버 에러 발생 (리다이렉트 주석 처리):', err);
     }
 
     throw err;
@@ -52,7 +54,10 @@ function handleFetchError(err: any) {
     } catch {
       // ignore
     }
-    window.location.href = '/error';
+    // 개발 중 리다이렉트 비활성화: 콘솔로 에러 확인하기 위해 주석 처리
+    // TODO: 실제 서비스 시 주석 해제
+    // window.location.href = '/error';
+    console.error('[apiClient] fetch 실패 (리다이렉트 주석 처리):', err);
   }
   throw err;
 }

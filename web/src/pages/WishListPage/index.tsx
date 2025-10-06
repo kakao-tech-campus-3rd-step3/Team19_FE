@@ -40,15 +40,7 @@ const WishListPage = () => {
   };
 
   if (isLoading) return <div css={pageContainerStyle}>로딩 중...</div>;
-  if (error)
-    return (
-      <div css={pageContainerStyle}>
-        <div css={emptyText}>
-          찜 목록을 <br />
-          불러오지 못했습니다.
-        </div>
-      </div>
-    );
+  // error는 빈 상태 UI로 처리: 아래 렌더에서 error 여부에 따라 메시지 표시
 
   return (
     <>
@@ -85,7 +77,9 @@ const WishListPage = () => {
             <span css={emptyTitle}>찜 목록</span>
           </div>
           <div css={emptyBox}>
-            <div css={emptyText}>찜이 없습니다.</div>
+            <div css={emptyText}>
+              {error ? '찜 목록을\n불러오지 못했습니다.' : '찜이 없습니다.'}
+            </div>
             <img src={emptyWishImg} alt="찜 없음" css={emptyImg} />
           </div>
         </div>
@@ -183,4 +177,5 @@ const emptyText = css`
   font-weight: 700;
   color: #fff;
   text-shadow: 2px 2px 6px #222;
+  white-space: pre-line; /* '\n'을 줄바꿈으로 렌더 */
 `;

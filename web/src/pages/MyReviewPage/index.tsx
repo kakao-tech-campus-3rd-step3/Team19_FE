@@ -41,7 +41,9 @@ const MyReviewPage = () => {
       .catch((e) => {
         if (!mounted) return;
         console.error('[MyReviewPage] getMyReviews error', e);
+        // API 실패 시에도 빈 상태 UI를 보여주고, 토스트로 에러를 알림
         setError(e);
+        setReviews([]); // 명시적으로 빈배열로 처리
       })
       .finally(() => {
         if (!mounted) return;
@@ -57,7 +59,7 @@ const MyReviewPage = () => {
   };
 
   if (loading) return <div>로딩 중...</div>;
-  if (error) return <div>내 리뷰를 불러올 수 없습니다.</div>;
+  // 변경: error 발생해도 별도 에러 화면으로 리턴하지 않고 빈 상태 UI를 렌더하도록 함
 
   return (
     <>
@@ -80,14 +82,16 @@ const MyReviewPage = () => {
           </div>
         </div>
       ) : (
-        // 내가 쓴 리뷰가 없을 때 컨테이너
+        // 내가 쓴 리뷰가 없을 때 컨테이너 (API 실패도 여기로 표시)
         <div css={emptyStateStyle}>
           <div css={emptyHeader}>
             <FaRegCommentDots color="#fff" size={43} css={reviewIcon} />
             <span css={emptyTitle}>내가 쓴 리뷰</span>
           </div>
           <div css={emptyBox}>
-            <div css={emptyText}>작성한 리뷰가 없습니다.</div>
+            <div css={emptyText}>
+              {error ? '리뷰를 \n불러오지 못했습니다.' : '작성한 리뷰가 없습니다.'}
+            </div>
             <img src={emptyReviewImg} alt="리뷰 없음" css={emptyImg} />
           </div>
         </div>
@@ -188,4 +192,5 @@ const emptyText = css`
   font-weight: 700;
   color: #fff;
   text-shadow: 2px 2px 6px #222;
+  white-space: pre-line; /*'\n'을 줄바꿈으로 렌더 */
 `;

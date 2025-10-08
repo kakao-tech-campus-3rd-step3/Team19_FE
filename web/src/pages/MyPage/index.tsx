@@ -11,8 +11,8 @@ const MyPage = () => {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
 
-  // TODO: userId는 개발 환경에서 임의로 1 사용. 실제 로그인 연동 시 변경 필요.
-  const { user, error, isLoading, isMock } = useUser(1);
+  // TODO: 실제 로그인 연동 시 변경 필요.
+  const { user, error, isLoading, isMock } = useUser();
 
   if (isLoading) return <div css={container}>로딩 중...</div>;
 
@@ -37,9 +37,6 @@ const MyPage = () => {
     <div css={container}>
       {/* 마이페이지 타이틀 */}
       <div css={mypageTitle}>마이페이지</div>
-
-      {/* 개발용 목데이터 사용 안내 */}
-      {isMock && <div css={mockNotice}>개발용 목데이터를 사용 중입니다.</div>}
 
       {/* 프로필 */}
       <div css={profileBox}>
@@ -87,13 +84,6 @@ const mypageTitle = css`
   padding: 4% 5%;
   text-align: center;
   text-shadow: 2px 2px 6px #bbb;
-`;
-
-const mockNotice = css`
-  text-align: center;
-  color: #666;
-  font-size: 0.9rem;
-  margin-top: -8px;
 `;
 
 const profileBox = css`

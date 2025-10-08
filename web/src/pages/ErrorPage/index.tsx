@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import theme from '@/styles/theme';
 import { css } from '@emotion/react';
-import errorimg from '@/assets/images/error.png';
+import errorGif from '@/assets/images/error.gif';
 
 interface ErrorProps {
   status: number;
@@ -22,7 +22,7 @@ const ErrorPage = ({ status, error, message, path }: ErrorProps) => {
       <button css={homeBtn} onClick={() => (window.location.href = '/')}>
         홈으로 돌아가기
       </button>
-      <img src={errorimg} alt="무쉼사 캐릭터" css={bottomImg} />
+      <img src={errorGif} css={bottomImg} alt="에러 이미지" />
     </div>
   );
 };
@@ -44,7 +44,7 @@ const errorBox = css`
   border-radius: 16px;
   box-shadow: 0 2px 12px #2222;
   margin-top: auto;
-  padding: 40px 32px;
+  padding: 36px 28px;
   text-align: center;
   margin-bottom: 32px;
 `;
@@ -88,6 +88,11 @@ const homeBtn = css`
 `;
 
 const bottomImg = css`
-  margin-top: 10%;
-  width: 330px;
+  margin-top: 5%;
+  width: 90%;
+  height: auto;
+  object-fit: contain;
+  /* 클릭/포인터 상호작용 방지 */
+  pointer-events: none;
+  user-select: none;
 `;

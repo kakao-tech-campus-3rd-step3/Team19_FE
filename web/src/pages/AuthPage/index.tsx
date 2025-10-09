@@ -4,6 +4,7 @@ import theme from '@/styles/theme';
 import { useMemo, useState } from 'react';
 import AuthTabs, { type AuthTab } from './components/AuthTabs';
 import LoginForm from './components/LoginForm';
+import SignupForm from './components/SignupForm';
 
 // AuthPage: 탭 토글 및 폼 영역 컨테이너
 const AuthPage = () => {
@@ -16,11 +17,7 @@ const AuthPage = () => {
         <AuthTabs active={active} onChange={setActive} />
         <div id="auth-panel" role="tabpanel" aria-label={title} css={contentArea}>
           {/* 로그인/회원가입 폼 영역 */}
-          {active === 'login' ? (
-            <LoginForm />
-          ) : (
-            <div css={contentPlaceholder}>회원가입 폼 컨텐츠 영역</div>
-          )}
+          {active === 'login' ? <LoginForm /> : <SignupForm />}
         </div>
       </div>
     </div>
@@ -52,7 +49,4 @@ const contentArea = css`
   padding: 0;
 `;
 
-const contentPlaceholder = css`
-  padding: 24px 16px 32px 16px;
-  color: #444;
-`;
+// contentPlaceholder는 더 이상 사용하지 않음

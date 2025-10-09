@@ -35,6 +35,7 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
 
 const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
   const navigate = useNavigate();
 
   // react-query mutation 사용
@@ -99,7 +100,17 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
           <div css={cardContent}>{item.content}</div>
           <div css={cardDate}>작성일: {new Date(item.createdAt).toLocaleDateString()}</div>
           {item.photoUrl && item.photoUrl.trim() !== '' && (
-            <img src={item.photoUrl} alt="리뷰 이미지" css={cardImg} onError={handleImageError} />
+            <img
+              src={item.photoUrl}
+              alt="리뷰 이미지"
+              css={cardImg}
+              onError={handleImageError}
+              onClick={(e) => {
+                e.stopPropagation();
+                setModalImg(item.photoUrl);
+              }}
+              style={{ cursor: 'pointer' }}
+            />
           )}
         </div>
       </div>
@@ -122,6 +133,22 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
                 아니요
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* 이미지 확대 모달 */}
+      {modalImg && (
+        <div css={modalOverlay} onClick={() => setModalImg(null)}>
+          <div css={modalContent} onClick={(e) => e.stopPropagation()}>
+            <img
+              src={modalImg}
+              alt="리뷰 이미지 확대"
+              css={modalImgStyle}
+              onError={handleImageError}
+            />
+            <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
+              닫기
+            </button>
           </div>
         </div>
       )}
@@ -300,6 +327,39 @@ const modalBtn = css`
     background: #bbb;
     color: #222;
   }
+`;
+
+// (ShelterDetailPage와 통일)
+const modalContent = css`
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 16px 16px 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 90vw;
+  max-height: 80vh;
+`;
+
+const modalImgStyle = css`
+  width: 90vw;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fafafa;
+`;
+
+const modalCloseBtn = css`
+  align-self: center;
+  margin-top: 8px;
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
 `;
 
 export default ReviewListCard;

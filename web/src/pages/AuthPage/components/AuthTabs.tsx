@@ -47,8 +47,8 @@ const tab = css`
   background: none;
   border: none;
   cursor: pointer;
-  font-size: ${theme.typography.my3.fontSize};
-  font-weight: ${theme.typography.my3.fontWeight};
+  font-size: ${theme.typography.authTab.fontSize};
+  font-weight: ${theme.typography.authTab.fontWeight};
 `;
 
 const tabActive = css`

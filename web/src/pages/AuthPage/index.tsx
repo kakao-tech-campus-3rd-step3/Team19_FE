@@ -1,14 +1,22 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
+import { useMemo, useState } from 'react';
+import AuthTabs, { type AuthTab } from './components/AuthTabs';
 
-// AuthPage 스켈레톤: 상단 탭과 폼 영역을 배치할 컨테이너만 구성
+// AuthPage: 탭 토글 및 폼 영역 컨테이너
 const AuthPage = () => {
+  const [active, setActive] = useState<AuthTab>('login');
+  const title = useMemo(() => (active === 'login' ? '로그인' : '회원가입'), [active]);
+
   return (
     <div css={container}>
       <div css={card}>
-        <div css={tabsPlaceholder}>탭 영역 (로그인 | 회원가입)</div>
-        <div css={contentPlaceholder}>폼 컨텐츠 영역</div>
+        <AuthTabs active={active} onChange={setActive} />
+        <div id="auth-panel" role="tabpanel" aria-label={title} css={contentArea}>
+          {/* 다음 단계에서 LoginForm/SignupForm로 교체 */}
+          <div css={contentPlaceholder}>{title} 폼 컨텐츠 영역</div>
+        </div>
       </div>
     </div>
   );
@@ -35,14 +43,8 @@ const card = css`
   overflow: hidden;
 `;
 
-const tabsPlaceholder = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 56px;
-  font-size: ${theme.typography.my3.fontSize};
-  font-weight: ${theme.typography.my3.fontWeight};
-  background: ${theme.colors.button.gray100};
+const contentArea = css`
+  padding: 0;
 `;
 
 const contentPlaceholder = css`

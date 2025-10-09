@@ -6,17 +6,21 @@ import AuthTabs, { type AuthTab } from './components/AuthTabs';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 
-// AuthPage: 탭 토글 및 폼 영역 컨테이너
+// AuthPage: 탭 바(상단 고정)와 폼 카드 영역
 const AuthPage = () => {
   const [active, setActive] = useState<AuthTab>('login');
   const title = useMemo(() => (active === 'login' ? '로그인' : '회원가입'), [active]);
 
   return (
     <div css={container}>
-      <div css={card}>
+      {/* 상단 탭 바 (고정 높이) */}
+      <div css={tabsBar}>
         <AuthTabs active={active} onChange={setActive} />
+      </div>
+
+      {/* 폼 카드 */}
+      <div css={card}>
         <div id="auth-panel" role="tabpanel" aria-label={title} css={contentArea}>
-          {/* 로그인/회원가입 폼 영역 */}
           {active === 'login' ? <LoginForm /> : <SignupForm />}
         </div>
       </div>
@@ -30,9 +34,18 @@ const container = css`
   width: 100%;
   height: calc(100vh - ${theme.spacing.spacing16});
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* 상단 정렬로 고정 위치 */
   background: #fff;
+  padding-top: 12px;
+  box-sizing: border-box;
+`;
+
+const tabsBar = css`
+  width: 100%;
+  max-width: 500px;
+  margin: 0 16px 12px 16px;
 `;
 
 const card = css`

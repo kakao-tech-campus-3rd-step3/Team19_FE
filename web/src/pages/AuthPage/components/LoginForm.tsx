@@ -2,7 +2,6 @@
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useState } from 'react';
-import { FaGoogle, FaCommentDots } from 'react-icons/fa';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -47,16 +46,6 @@ const LoginForm = () => {
       {/* 구분선 */}
       <div css={dividerWrap}>
         <span css={divider} />
-      </div>
-
-      {/* 소셜 로그인 버튼 */}
-      <div css={socialRow}>
-        <button type="button" css={socialBtn} aria-label="구글로 로그인">
-          <FaGoogle size={18} style={{ marginRight: 8 }} /> Google
-        </button>
-        <button type="button" css={socialBtn} aria-label="카카오로 로그인">
-          <FaCommentDots size={18} style={{ marginRight: 8 }} /> Kakao
-        </button>
       </div>
 
       {/* 비밀번호 찾기 */}
@@ -115,25 +104,6 @@ const divider = css`
   height: 1px;
   background: ${theme.colors.button.black};
   opacity: 0.2;
-`;
-
-const socialRow = css`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-`;
-
-const socialBtn = css`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 10px;
-  border: 1px solid ${theme.colors.button.black};
-  background: #fff;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: ${theme.typography.authInput.fontSize};
-  font-weight: ${theme.typography.authInput.fontWeight};
 `;
 
 const linkBtn = css`

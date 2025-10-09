@@ -14,7 +14,7 @@ const AuthPage = () => {
   return (
     <div css={container}>
       {/* 상단 탭 바 (고정 높이) */}
-      <div css={tabsBar}>
+      <div>
         <AuthTabs active={active} onChange={setActive} />
       </div>
 
@@ -40,12 +40,6 @@ const container = css`
   background: #fff;
   padding-top: 12px;
   box-sizing: border-box;
-`;
-
-const tabsBar = css`
-  width: 100%;
-  max-width: 500px;
-  margin: 0 16px 12px 16px;
 `;
 
 const card = css`

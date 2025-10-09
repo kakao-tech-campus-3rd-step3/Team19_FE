@@ -18,6 +18,7 @@ import EditReviewPage from './pages/EditReviewPage';
 import WriteReviewPage from './pages/WriteReviewPage';
 import ErrorPage from './pages/ErrorPage';
 import { ErrorBoundary } from 'react-error-boundary';
+import AuthPage from './pages/AuthPage';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
@@ -121,6 +122,8 @@ const App = () => {
               <Route path="/edit-review/:id" element={<EditReviewPage />} />
               {/* path="/write-review/:shelterId": 리뷰 작성 페이지 추가 */}
               <Route path="/write-review/:shelterId" element={<WriteReviewPage />} />
+              {/* path="/auth": 로그인/회원가입 페이지 추가 */}
+              <Route path="/auth" element={<AuthPage />} />
               <Route
                 path="/error"
                 element={

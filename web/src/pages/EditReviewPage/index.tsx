@@ -4,7 +4,7 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
 import theme from '@/styles/theme';
-import ToastMessage from '../FindSheltersPage/components/ToastMessage'; // 경로에 맞게 import
+import ToastMessage from '../../components/ToastMessage';
 import { useEditReview } from './hooks/useEditReview';
 
 const EditReviewPage = () => {
@@ -26,6 +26,8 @@ const EditReviewPage = () => {
     handleImageChange,
     handleAddImageClick,
     navigate,
+    errorMessage,
+    saving, // 훅에서 반환된 saving 사용
   } = useEditReview();
 
   if (!review) return <div>로딩 중...</div>;
@@ -78,10 +80,13 @@ const EditReviewPage = () => {
             />
           </label>
         </div>
-        <button css={saveBtn} type="submit">
-          저&nbsp;장
+        {/* 에러 메시지 표시 */}
+        {errorMessage && <div css={errorMsgStyle}>{errorMessage}</div>}
+        <button css={saveBtn} type="submit" disabled={saving}>
+          {saving ? '저장 중...' : '저장'}
         </button>
       </form>
+
       {/* 저장/삭제 모달 */}
       {showModal && (
         <div css={modalOverlay}>
@@ -359,4 +364,11 @@ const modalBtn = css`
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
+`;
+
+const errorMsgStyle = css`
+  color: #d32f2f;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  text-align: center;
 `;

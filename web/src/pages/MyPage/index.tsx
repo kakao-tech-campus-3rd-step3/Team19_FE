@@ -8,16 +8,25 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from './hooks/useUser';
 
 const MyPage = () => {
-  const user = useUser(1); // TODO: userId를 실제 로그인 정보에 맞게 변경 필요
-  const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
-  // TODO: https://github.com/kakao-tech-campus-3rd-step3/Team19_FE/pull/40#discussion_r2347400932
+  const [imgError, setImgError] = useState(false);
 
-  if (!user) return <div css={container}>로딩 중...</div>;
+  // TODO: 실제 로그인 연동 시 변경 필요.
+  const { user, error, isLoading, isMock } = useUser();
+
+  if (isLoading) return <div css={container}>로딩 중...</div>;
+
+  if (error && !isMock)
+    return (
+      <div css={container}>
+        <div css={errorMsgStyle}>사용자 정보를 불러오지 못했습니다.</div>
+      </div>
+    );
+
+  if (!user) return <div css={container}>사용자 정보가 없습니다.</div>;
 
   const profileImgUrl = !user.profileImageUrl || imgError ? NoProfile : user.profileImageUrl;
 
-  // 아이콘 크기 글자 크기와 동일하게 맞추기 위한 스타일
   const iconStyle = css`
     font-size: ${theme.typography.my3.fontSize};
     margin-right: 8px;
@@ -28,6 +37,7 @@ const MyPage = () => {
     <div css={container}>
       {/* 마이페이지 타이틀 */}
       <div css={mypageTitle}>마이페이지</div>
+
       {/* 프로필 */}
       <div css={profileBox}>
         <img src={profileImgUrl} alt="프로필" css={profileImg} onError={() => setImgError(true)} />
@@ -46,8 +56,7 @@ const MyPage = () => {
           <FaRegCommentDots color="#444" css={iconStyle} />
           내가 쓴 리뷰 목록
         </button>
-        <button css={menuBtn}>앱 푸쉬 알림 ON/OFF</button>{' '}
-        {/* TODO: 앱 푸시 현재 설정에 따른 변화 필요 */}
+        <button css={menuBtn}>앱 푸쉬 알림 ON/OFF</button>
       </div>
 
       {/* TODO: 로그아웃 버튼 기능 추가 */}
@@ -132,16 +141,6 @@ const menuBtn = css`
   justify-content: center;
   color: #222;
   cursor: pointer;
-  /* 버튼 반응 없애기 */
-  outline: none;
-  box-shadow: none;
-  -webkit-tap-highlight-color: transparent;
-  &:focus,
-  &:active,
-  &:focus-visible {
-    outline: none;
-    box-shadow: none;
-  }
 `;
 
 const logoutBtn = css`
@@ -155,14 +154,10 @@ const logoutBtn = css`
   font-weight: ${theme.typography.my4.fontWeight};
   line-height: ${theme.typography.my4.lineHeight};
   cursor: pointer;
-  /* 버튼 반응 없애기 */
-  outline: none;
-  box-shadow: none;
-  -webkit-tap-highlight-color: transparent;
-  &:focus,
-  &:active,
-  &:focus-visible {
-    outline: none;
-    box-shadow: none;
-  }
+`;
+
+const errorMsgStyle = css`
+  color: red;
+  text-align: center;
+  margin-top: 24px;
 `;

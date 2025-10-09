@@ -1,41 +1,60 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { nearbyShelters } from '@/mock/nearbyShelters';
 import ShelterList from './components/ShelterList';
 import BottomControls from './components/BottomControls';
-import ToastMessage from './components/ToastMessage';
-import { useShelters } from './hooks/useShelters';
+import ToastMessage from '@/components/ToastMessage';
 import emptyShelterImage from '@/assets/images/empty-shelter.png';
+import { useShelters } from './hooks/useShelters';
+import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';
 
 const FindSheltersPage = () => {
   const {
+    shelters,
     favoriteIds,
     toastMessage,
-    visibleCount,
+    isLoading,
+    error,
     hasMoreItems,
-    handleToggleFavorite,
     handleLoadMore,
+    handleToggleFavorite,
   } = useShelters();
 
-  const shelters = nearbyShelters.slice(0, visibleCount);
+  // API 호출(toggleWish) -> 성공 시 훅의 로컬 토글 호출
+  const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {
+    try {
+      const userId = 1; // TODO: 로그인 연동 후 실제 userId 사용
+      await toggleWish({ shelterId, userId, isFavorite });
+      // 로컬 UI 즉시 반영
+      handleToggleFavorite(shelterId);
+    } catch (err) {
+      console.error('[FindSheltersPage] toggleWish error', err);
+      // 실패 시 사용자 알림
+      // ToastMessage는 상단에서 toastMessage로 보여주므로 set을 원하면 훅에 setToastMessage 추가 사용
+    }
+  };
+
+  if (isLoading) return <div css={pageContainerStyle}>로딩 중...</div>;
+  if (error)
+    return (
+      <div css={pageContainerStyle}>
+        <div css={emptyTextStyle}>근처 쉼터를 불러올 수 없습니다.</div>
+      </div>
+    );
 
   return (
     <>
       {shelters.length > 0 ? (
-        // 쉼터 목록이 있을 때의 전체 화면 컨테이너
         <div css={pageContainerStyle}>
           <ShelterList
             shelters={shelters}
             favoriteIds={favoriteIds}
-            onToggleFavorite={handleToggleFavorite}
+            onToggleFavorite={handleToggleWithApi} // 시그니처: (shelterId, isFavorite)
           />
           <BottomControls hasMoreItems={hasMoreItems} onLoadMore={handleLoadMore} />
-          {/* ToastMessage 컴포넌트 사용 */}
-          <ToastMessage message={toastMessage} />
+          {toastMessage && <ToastMessage message={toastMessage} />}
         </div>
       ) : (
-        // 쉼터 목록이 없을 때의 전체 화면 컨테이너
         <div css={emptyStateStyle}>
           <p css={emptyTextStyle}>
             근처에 가까운 쉼터가

@@ -2,11 +2,11 @@
 import { css } from '@emotion/react';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
-import ToastMessage from '../FindSheltersPage/components/ToastMessage';
+import ToastMessage from '../../components/ToastMessage';
 import ShelterDetailInfo from './components/ShelterDetailInfo';
 import ShelterReviewSection from './components/ShelterReviewSection';
 import { useShelterDetail } from './hooks/useShelterDetail';
-import { toggleWish } from '@/utils/wishApi';
+import { toggleWish } from '@/api/wishApi';
 
 const ShelterDetailPage = () => {
   const { id } = useParams();
@@ -23,12 +23,15 @@ const ShelterDetailPage = () => {
     handleMore,
     onGuideStart,
     setIsFavorite,
+    shelterError,
+    reviewsError,
   } = useShelterDetail(id);
 
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
   });
+  const [toggling, setToggling] = useState(false);
 
   const showToast = (message: string) => {
     setToast({ open: true, message });
@@ -37,21 +40,37 @@ const ShelterDetailPage = () => {
 
   // wishApi를 활용한 찜 버튼 클릭 핸들러
   const handleToggleFavorite = async () => {
-    const userId = 1; // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
-    const result = await toggleWish({
-      shelterId: id ?? '',
-      userId,
-      isFavorite,
-    });
-    // 찜 추가/삭제 성공 시 하트 상태 변경
-    if (result.success) {
-      setIsFavorite(!isFavorite);
+    if (toggling) return; // 중복 호출 방지
+    setToggling(true);
+    try {
+      const userId = 1; // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
+      const result = await toggleWish({
+        shelterId: id ?? '',
+        userId,
+        isFavorite,
+      });
+
+      if (result?.success) {
+        setIsFavorite(!isFavorite);
+      }
+      showToast(result?.message ?? '처리되었습니다.');
+    } catch (err: any) {
+      console.error('[ShelterDetailPage] toggleWish error:', err);
+      // client.ts의 전역 리다이렉트가 주석처리된 상태라면 이 catch가 호출됩니다.
+      showToast(err?.message ?? '서버와 연결할 수 없습니다.');
+    } finally {
+      setToggling(false);
     }
-    showToast(result.message);
   };
 
   if (isLoading) {
     return <div>로딩 중...</div>;
+  }
+  if (shelterError) {
+    return <div>쉼터 정보를 불러오지 못했습니다.</div>;
+  }
+  if (reviewsError) {
+    return <div>리뷰 정보를 불러오지 못했습니다.</div>;
   }
 
   return (
@@ -64,6 +83,8 @@ const ShelterDetailPage = () => {
           averageRating={averageRating}
           isFavorite={isFavorite}
           onToggleFavorite={handleToggleFavorite}
+          // optional: 자식에서 버튼 비활성화 처리하려면 prop 추가 가능
+          // isToggling={toggling}
           onGuideStart={onGuideStart}
           handleImageError={handleImageError}
         />
@@ -75,8 +96,8 @@ const ShelterDetailPage = () => {
         visibleCount={visibleCount}
         onMore={handleMore}
         handleImageError={handleImageError}
-        shelterName={shelter?.name ?? ''} // 쉼터 이름 추가
-        shelterId={shelter?.shelterId ?? 0} // 쉼터 id 추가
+        shelterName={shelter?.name ?? ''}
+        shelterId={shelter?.shelterId ?? 0}
       />
     </div>
   );

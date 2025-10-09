@@ -1,22 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
-
-const mockReview = {
-  reviewId: 101,
-  shelterId: 1,
-  name: '다솔(아)경로당',
-  userId: 1,
-  content: '에어컨이 참. 시원.하네요~^^',
-  rating: 4,
-  photoUrl: 'https://plus.cnu.ac.kr/images/kr/sub01/ci_simbol_v2.png',
-  profileImageUrl: 'https://example.com/users/1.jpg',
-  createdAt: '2025-08-19T09:00:00Z',
-  updatedAt: '2025-08-19T09:00:00Z',
-};
+import { getReview, patchReview } from '@/api/reviewApi';
 
 export const useEditReview = () => {
   const { id } = useParams();
-  const [review, setReview] = useState<typeof mockReview | null>(null);
+  const reviewId = id ? Number(id) : undefined;
+
+  const [review, setReview] = useState<any | null>(null);
   const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
   const [photoUrl, setPhotoUrl] = useState('');
@@ -26,24 +17,41 @@ export const useEditReview = () => {
   const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => () => {});
   const [onModalCancel, setOnModalCancel] = useState<() => void>(() => () => {});
   const [toastMessage, setToastMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  // 리뷰 단건 조회 (목데이터)
+  // 리뷰 단건 조회 (API 연동)
   useEffect(() => {
-    // TODO: 실제 API 연동 시 fetch(`/api/reviews/${id}`)로 변경
-    setReview(mockReview);
-    setContent(mockReview.content);
-    setRating(mockReview.rating);
-    setPhotoUrl(mockReview.photoUrl || '');
-    setShowImage(!!mockReview.photoUrl);
-  }, [id]);
+    let mounted = true;
+    if (!reviewId) {
+      // no id -> keep defaults
+      return;
+    }
+    (async () => {
+      try {
+        const data = await getReview(reviewId); // res -> data로 사용
+        if (!mounted) return;
+        setReview(data);
+        setContent(data?.content ?? '');
+        setRating(typeof data?.rating === 'number' ? data.rating : 0);
+        setPhotoUrl(data?.photoUrl ?? '');
+        setShowImage(!!data?.photoUrl);
+      } catch (err) {
+        console.error('[useEditReview] getReview error', err);
+        setErrorMessage((err as any)?.message ?? '리뷰를 불러오지 못했습니다.');
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [reviewId]);
 
   // 별점 클릭 핸들러
   const handleStarClick = (idx: number) => {
     setRating(idx + 1);
   };
 
-  // 저장 버튼 클릭
+  // 저장 버튼 클릭 -> 확인 모달 오픈
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setModalText('저장 하시겠습니까?');
@@ -52,41 +60,42 @@ export const useEditReview = () => {
     setShowModal(true);
   };
 
+  // 실제 API 호출: 리뷰 수정
+  const patchReviewMutation = useMutation({
+    mutationFn: async (params: {
+      reviewId: number;
+      content: string;
+      rating?: number;
+      photoUrl?: string;
+    }) => {
+      return await patchReview(params.reviewId, {
+        content: params.content,
+        rating: params.rating,
+        photoUrl: params.photoUrl,
+      });
+    },
+    onError: (error: any) => {
+      setErrorMessage(error?.message || '리뷰 수정 중 오류가 발생했습니다.');
+    },
+    onSuccess: (_res: any) => {
+      // 성공 시 이동 또는 상태 반영
+      navigate('/myreviews');
+    },
+  });
+
   // 저장 모달에서 "예" 클릭 시
   const handleSaveConfirm = async () => {
     setShowModal(false);
-
-    // TODO: 실제 API 연동 시 아래 fetch 코드 사용
-    /*
-    await fetch(`/api/reviews/${review?.reviewId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`, // JWT 토큰 필요시
-      },
-      body: JSON.stringify({
-        content,
-        // rating,
-        // photoUrl,
-      }),
+    if (!reviewId) {
+      setErrorMessage('리뷰 ID가 없습니다.');
+      return;
+    }
+    patchReviewMutation.mutate({
+      reviewId,
+      content,
+      rating,
+      photoUrl,
     });
-    */
-
-    // 목데이터로 동작: 리뷰 상태를 임시로 업데이트
-    setReview((prev) =>
-      prev
-        ? {
-            ...prev,
-            content,
-            // rating,
-            // photoUrl,
-            updatedAt: new Date().toISOString(),
-          }
-        : prev,
-    );
-
-    // 저장 후 내가 쓴 리뷰 목록 페이지로 이동
-    navigate('/myreviews');
   };
 
   // 사진 삭제 버튼 클릭
@@ -105,9 +114,7 @@ export const useEditReview = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (showImage && photoUrl) {
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
       e.target.value = ''; //input value 초기화 (중복 선택 가능)
-
       return;
     }
     const file = e.target.files?.[0];
@@ -123,9 +130,11 @@ export const useEditReview = () => {
     if (showImage && photoUrl) {
       e.preventDefault(); // 파일 선택창이 뜨지 않도록 막음
       setToastMessage('사진 첨부는 최대 1장만 가능합니다');
-      setTimeout(() => setToastMessage(''), 2000);
     }
   };
+
+  // React Query(vX) 에서는 상태명이 'pending'이므로 그에 맞게 검사
+  const saving = patchReviewMutation.status === 'pending';
 
   return {
     review,
@@ -147,6 +156,8 @@ export const useEditReview = () => {
     setOnModalCancel,
     toastMessage,
     setToastMessage,
+    errorMessage,
+    patchReviewMutation,
     handleStarClick,
     handleSave,
     handleSaveConfirm,
@@ -154,5 +165,6 @@ export const useEditReview = () => {
     handleImageChange,
     handleAddImageClick,
     navigate,
+    saving, // 추가: 로딩 상태를 안전하게 제공
   };
 };

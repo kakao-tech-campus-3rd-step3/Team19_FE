@@ -73,7 +73,7 @@ export async function deleteWish({ userId, shelterId }: { userId: number; shelte
 }
 
 /**
- * 찜 토글 (추가/삭제)
+ * 찜 토글 (추가/삭제) -> TODO: 다른 파일로 분리!
  */
 export async function toggleWish({
   shelterId,

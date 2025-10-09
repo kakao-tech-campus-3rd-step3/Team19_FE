@@ -38,3 +38,5 @@ export async function patchPassword({
 }) {
   return apiClient.patch('/api/users/me/password', { currentPassword, newPassword });
 }
+
+//TODO: 사용자 프로필 사진 수정/사용자 닉네임 수정 -> 필요하면 추가할 것

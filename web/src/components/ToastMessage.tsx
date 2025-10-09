@@ -3,6 +3,7 @@ import theme from '@/styles/theme';
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
 
+//TODO: 좋아요 버튼 클릭 시 나오는 토스트 메시지 버그 수정
 const ToastMessage = ({ message }: { message: string }) => {
   const [show, setShow] = useState(!!message);
 

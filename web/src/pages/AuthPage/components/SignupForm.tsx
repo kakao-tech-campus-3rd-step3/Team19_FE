@@ -39,22 +39,22 @@ const SignupForm = () => {
         required
       />
 
-      {/* 이메일 + 인증 발송 */}
+      {/* 아이디 + 중복 검사사 */}
       <label css={label} htmlFor="signup-email">
-        이메일
+        아이디
       </label>
       <div css={row}>
         <input
           id="signup-email"
           css={[input, flex1]}
-          type="email"
-          placeholder="이메일을 입력해주세요"
+          type="text"
+          placeholder="아이디를 입력해주세요"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <button type="button" css={secondaryBtn}>
-          인증발송
+          중복 검사
         </button>
       </div>
 
@@ -148,8 +148,6 @@ const flex1 = css`
   flex: 1;
 `;
 
-// helper 스타일은 현재 미사용
-
 const submitBtn = css`
   margin-top: 6px;
   padding: 14px 16px;
@@ -178,8 +176,6 @@ const secondaryBtn = css`
   font-size: ${theme.typography.authInput.fontSize};
   font-weight: ${theme.typography.authInput.fontWeight};
 `;
-
-// agreeRow는 현재 미사용
 
 const dividerWrap = css`
   display: flex;

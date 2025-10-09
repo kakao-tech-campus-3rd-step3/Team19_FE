@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useMemo, useState } from 'react';
 import AuthTabs, { type AuthTab } from './components/AuthTabs';
+import LoginForm from './components/LoginForm';
 
 // AuthPage: 탭 토글 및 폼 영역 컨테이너
 const AuthPage = () => {
@@ -14,8 +15,12 @@ const AuthPage = () => {
       <div css={card}>
         <AuthTabs active={active} onChange={setActive} />
         <div id="auth-panel" role="tabpanel" aria-label={title} css={contentArea}>
-          {/* 다음 단계에서 LoginForm/SignupForm로 교체 */}
-          <div css={contentPlaceholder}>{title} 폼 컨텐츠 영역</div>
+          {/* 로그인/회원가입 폼 영역 */}
+          {active === 'login' ? (
+            <LoginForm />
+          ) : (
+            <div css={contentPlaceholder}>회원가입 폼 컨텐츠 영역</div>
+          )}
         </div>
       </div>
     </div>

@@ -8,6 +8,20 @@ const SignupForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const isPasswordValid = (pw: string) => {
+    if (!pw) return false;
+    const lengthOk = pw.length >= 8;
+    const hasLetter = /[A-Za-z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    return lengthOk && hasLetter && hasNumber && hasSpecial;
+  };
+  const passwordError =
+    password && !isPasswordValid(password)
+      ? '8자 이상, 영문/숫자/특수문자를 모두 포함해야 합니다.'
+      : '';
+  const confirmError =
+    passwordConfirm && passwordConfirm !== password ? '비밀번호가 일치하지 않습니다.' : '';
 
   return (
     <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="회원가입 폼">
@@ -57,6 +71,11 @@ const SignupForm = () => {
         onChange={(e) => setPassword(e.target.value)}
         required
       />
+      {passwordError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {passwordError}
+        </div>
+      )}
 
       {/* 비밀번호 확인 */}
       <label css={label} htmlFor="signup-password-confirm">
@@ -71,9 +90,19 @@ const SignupForm = () => {
         onChange={(e) => setPasswordConfirm(e.target.value)}
         required
       />
+      {confirmError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {confirmError}
+        </div>
+      )}
 
       {/* 제출 버튼 */}
-      <button type="submit" css={submitBtn}>
+      <button
+        type="submit"
+        css={submitBtn}
+        disabled={Boolean(passwordError || confirmError)}
+        aria-disabled={Boolean(passwordError || confirmError)}
+      >
         회원가입
       </button>
 
@@ -163,4 +192,12 @@ const divider = css`
   height: 1px;
   background: ${theme.colors.button.black};
   opacity: 0.2;
+`;
+
+const errorMsg = css`
+  margin-top: 4px;
+  color: #e03131;
+  font-size: ${theme.typography.authHelper.fontSize};
+  font-weight: ${theme.typography.authHelper.fontWeight};
+  line-height: ${theme.typography.authHelper.lineHeight};
 `;

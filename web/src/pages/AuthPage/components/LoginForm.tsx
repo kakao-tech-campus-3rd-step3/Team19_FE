@@ -8,6 +8,10 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   // TODO: 항상 로그인 상태 유지 정책: remember UI/state 제거했음.
 
+  const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const emailError = email && !isEmailValid(email) ? '이메일 형식이 올바르지 않습니다.' : '';
+  const passwordError = password && password.length < 8 ? '비밀번호는 8자 이상이어야 합니다.' : '';
+
   return (
     <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="로그인 폼">
       {/* 이메일 */}
@@ -23,6 +27,11 @@ const LoginForm = () => {
         onChange={(e) => setEmail(e.target.value)}
         required
       />
+      {emailError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {emailError}
+        </div>
+      )}
 
       {/* 비밀번호 */}
       <label css={label} htmlFor="login-password">
@@ -37,9 +46,20 @@ const LoginForm = () => {
         onChange={(e) => setPassword(e.target.value)}
         required
       />
+      {passwordError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {passwordError}
+        </div>
+      )}
 
       {/* 로그인 버튼 */}
-      <button type="submit" css={submitBtn} aria-label="로그인">
+      <button
+        type="submit"
+        css={submitBtn}
+        aria-label="로그인"
+        disabled={Boolean(emailError || passwordError)}
+        aria-disabled={Boolean(emailError || passwordError)}
+      >
         로그인
       </button>
 
@@ -104,6 +124,14 @@ const divider = css`
   height: 1px;
   background: ${theme.colors.button.black};
   opacity: 0.2;
+`;
+
+const errorMsg = css`
+  margin-top: 4px;
+  color: #e03131;
+  font-size: ${theme.typography.authHelper.fontSize};
+  font-weight: ${theme.typography.authHelper.fontWeight};
+  line-height: ${theme.typography.authHelper.lineHeight};
 `;
 
 const linkBtn = css`

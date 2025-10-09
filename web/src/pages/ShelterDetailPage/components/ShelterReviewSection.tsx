@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import NoProfile from '@/assets/images/NoProfile.png'; // 추가
+import NoProfile from '@/assets/images/NoProfile.png';
 
 // Review 타입 정의
 interface Review {

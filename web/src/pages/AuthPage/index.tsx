@@ -14,7 +14,7 @@ const AuthPage = () => {
   return (
     <div css={container}>
       {/* 상단 탭 바 (고정 높이) */}
-      <div>
+      <div css={tabsBar}>
         <AuthTabs active={active} onChange={setActive} />
       </div>
 
@@ -57,3 +57,9 @@ const contentArea = css`
 `;
 
 // contentPlaceholder는 더 이상 사용하지 않음
+
+const tabsBar = css`
+  width: 100%;
+  max-width: 500px;
+  margin: 0 16px 12px 16px;
+`;

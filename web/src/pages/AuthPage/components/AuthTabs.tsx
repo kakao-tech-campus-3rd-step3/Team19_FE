@@ -39,6 +39,7 @@ export default AuthTabs;
 const tablist = css`
   display: grid;
   grid-template-columns: 1fr 1fr;
+  width: 100%;
   background: ${theme.colors.button.gray100};
   border-radius: 12px;
   padding: 4px; /* 안쪽 여백으로 흰색 탭을 더 작게 보이게 */

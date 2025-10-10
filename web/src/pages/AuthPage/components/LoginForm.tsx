@@ -14,6 +14,9 @@ const LoginForm = () => {
   const emailError = email && !isEmailValid(email) ? '이메일 형식이 올바르지 않습니다.' : '';
   const passwordError = password && password.length < 8 ? '비밀번호는 8자 이상이어야 합니다.' : '';
 
+  // 제출 가능 여부: 이메일/비밀번호 조건 모두 만족해야 함
+  const canSubmit = isEmailValid(email) && password.length >= 8;
+
   return (
     <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="로그인 폼">
       {/* 이메일 */}
@@ -61,8 +64,12 @@ const LoginForm = () => {
         type="submit"
         css={submitBtn}
         aria-label="로그인"
-        disabled={Boolean(emailError || passwordError)}
-        aria-disabled={Boolean(emailError || passwordError)}
+        disabled={!canSubmit}
+        aria-disabled={!canSubmit}
+        style={{
+          opacity: canSubmit ? 1 : 0.5,
+          cursor: canSubmit ? 'pointer' : 'not-allowed',
+        }}
       >
         로그인
       </button>
@@ -120,7 +127,7 @@ const inputError = css`
 const submitBtn = css`
   margin-top: 28px;
   padding: 14px 16px;
-  background: #000;
+  background: #111; /* WriteReviewPage saveBtn 색상과 동일하게 적용 */
   color: #fff;
   border: none;
   border-radius: 10px;

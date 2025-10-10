@@ -5,6 +5,8 @@ import theme from '@/styles/theme';
 import { FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { deleteReview } from '@/api/reviewApi';
 
 interface MyReview {
   reviewId: number;
@@ -19,11 +21,11 @@ interface MyReview {
   updatedAt: string;
 }
 
-// ✅ 부모로 전달할 콜백 추가
+// 부모로 전달할 콜백 추가
 interface ReviewListCardProps {
   item: MyReview;
   onClick: (shelterId: number) => void;
-  onToast: (msg: string) => void; // ✅ 부모로 전달할 콜백
+  onToast: (msg: string) => void; // 부모로 전달할 콜백
 }
 
 // 이미지 url이 유효하지 않을 경우 대체 이미지를 보여주는 함수
@@ -33,30 +35,30 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
 
 const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
   const navigate = useNavigate();
+
+  // react-query mutation 사용
+  const { mutate: deleteMutate } = useMutation({
+    mutationFn: (reviewId: number) => deleteReview(reviewId),
+    onSuccess: () => {
+      onToast('리뷰가 삭제되었습니다');
+      // TODO: 리뷰 삭제 후 목록 갱신 필요 (부모에서 refetch 등)
+    },
+    onError: () => {
+      onToast('삭제에 실패했습니다');
+    },
+  });
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(true);
   };
 
-  // 찜 삭제와 동일한 패턴으로 리뷰 삭제
-  const handleDeleteConfirm = async (e: React.MouseEvent) => {
+  const handleDeleteConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(false);
-    try {
-      const res = await fetch(`/api/reviews/${item.reviewId}`, {
-        method: 'DELETE',
-      });
-      if (res.status === 204) {
-        onToast('리뷰가 삭제되었습니다'); // 부모로 전달
-        //TODO: 리뷰 삭제 후 목록 표시 수정 필요
-      } else {
-        onToast('삭제에 실패했습니다');
-      }
-    } catch {
-      onToast('삭제에 실패했습니다');
-    }
+    deleteMutate(item.reviewId);
   };
 
   const handleDeleteCancel = (e: React.MouseEvent) => {
@@ -98,7 +100,17 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
           <div css={cardContent}>{item.content}</div>
           <div css={cardDate}>작성일: {new Date(item.createdAt).toLocaleDateString()}</div>
           {item.photoUrl && item.photoUrl.trim() !== '' && (
-            <img src={item.photoUrl} alt="리뷰 이미지" css={cardImg} onError={handleImageError} />
+            <img
+              src={item.photoUrl}
+              alt="리뷰 이미지"
+              css={cardImg}
+              onError={handleImageError}
+              onClick={(e) => {
+                e.stopPropagation();
+                setModalImg(item.photoUrl);
+              }}
+              style={{ cursor: 'pointer' }}
+            />
           )}
         </div>
       </div>
@@ -121,6 +133,22 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
                 아니요
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* 이미지 확대 모달 */}
+      {modalImg && (
+        <div css={modalOverlay} onClick={() => setModalImg(null)}>
+          <div css={modalContent} onClick={(e) => e.stopPropagation()}>
+            <img
+              src={modalImg}
+              alt="리뷰 이미지 확대"
+              css={modalImgStyle}
+              onError={handleImageError}
+            />
+            <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
+              닫기
+            </button>
           </div>
         </div>
       )}
@@ -299,6 +327,39 @@ const modalBtn = css`
     background: #bbb;
     color: #222;
   }
+`;
+
+// (ShelterDetailPage와 통일)
+const modalContent = css`
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 16px 16px 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 90vw;
+  max-height: 80vh;
+`;
+
+const modalImgStyle = css`
+  width: 90vw;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fafafa;
+`;
+
+const modalCloseBtn = css`
+  align-self: center;
+  margin-top: 8px;
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
 `;
 
 export default ReviewListCard;

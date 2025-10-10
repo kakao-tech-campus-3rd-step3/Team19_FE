@@ -5,13 +5,11 @@ import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { useEditProfile } from './hooks/useEditProfile';
 import { theme } from '@/styles/theme';
 
-// 목데이터: 기존 회원 정보
-// (mockUser는 useEditProfile에서 가져옴)
-
 const EditProfilePage = () => {
   // useEditProfile 훅 사용
   const {
     mockUser,
+    user,
     profileImageUrl,
     imgError,
     setImgError,
@@ -38,6 +36,9 @@ const EditProfilePage = () => {
     setShowNewPassword,
   } = useEditProfile();
 
+  // displayUser: user가 있으면 API 데이터, 없으면 mockUser 사용
+  const displayUser = (user as any) ?? mockUser;
+
   return (
     <div css={container}>
       <div css={titleRow}>
@@ -46,7 +47,7 @@ const EditProfilePage = () => {
       </div>
       <div css={profileBox}>
         <img
-          src={imgError ? mockUser.profileImageUrl : profileImageUrl}
+          src={imgError ? displayUser.profileImageUrl : profileImageUrl}
           alt="프로필"
           css={profileImg}
           onError={() => setImgError(true)}
@@ -60,7 +61,7 @@ const EditProfilePage = () => {
               <button css={modalBtnS} onClick={handleProfileImgSelect}>
                 앨범에서 사진 선택
               </button>
-              {profileImageUrl !== mockUser.profileImageUrl && (
+              {profileImageUrl !== displayUser.profileImageUrl && (
                 <button css={modalBtnS} onClick={handleSetDefaultProfile}>
                   기본 프로필로 변경
                 </button>
@@ -85,14 +86,19 @@ const EditProfilePage = () => {
           <label css={labelShort}>이&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;름</label>
           <input
             css={inputShort}
-            defaultValue={mockUser.nickname}
+            defaultValue={displayUser.nickname}
             onChange={(e) => setNicknameInput(e.target.value)}
             placeholder="닉네임을 입력하세요"
           />
         </div>
         <div css={inputRow}>
           <label css={labelShort}>이&nbsp;메&nbsp;일</label>
-          <input css={inputShort} value={mockUser.email} readOnly style={{ background: '#eee' }} />
+          <input
+            css={inputShort}
+            value={displayUser.email}
+            readOnly
+            style={{ background: '#eee' }}
+          />
         </div>
         <div css={inputRowVertical}>
           <label css={labelLong}>이전 비밀번호</label>
@@ -103,7 +109,7 @@ const EditProfilePage = () => {
               value={oldPassword}
               onChange={(e) => {
                 setOldPassword(e.target.value);
-                setOldPasswordError(false); // 입력 시 에러 해제
+                setOldPasswordError(false);
               }}
             />
             <button
@@ -140,6 +146,7 @@ const EditProfilePage = () => {
           저장
         </button>
       </form>
+
       {/* 수정 완료 모달 */}
       {showModal && (
         <div css={modalOverlay}>

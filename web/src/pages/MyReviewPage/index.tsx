@@ -4,12 +4,12 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import emptyReviewImg from '@/assets/images/empty-review.png';
 import theme from '@/styles/theme';
+import { useEffect, useState } from 'react';
+import { getMyReviews } from '@/api/reviewApi';
+import ToastMessage from '@/components/ToastMessage';
 import ReviewListCard from './components/ReviewListCard';
-import { useState, useEffect } from 'react';
-import ToastMessage from '@/pages/FindSheltersPage/components/ToastMessage';
 
-// API 명세에 맞는 타입 정의
-interface MyReview {
+type MyReview = {
   reviewId: number;
   shelterId: number;
   name: string;
@@ -20,54 +20,46 @@ interface MyReview {
   profileImageUrl: string;
   createdAt: string;
   updatedAt: string;
-}
-
-// 목데이터 (API 응답 형태와 동일)
-const mockReviews: MyReview[] = [
-  {
-    reviewId: 101,
-    shelterId: 1,
-    name: '종로 무더위 쉼터',
-    userId: 1,
-    content: '에어컨도 잘 나오고 깨끗했어요',
-    rating: 5,
-    photoUrl: 'https://example.com/review1.jpg',
-    profileImageUrl: 'https://example.com/users/1.jpg',
-    createdAt: '2025-08-19T09:00:00Z',
-    updatedAt: '2025-08-19T09:00:00Z',
-  },
-  {
-    reviewId: 102,
-    shelterId: 2,
-    name: '강남 무더위 쉼터',
-    userId: 1,
-    content:
-      '일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십일이삼사오육칠팔구십',
-    rating: 3,
-    photoUrl: null,
-    profileImageUrl: 'https://example.com/users/1.jpg',
-    createdAt: '2025-08-18T14:00:00Z',
-    updatedAt: '2025-08-18T14:00:00Z',
-  },
-];
+};
 
 const MyReviewPage = () => {
-  const reviews = mockReviews; // TODO: 추후 API 연결 시 변경
+  const [reviews, setReviews] = useState<MyReview[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<any>(null);
+  const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
 
-  const [toastMessage, setToastMessage] = useState('');
-
-  // ✅ 2초 후 토스트 메시지 자동 사라짐
   useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => setToastMessage(''), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
+    let mounted = true;
+    setLoading(true);
+    getMyReviews()
+      .then((res) => {
+        if (!mounted) return;
+        const data = Array.isArray(res) ? res : res && (res as any).data ? (res as any).data : [];
+        setReviews(Array.isArray(data) ? data : []);
+      })
+      .catch((e) => {
+        if (!mounted) return;
+        console.error('[MyReviewPage] getMyReviews error', e);
+        // API 실패 시에도 빈 상태 UI를 보여주고, 토스트로 에러를 알림
+        setError(e);
+        setReviews([]); // 명시적으로 빈배열로 처리
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);
   };
+
+  if (loading) return <div>로딩 중...</div>;
+  // 변경: error 발생해도 별도 에러 화면으로 리턴하지 않고 빈 상태 UI를 렌더하도록 함
 
   return (
     <>
@@ -90,14 +82,16 @@ const MyReviewPage = () => {
           </div>
         </div>
       ) : (
-        // 내가 쓴 리뷰가 없을 때 컨테이너
+        // 내가 쓴 리뷰가 없을 때 컨테이너 (API 실패도 여기로 표시)
         <div css={emptyStateStyle}>
           <div css={emptyHeader}>
             <FaRegCommentDots color="#fff" size={43} css={reviewIcon} />
             <span css={emptyTitle}>내가 쓴 리뷰</span>
           </div>
           <div css={emptyBox}>
-            <div css={emptyText}>작성한 리뷰가 없습니다.</div>
+            <div css={emptyText}>
+              {error ? '리뷰를 \n불러오지 못했습니다.' : '작성한 리뷰가 없습니다.'}
+            </div>
             <img src={emptyReviewImg} alt="리뷰 없음" css={emptyImg} />
           </div>
         </div>
@@ -198,4 +192,5 @@ const emptyText = css`
   font-weight: 700;
   color: #fff;
   text-shadow: 2px 2px 6px #222;
+  white-space: pre-line; /*'\n'을 줄바꿈으로 렌더 */
 `;

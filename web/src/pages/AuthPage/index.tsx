@@ -67,5 +67,5 @@ const tabsBar = css`
 
 const topSpacer = css`
   width: 100%;
-  flex: 0 0 10%; /* 컨테이너 높이의 20% */
+  flex: 0 0 10%; /* 컨테이너 높이의 10% */
 `;

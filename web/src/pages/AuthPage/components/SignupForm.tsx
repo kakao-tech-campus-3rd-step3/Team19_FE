@@ -159,11 +159,6 @@ const submitBtn = css`
   font-size: ${theme.typography.authButton.fontSize};
   font-weight: ${theme.typography.authButton.fontWeight};
   line-height: ${theme.typography.authButton.lineHeight};
-
-  &:disabled {
-    background: #c8f2e3;
-    cursor: not-allowed;
-  }
 `;
 
 // secondaryBtn 제거

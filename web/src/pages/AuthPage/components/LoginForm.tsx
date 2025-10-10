@@ -114,6 +114,7 @@ const label = css`
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 6px;
   margin-top: 6px;
 `;
 

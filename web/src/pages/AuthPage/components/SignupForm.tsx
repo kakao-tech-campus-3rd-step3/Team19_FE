@@ -126,9 +126,7 @@ const form = css`
 `;
 
 const label = css`
-  font-size: ${theme.typography.authLabel.fontSize};
-  font-weight: ${theme.typography.authLabel.fontWeight};
-  line-height: ${theme.typography.authLabel.lineHeight};
+  ${theme.typography.authLabel};
   text-align: left;
   display: flex;
   align-items: center;
@@ -140,33 +138,29 @@ const input = css`
   padding: 12px 14px;
   border: 1px solid #bbb;
   border-radius: 8px;
-  font-size: ${theme.typography.authInput.fontSize};
-  font-weight: ${theme.typography.authInput.fontWeight};
-  line-height: ${theme.typography.authInput.lineHeight};
+  margin-bottom: 0;
+  ${theme.typography.authInput};
   background: #fff;
 `;
 
 // row/flex1 제거
 
 const submitBtn = css`
-  margin-top: 6px;
+  margin-top: 24px;
   padding: 14px 16px;
   background: #000;
   color: #fff;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-size: ${theme.typography.authButton.fontSize};
-  font-weight: ${theme.typography.authButton.fontWeight};
-  line-height: ${theme.typography.authButton.lineHeight};
+  ${theme.typography.authButton};
 `;
 
 // secondaryBtn 제거
 
 const errorMsg = css`
-  margin-top: 4px;
+  margin-top: 0;
+  text-align: left;
   color: #e03131;
-  font-size: ${theme.typography.authHelper.fontSize};
-  font-weight: ${theme.typography.authHelper.fontWeight};
-  line-height: ${theme.typography.authHelper.lineHeight};
+  ${theme.typography.authHelper};
 `;

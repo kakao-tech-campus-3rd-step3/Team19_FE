@@ -160,19 +160,6 @@ const submitBtn = css`
 
 // secondaryBtn 제거
 
-const dividerWrap = css`
-  display: flex;
-  align-items: center;
-  margin: 10px 0;
-`;
-
-const divider = css`
-  flex: 1;
-  height: 1px;
-  background: ${theme.colors.button.black};
-  opacity: 0.2;
-`;
-
 const errorMsg = css`
   margin-top: 4px;
   color: #e03131;

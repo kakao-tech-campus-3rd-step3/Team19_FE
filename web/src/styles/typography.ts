@@ -222,9 +222,9 @@ export const typography = {
     lineHeight: '3.2vh',
   },
   authInput: {
-    fontSize: '2.6vh', // 인풋 텍스트
+    fontSize: '2.4vh', // 인풋 텍스트
     fontWeight: 400,
-    lineHeight: '3.0vh',
+    lineHeight: '2.8vh',
   },
   authHelper: {
     fontSize: '2.2vh', // 도움말/에러 메시지/부가 텍스트

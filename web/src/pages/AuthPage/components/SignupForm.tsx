@@ -3,12 +3,15 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
+import { IoEye, IoEyeOff } from 'react-icons/io5';
 
 const SignupForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const isPasswordValid = (pw: string) => {
     if (!pw) return false;
     const lengthOk = pw.length >= 8;
@@ -68,15 +71,25 @@ const SignupForm = () => {
         <FaLock size={18} color="#777" />
         <span>비밀번호</span>
       </label>
-      <input
-        id="signup-password"
-        css={input}
-        type="password"
-        placeholder="8자 이상 영문, 숫자, 특수문자 포함"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
+      <div css={passwordWrapper}>
+        <input
+          id="signup-password"
+          css={[input, passwordField]}
+          type={showPassword ? 'text' : 'password'}
+          placeholder="8자 이상 영문, 숫자, 특수문자 포함"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button
+          type="button"
+          css={eyeBtn}
+          aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+          onClick={() => setShowPassword((s) => !s)}
+        >
+          {showPassword ? <IoEyeOff /> : <IoEye />}
+        </button>
+      </div>
       {passwordError && (
         <div css={errorMsg} role="alert" aria-live="polite">
           {passwordError}
@@ -88,15 +101,25 @@ const SignupForm = () => {
         <FaLock size={18} color="#777" />
         <span>비밀번호 확인</span>
       </label>
-      <input
-        id="signup-password-confirm"
-        css={input}
-        type="password"
-        placeholder="비밀번호를 다시 입력해주세요"
-        value={passwordConfirm}
-        onChange={(e) => setPasswordConfirm(e.target.value)}
-        required
-      />
+      <div css={passwordWrapper}>
+        <input
+          id="signup-password-confirm"
+          css={[input, passwordField]}
+          type={showPasswordConfirm ? 'text' : 'password'}
+          placeholder="비밀번호를 다시 입력해주세요"
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
+          required
+        />
+        <button
+          type="button"
+          css={eyeBtn}
+          aria-label={showPasswordConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
+          onClick={() => setShowPasswordConfirm((s) => !s)}
+        >
+          {showPasswordConfirm ? <IoEyeOff /> : <IoEye />}
+        </button>
+      </div>
       {confirmError && (
         <div css={errorMsg} role="alert" aria-live="polite">
           {confirmError}
@@ -132,6 +155,7 @@ const label = css`
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
+  margin-top: 6px;
 `;
 
 const input = css`
@@ -141,6 +165,37 @@ const input = css`
   margin-bottom: 0;
   ${theme.typography.authInput};
   background: #fff;
+  width: 100%; /* 입력창이 wrapper 너비를 채우도록 */
+  box-sizing: border-box; /* padding 포함 너비 계산 */
+`;
+
+/* 비밀번호 입력용 추가 스타일: 오른쪽에 아이콘 위해 내부 여백 확보 */
+const passwordField = css`
+  padding-right: 48px; /* 아이콘 너비 + 여유 공간 확보 (버튼 크기에 맞춤) */
+`;
+
+const passwordWrapper = css`
+  position: relative;
+  display: block; /* wrapper가 전체 너비를 갖도록 변경 */
+  width: 100%;
+`;
+
+const eyeBtn = css`
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%); /* 세로 중앙 정렬 */
+  background: none;
+  border: none;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  /* 버튼이 input 위에 겹쳐도 입력 포인터는 유지하려면 pointer-events 유지 (버튼은 클릭 가능) */
 `;
 
 // row/flex1 제거

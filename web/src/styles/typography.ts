@@ -212,9 +212,9 @@ export const typography = {
 
   // 인증 페이지 (AuthPage)
   authTab: {
-    fontSize: '3.2vh', // 상단 탭 라벨 (로그인/회원가입)
-    fontWeight: 700,
-    lineHeight: '3.6vh',
+    fontSize: '3vh', // 상단 탭 라벨 (로그인/회원가입)
+    fontWeight: 800,
+    lineHeight: '3.4vh',
   },
   authLabel: {
     fontSize: '2.8vh',
@@ -222,9 +222,9 @@ export const typography = {
     lineHeight: '3.2vh',
   },
   authInput: {
-    fontSize: '2.6vh', // 인풋 텍스트
-    fontWeight: 500,
-    lineHeight: '3.0vh',
+    fontSize: '2.4vh', // 인풋 텍스트
+    fontWeight: 400,
+    lineHeight: '2.8vh',
   },
   authHelper: {
     fontSize: '2.2vh', // 도움말/에러 메시지/부가 텍스트
@@ -238,7 +238,7 @@ export const typography = {
   },
   authLink: {
     fontSize: '2.4vh', // 비밀번호 찾기/약관 링크 등
-    fontWeight: 600,
+    fontWeight: 550,
     lineHeight: '2.8vh',
   },
 } as const;

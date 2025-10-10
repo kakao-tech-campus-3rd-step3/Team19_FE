@@ -53,6 +53,12 @@ const tab = css`
   font-size: ${theme.typography.authTab.fontSize};
   font-weight: ${theme.typography.authTab.fontWeight};
   border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap; /* 좁은 폭에서도 줄바꿈 방지 */
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const tabActive = css`

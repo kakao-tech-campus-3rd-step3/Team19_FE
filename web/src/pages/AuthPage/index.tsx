@@ -13,6 +13,8 @@ const AuthPage = () => {
 
   return (
     <div css={container}>
+      {/* 상단 여백: 컨테이너 높이의 약 20% */}
+      <div css={topSpacer} aria-hidden />
       {/* 상단 탭 바 (고정 높이) */}
       <div css={tabsBar}>
         <AuthTabs active={active} onChange={setActive} />
@@ -61,4 +63,9 @@ const contentArea = css`
 const tabsBar = css`
   width: 100%;
   margin: 0 0 12px 0; /* 상위 컨테이너 padding으로 좌우 여백 통일 */
+`;
+
+const topSpacer = css`
+  width: 100%;
+  flex: 0 0 10%; /* 컨테이너 높이의 20% */
 `;

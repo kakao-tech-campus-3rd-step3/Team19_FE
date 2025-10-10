@@ -97,7 +97,7 @@ const input = css`
 const submitBtn = css`
   margin-top: 6px;
   padding: 14px 16px;
-  background: #12b886; /* 기본 그린톤 버튼 (프로젝트 팔레트에 맞춰 필요시 조정) */
+  background: #000;
   color: #fff;
   border: none;
   border-radius: 10px;

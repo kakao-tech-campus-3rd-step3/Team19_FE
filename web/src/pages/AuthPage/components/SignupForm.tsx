@@ -151,7 +151,7 @@ const flex1 = css`
 const submitBtn = css`
   margin-top: 6px;
   padding: 14px 16px;
-  background: #12b886;
+  background: #000;
   color: #fff;
   border: none;
   border-radius: 10px;

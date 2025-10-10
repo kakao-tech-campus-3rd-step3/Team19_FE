@@ -48,7 +48,7 @@ const container = css`
 
 const card = css`
   width: 100%;
-  border: 1px solid ${theme.colors.button.black};
+  border: none; /* 폼 외곽선 제거 */
   border-radius: 12px;
   background: #ffffff;
   overflow: hidden;

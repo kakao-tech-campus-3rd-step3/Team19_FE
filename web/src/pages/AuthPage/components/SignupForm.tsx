@@ -39,24 +39,19 @@ const SignupForm = () => {
         required
       />
 
-      {/* 아이디 + 중복 검사사 */}
+      {/* 아이디 */}
       <label css={label} htmlFor="signup-email">
         아이디
       </label>
-      <div css={row}>
-        <input
-          id="signup-email"
-          css={[input, flex1]}
-          type="text"
-          placeholder="아이디를 입력해주세요"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <button type="button" css={secondaryBtn}>
-          중복 검사
-        </button>
-      </div>
+      <input
+        id="signup-email"
+        css={input}
+        type="text"
+        placeholder="아이디를 입력해주세요"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
 
       {/* 비밀번호 */}
       <label css={label} htmlFor="signup-password">
@@ -138,15 +133,7 @@ const input = css`
   line-height: ${theme.typography.authInput.lineHeight};
 `;
 
-const row = css`
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-`;
-
-const flex1 = css`
-  flex: 1;
-`;
+// row/flex1 제거
 
 const submitBtn = css`
   margin-top: 6px;
@@ -166,16 +153,7 @@ const submitBtn = css`
   }
 `;
 
-const secondaryBtn = css`
-  padding: 12px 14px;
-  background: ${theme.colors.button.gray100};
-  color: #111;
-  border: 1px solid ${theme.colors.button.black};
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: ${theme.typography.authInput.fontSize};
-  font-weight: ${theme.typography.authInput.fontWeight};
-`;
+// secondaryBtn 제거
 
 const dividerWrap = css`
   display: flex;

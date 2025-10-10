@@ -3,10 +3,12 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
+import { IoEye, IoEyeOff } from 'react-icons/io5';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   // TODO: 항상 로그인 상태 유지 정책: remember UI/state 제거했음.
 
   // 이메일 형식 및 비밀번호 기본 검증
@@ -44,15 +46,25 @@ const LoginForm = () => {
         <FaLock size={18} color="#777" />
         <span>비밀번호</span>
       </label>
-      <input
-        id="login-password"
-        css={[input, passwordError && inputError]}
-        type="password"
-        placeholder="비밀번호를 입력해주세요"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
+      <div css={passwordWrapper}>
+        <input
+          id="login-password"
+          css={[input, passwordError && inputError, passwordField]}
+          type={showPassword ? 'text' : 'password'}
+          placeholder="비밀번호를 입력해주세요"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button
+          type="button"
+          css={eyeBtn}
+          aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+          onClick={() => setShowPassword((s) => !s)}
+        >
+          {showPassword ? <IoEyeOff /> : <IoEye />}
+        </button>
+      </div>
       {passwordError && (
         <div css={errorMsg} role="alert" aria-live="polite">
           {passwordError}
@@ -112,6 +124,31 @@ const input = css`
   margin-bottom: 0;
   ${theme.typography.authInput};
   background: #fff;
+`;
+
+/* 비밀번호 입력용 추가 스타일: 오른쪽에 아이콘 위해 내부 여백 확보 */
+const passwordField = css`
+  padding-right: 44px;
+`;
+
+const passwordWrapper = css`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const eyeBtn = css`
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.6rem;
 `;
 
 /* 추가: 에러 시 적용되는 최소한의 스타일 (기존 input 유지) */

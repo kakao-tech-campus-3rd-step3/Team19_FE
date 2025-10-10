@@ -2,6 +2,7 @@
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useState } from 'react';
+import { FaUser, FaLock } from 'react-icons/fa';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,8 @@ const LoginForm = () => {
     <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="로그인 폼">
       {/* 아이디 */}
       <label css={label} htmlFor="login-email">
-        아이디
+        <FaUser size={18} color="#777" />
+        <span>아이디</span>
       </label>
       <input
         id="login-email"
@@ -29,7 +31,8 @@ const LoginForm = () => {
 
       {/* 비밀번호 */}
       <label css={label} htmlFor="login-password">
-        비밀번호
+        <FaLock size={18} color="#777" />
+        <span>비밀번호</span>
       </label>
       <input
         id="login-password"
@@ -83,6 +86,11 @@ const label = css`
   font-size: ${theme.typography.authLabel.fontSize};
   font-weight: ${theme.typography.authLabel.fontWeight};
   line-height: ${theme.typography.authLabel.lineHeight};
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
 `;
 
 const input = css`

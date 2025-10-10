@@ -217,9 +217,9 @@ export const typography = {
     lineHeight: '3.6vh',
   },
   authLabel: {
-    fontSize: '2.6vh', // 인풋 라벨
+    fontSize: '2.8vh',
     fontWeight: 600,
-    lineHeight: '3.0vh',
+    lineHeight: '3.2vh',
   },
   authInput: {
     fontSize: '2.6vh', // 인풋 텍스트

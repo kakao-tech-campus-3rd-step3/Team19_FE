@@ -135,11 +135,12 @@ const label = css`
 
 const input = css`
   padding: 12px 14px;
-  border: 1px solid ${theme.colors.button.black};
+  border: 1px solid #bbb;
   border-radius: 8px;
   font-size: ${theme.typography.authInput.fontSize};
   font-weight: ${theme.typography.authInput.fontWeight};
   line-height: ${theme.typography.authInput.lineHeight};
+  background: #fff;
 `;
 
 // row/flex1 제거

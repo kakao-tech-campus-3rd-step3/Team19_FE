@@ -30,6 +30,13 @@ const SignupForm = () => {
   const confirmError =
     passwordConfirm && passwordConfirm !== password ? '비밀번호가 일치하지 않습니다.' : '';
 
+  // 제출 가능 여부: 이름 입력, 이메일/비밀번호 유효성, 비밀번호 확인 일치 모두 만족해야 함
+  const canSubmit =
+    name.trim().length > 0 &&
+    isEmailValid(email) &&
+    isPasswordValid(password) &&
+    passwordConfirm === password;
+
   return (
     <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="회원가입 폼">
       {/* 이름 */}
@@ -136,8 +143,12 @@ const SignupForm = () => {
       <button
         type="submit"
         css={submitBtn}
-        disabled={Boolean(emailError || passwordError || confirmError)}
-        aria-disabled={Boolean(emailError || passwordError || confirmError)}
+        disabled={!canSubmit}
+        aria-disabled={!canSubmit}
+        style={{
+          opacity: canSubmit ? 1 : 0.5,
+          cursor: canSubmit ? 'pointer' : 'not-allowed',
+        }}
       >
         회원가입
       </button>

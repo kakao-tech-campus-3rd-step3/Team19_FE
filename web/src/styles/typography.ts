@@ -212,9 +212,9 @@ export const typography = {
 
   // 인증 페이지 (AuthPage)
   authTab: {
-    fontSize: '3.2vh', // 상단 탭 라벨 (로그인/회원가입)
-    fontWeight: 700,
-    lineHeight: '3.6vh',
+    fontSize: '3vh', // 상단 탭 라벨 (로그인/회원가입)
+    fontWeight: 800,
+    lineHeight: '3.4vh',
   },
   authLabel: {
     fontSize: '2.8vh',

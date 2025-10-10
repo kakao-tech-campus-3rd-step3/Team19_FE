@@ -32,20 +32,20 @@ export default AuthPage;
 
 const container = css`
   width: 100%;
+  max-width: 500px; /* 페이지 레이아웃 단일화 */
   height: calc(100vh - ${theme.spacing.spacing16});
+  margin: 0 auto; /* 중앙 정렬 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start; /* 상단 정렬로 고정 위치 */
+  align-items: stretch; /* 자식이 부모 폭을 100% 사용 */
+  justify-content: flex-start;
   background: #fff;
-  padding-top: 12px;
+  padding: 12px 16px 0 16px; /* 좌우 여백을 상위 컨테이너에서 책임 */
   box-sizing: border-box;
 `;
 
 const card = css`
   width: 100%;
-  max-width: 500px;
-  margin: 0 16px;
   border: 1px solid ${theme.colors.button.black};
   border-radius: 12px;
   background: #ffffff;
@@ -60,6 +60,5 @@ const contentArea = css`
 
 const tabsBar = css`
   width: 100%;
-  max-width: 500px;
-  margin: 0 16px 12px 16px;
+  margin: 0 0 12px 0; /* 상위 컨테이너 padding으로 좌우 여백 통일 */
 `;

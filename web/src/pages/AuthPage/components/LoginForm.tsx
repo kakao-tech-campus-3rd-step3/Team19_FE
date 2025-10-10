@@ -9,25 +9,32 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   // TODO: 항상 로그인 상태 유지 정책: remember UI/state 제거했음.
 
-  // 아이디 사용으로 이메일 형식 검증 제거
+  // 이메일 형식 및 비밀번호 기본 검증
+  const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const emailError = email && !isEmailValid(email) ? '이메일 형식이 올바르지 않습니다.' : '';
   const passwordError = password && password.length < 8 ? '비밀번호는 8자 이상이어야 합니다.' : '';
 
   return (
     <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="로그인 폼">
-      {/* 아이디 */}
+      {/* 이메일 */}
       <label css={label} htmlFor="login-email">
         <FaUser size={18} color="#777" />
-        <span>아이디</span>
+        <span>이메일</span>
       </label>
       <input
         id="login-email"
         css={input}
-        type="text"
-        placeholder="아이디를 입력해주세요"
+        type="email"
+        placeholder="이메일을 입력해주세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
       />
+      {emailError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {emailError}
+        </div>
+      )}
 
       {/* 비밀번호 */}
       <label css={label} htmlFor="login-password">
@@ -54,8 +61,8 @@ const LoginForm = () => {
         type="submit"
         css={submitBtn}
         aria-label="로그인"
-        disabled={Boolean(passwordError)}
-        aria-disabled={Boolean(passwordError)}
+        disabled={Boolean(emailError || passwordError)}
+        aria-disabled={Boolean(emailError || passwordError)}
       >
         로그인
       </button>

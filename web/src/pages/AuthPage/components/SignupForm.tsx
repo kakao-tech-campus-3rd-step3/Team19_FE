@@ -40,16 +40,16 @@ const SignupForm = () => {
         required
       />
 
-      {/* 아이디 */}
+      {/* 이메일 */}
       <label css={label} htmlFor="signup-email">
         <FaUser size={18} color="#777" />
-        <span>아이디</span>
+        <span>이메일</span>
       </label>
       <input
         id="signup-email"
         css={input}
-        type="text"
-        placeholder="아이디를 입력해주세요"
+        type="email"
+        placeholder="이메일을 입력해주세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required

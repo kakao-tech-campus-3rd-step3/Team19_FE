@@ -17,6 +17,9 @@ const SignupForm = () => {
     const hasSpecial = /[^A-Za-z0-9]/.test(pw);
     return lengthOk && hasLetter && hasNumber && hasSpecial;
   };
+  const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const emailError = email && !isEmailValid(email) ? '이메일 형식이 올바르지 않습니다.' : '';
+
   const passwordError =
     password && !isPasswordValid(password)
       ? '8자 이상, 영문/숫자/특수문자를 모두 포함해야 합니다.'
@@ -54,6 +57,11 @@ const SignupForm = () => {
         onChange={(e) => setEmail(e.target.value)}
         required
       />
+      {emailError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {emailError}
+        </div>
+      )}
 
       {/* 비밀번호 */}
       <label css={label} htmlFor="signup-password">
@@ -99,8 +107,8 @@ const SignupForm = () => {
       <button
         type="submit"
         css={submitBtn}
-        disabled={Boolean(passwordError || confirmError)}
-        aria-disabled={Boolean(passwordError || confirmError)}
+        disabled={Boolean(emailError || passwordError || confirmError)}
+        aria-disabled={Boolean(emailError || passwordError || confirmError)}
       >
         회원가입
       </button>

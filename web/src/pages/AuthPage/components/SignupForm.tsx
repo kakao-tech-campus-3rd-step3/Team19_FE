@@ -104,11 +104,6 @@ const SignupForm = () => {
       >
         회원가입
       </button>
-
-      {/* 구분선 */}
-      <div css={dividerWrap}>
-        <span css={divider} />
-      </div>
     </form>
   );
 };

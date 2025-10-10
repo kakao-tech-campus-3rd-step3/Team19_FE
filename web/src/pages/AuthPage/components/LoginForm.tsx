@@ -160,12 +160,8 @@ const eyeBtn = css`
 
 /* 추가: 에러 시 적용되는 최소한의 스타일 (기존 input 유지) */
 const inputError = css`
-  border-color: #e03131;
-  box-shadow: 0 0 0 3px rgba(224, 49, 49, 0.08);
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(224, 49, 49, 0.14);
-  }
+  border: 2px solid #e74c3c !important;
+  background: #fff0f0;
 `;
 
 const submitBtn = css`

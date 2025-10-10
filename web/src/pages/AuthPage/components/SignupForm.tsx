@@ -53,15 +53,17 @@ const SignupForm = () => {
       </label>
       <input
         id="signup-email"
-        css={input}
+        css={[input, emailError && inputError]}
         type="email"
         placeholder="이메일을 입력해주세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
+        aria-invalid={!!emailError}
+        aria-describedby={emailError ? 'signup-email-error' : undefined}
       />
       {emailError && (
-        <div css={errorMsg} role="alert" aria-live="polite">
+        <div css={errorMsg} role="alert" aria-live="polite" id="signup-email-error">
           {emailError}
         </div>
       )}
@@ -74,12 +76,14 @@ const SignupForm = () => {
       <div css={passwordWrapper}>
         <input
           id="signup-password"
-          css={[input, passwordField]}
+          css={[input, passwordField, passwordError && inputError]}
           type={showPassword ? 'text' : 'password'}
           placeholder="8자 이상 영문, 숫자, 특수문자 포함"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          aria-invalid={!!passwordError}
+          aria-describedby={passwordError ? 'signup-password-error' : undefined}
         />
         <button
           type="button"
@@ -91,7 +95,7 @@ const SignupForm = () => {
         </button>
       </div>
       {passwordError && (
-        <div css={errorMsg} role="alert" aria-live="polite">
+        <div css={errorMsg} role="alert" aria-live="polite" id="signup-password-error">
           {passwordError}
         </div>
       )}
@@ -104,12 +108,14 @@ const SignupForm = () => {
       <div css={passwordWrapper}>
         <input
           id="signup-password-confirm"
-          css={[input, passwordField]}
+          css={[input, passwordField, confirmError && inputError]}
           type={showPasswordConfirm ? 'text' : 'password'}
           placeholder="비밀번호를 다시 입력해주세요"
           value={passwordConfirm}
           onChange={(e) => setPasswordConfirm(e.target.value)}
           required
+          aria-invalid={!!confirmError}
+          aria-describedby={confirmError ? 'signup-password-confirm-error' : undefined}
         />
         <button
           type="button"
@@ -121,7 +127,7 @@ const SignupForm = () => {
         </button>
       </div>
       {confirmError && (
-        <div css={errorMsg} role="alert" aria-live="polite">
+        <div css={errorMsg} role="alert" aria-live="polite" id="signup-password-confirm-error">
           {confirmError}
         </div>
       )}
@@ -218,4 +224,10 @@ const errorMsg = css`
   text-align: left;
   color: #e03131;
   ${theme.typography.authHelper};
+`;
+
+/* 추가: 에러 시 적용되는 최소한의 스타일 (기존 input 유지) */
+const inputError = css`
+  border: 2px solid #e74c3c !important;
+  background: #fff0f0;
 `;

@@ -124,31 +124,37 @@ const input = css`
   margin-bottom: 0;
   ${theme.typography.authInput};
   background: #fff;
+  width: 100%; /* 입력창이 wrapper 너비를 채우도록 */
+  box-sizing: border-box; /* padding 포함 너비 계산 */
 `;
 
 /* 비밀번호 입력용 추가 스타일: 오른쪽에 아이콘 위해 내부 여백 확보 */
 const passwordField = css`
-  padding-right: 44px;
+  padding-right: 48px; /* 아이콘 너비 + 여유 공간 확보 (버튼 크기에 맞춤) */
 `;
 
 const passwordWrapper = css`
   position: relative;
-  display: flex;
-  align-items: center;
+  display: block; /* wrapper가 전체 너비를 갖도록 변경 */
+  width: 100%;
 `;
 
 const eyeBtn = css`
   position: absolute;
+  top: 50%;
   right: 10px;
+  transform: translateY(-50%); /* 세로 중앙 정렬 */
   background: none;
   border: none;
-  padding: 4px;
+  padding: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #666;
   cursor: pointer;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  /* 버튼이 input 위에 겹쳐도 입력 포인터는 유지하려면 pointer-events 유지 (버튼은 클릭 가능) */
 `;
 
 /* 추가: 에러 시 적용되는 최소한의 스타일 (기존 input 유지) */

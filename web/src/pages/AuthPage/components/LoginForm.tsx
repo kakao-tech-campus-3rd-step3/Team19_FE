@@ -23,7 +23,7 @@ const LoginForm = () => {
       </label>
       <input
         id="login-email"
-        css={input}
+        css={[input, emailError && inputError]}
         type="email"
         placeholder="이메일을 입력해주세요"
         value={email}
@@ -43,7 +43,7 @@ const LoginForm = () => {
       </label>
       <input
         id="login-password"
-        css={input}
+        css={[input, passwordError && inputError]}
         type="password"
         placeholder="비밀번호를 입력해주세요"
         value={password}
@@ -90,37 +90,42 @@ const form = css`
 `;
 
 const label = css`
-  font-size: ${theme.typography.authLabel.fontSize};
-  font-weight: ${theme.typography.authLabel.fontWeight};
-  line-height: ${theme.typography.authLabel.lineHeight};
+  ${theme.typography.authLabel};
   text-align: left;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
+  margin-top: 6px;
 `;
 
 const input = css`
   padding: 12px 14px;
   border: 1px solid #bbb;
   border-radius: 8px;
-  font-size: ${theme.typography.authInput.fontSize};
-  font-weight: ${theme.typography.authInput.fontWeight};
-  line-height: ${theme.typography.authInput.lineHeight};
+  margin-bottom: 0;
+  ${theme.typography.authInput};
   background: #fff;
 `;
 
+/* 추가: 에러 시 적용되는 최소한의 스타일 (기존 input 유지) */
+const inputError = css`
+  border-color: #e03131;
+  box-shadow: 0 0 0 3px rgba(224, 49, 49, 0.08);
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(224, 49, 49, 0.14);
+  }
+`;
+
 const submitBtn = css`
-  margin-top: 6px;
+  margin-top: 28px;
   padding: 14px 16px;
   background: #000;
   color: #fff;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-size: ${theme.typography.authButton.fontSize};
-  font-weight: ${theme.typography.authButton.fontWeight};
-  line-height: ${theme.typography.authButton.lineHeight};
+  ${theme.typography.authButton};
 `;
 
 const dividerWrap = css`
@@ -137,11 +142,10 @@ const divider = css`
 `;
 
 const errorMsg = css`
-  margin-top: 4px;
+  margin-top: 0;
+  text-align: left;
   color: #e03131;
-  font-size: ${theme.typography.authHelper.fontSize};
-  font-weight: ${theme.typography.authHelper.fontWeight};
-  line-height: ${theme.typography.authHelper.lineHeight};
+  ${theme.typography.authHelper};
 `;
 
 const linkBtn = css`
@@ -151,7 +155,5 @@ const linkBtn = css`
   color: #1c7ed6;
   cursor: pointer;
   text-decoration: underline;
-  font-size: ${theme.typography.authLink.fontSize};
-  font-weight: ${theme.typography.authLink.fontWeight};
-  line-height: ${theme.typography.authLink.lineHeight};
+  ${theme.typography.authLink};
 `;

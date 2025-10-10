@@ -223,7 +223,7 @@ export const typography = {
   },
   authInput: {
     fontSize: '2.6vh', // 인풋 텍스트
-    fontWeight: 500,
+    fontWeight: 400,
     lineHeight: '3.0vh',
   },
   authHelper: {
@@ -238,7 +238,7 @@ export const typography = {
   },
   authLink: {
     fontSize: '2.4vh', // 비밀번호 찾기/약관 링크 등
-    fontWeight: 600,
+    fontWeight: 550,
     lineHeight: '2.8vh',
   },
 } as const;

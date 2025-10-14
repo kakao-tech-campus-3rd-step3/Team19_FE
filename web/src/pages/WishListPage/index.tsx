@@ -9,7 +9,7 @@ import theme from '@/styles/theme';
 import WishListCard from './components/WishListCard';
 
 const WishListPage = () => {
-  const userId = 1; // TODO: 실제 로그인 정보로 교체
+  // userId는 서버에서 me로 처리되므로 불필요
 
   const [wishList, setWishList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +18,7 @@ const WishListPage = () => {
   useEffect(() => {
     let mounted = true;
     setIsLoading(true);
-    getWishList(userId)
+    getWishList()
       .then((data: any) => {
         if (mounted) setWishList(Array.isArray(data) ? data : []);
       })
@@ -31,7 +31,7 @@ const WishListPage = () => {
     return () => {
       mounted = false;
     };
-  }, [userId]);
+  }, []);
 
   const navigate = useNavigate();
 
@@ -57,9 +57,8 @@ const WishListPage = () => {
                 key={item.shelterId}
                 item={item}
                 onClick={handleCardClick}
-                userId={userId}
                 refetchWishList={() =>
-                  getWishList(userId)
+                  getWishList()
                     .then((d: any) => setWishList(Array.isArray(d) ? d : []))
                     .catch(() => {
                       /* optional: set error state if needed */

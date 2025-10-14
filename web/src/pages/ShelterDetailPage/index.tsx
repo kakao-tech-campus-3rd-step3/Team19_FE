@@ -43,10 +43,8 @@ const ShelterDetailPage = () => {
     if (toggling) return; // 중복 호출 방지
     setToggling(true);
     try {
-      const userId = 1; // TODO: 실제 서비스에서는 인증 정보에서 받아야 함
       const result = await toggleWish({
         shelterId: id ?? '',
-        userId,
         isFavorite,
       });
 

@@ -7,6 +7,31 @@ export interface UserProfile {
   profileImageUrl?: string | null;
 }
 
+// 회원가입
+export async function signup({
+  email,
+  password,
+  nickname,
+  profileImageUrl,
+}: {
+  email: string;
+  password: string;
+  nickname: string;
+  profileImageUrl?: string;
+}) {
+  return apiClient.post('/api/users/signup', {
+    email,
+    password,
+    nickname,
+    profileImageUrl: profileImageUrl ?? '',
+  });
+}
+
+// 로그인
+export async function login({ email, password }: { email: string; password: string }) {
+  return apiClient.post('/api/users/login', { email, password });
+}
+
 // 내 정보 조회
 export async function getMyProfile(): Promise<UserProfile> {
   return apiClient.get('/api/users/me');

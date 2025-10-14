@@ -200,7 +200,7 @@ export const typography = {
 
   // 길찾기 페이지 (GuidePage)
   guide1: {
-    fontSize: '2.8vh', // 하단 경로안내 바 텍스트
+    fontSize: '3vh', // 하단 경로안내 바 텍스트
     fontWeight: 700,
     lineHeight: '3.4vh',
   },

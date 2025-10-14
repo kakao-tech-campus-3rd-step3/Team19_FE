@@ -12,7 +12,9 @@ export const GuideBar = ({ message, hasArrived, onArrivalConfirm }: GuideBarProp
   return (
     <div css={guidanceBarStyle}>
       <div css={guidanceContentStyle}>
-        <div css={guidanceTextStyle}>{message}</div>
+        <div css={guidanceTextStyle}>
+          <span css={guidanceTextInnerStyle}>{message}</span>
+        </div>
         {hasArrived && (
           <button css={confirmButtonStyle} onClick={onArrivalConfirm}>
             확인
@@ -27,27 +29,52 @@ const guidanceBarStyle = css`
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: 16px;
+  bottom: 32px;
   background: ${theme.colors.button.black};
   color: ${theme.colors.text.white};
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 8px 16px; /* 세로 패딩을 줄여 한 줄일 때 하단 여백 제거 */
+  box-sizing: border-box;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   z-index: 1000;
-  min-height: 48px;
+  display: flex; /* 내부 내용 수직/수평 중앙 정렬을 위해 flex 사용 */
+  align-items: center;
+  justify-content: center;
 `;
 
 const guidanceContentStyle = css`
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* 메시지와 버튼을 같은 행으로 정렬 */
+  align-items: center; /* 수직 중앙 정렬 */
+  justify-content: center; /* 수평 중앙 정렬 */
   gap: 12px;
+  width: 100%;
 `;
 
 const guidanceTextStyle = css`
   ${theme.typography.guide1}
+  /* 가로/세로 중앙 정렬을 보장하기 위해 flex로 감싸고 고정 최소 높이를 둠(2줄 기준) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  /* 한 줄일 때도 2줄 분량의 높이를 유지(글자 크기에 따라 em 단위로 계산) */
+  line-height: 1.3;
+  min-height: calc(1.3em * 2); /* 2줄 기준 높이 고정 */
+`;
+
+/* 실제 텍스트 클램프는 내부 span에서 처리 */
+const guidanceTextInnerStyle = css`
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* 최대 4줄 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   white-space: pre-line;
   word-break: keep-all;
   overflow-wrap: anywhere;
+  width: 100%;
 `;
 
 const confirmButtonStyle = css`
@@ -61,6 +88,7 @@ const confirmButtonStyle = css`
   white-space: nowrap;
   transition: background-color 0.2s ease;
   align-self: center;
+  margin-left: 12px; /* 텍스트와 버튼 사이 여유 */
 
   &:hover {
     background: #b71c1c;

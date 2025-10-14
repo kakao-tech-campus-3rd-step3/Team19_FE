@@ -1,14 +1,27 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
+import { useEffect } from 'react';
 
-interface GuideBarProps {
+export interface GuideBarProps {
   message: string | null;
-  hasArrived: boolean;
-  onArrivalConfirm: () => void;
+  hasArrived?: boolean;
+  onArrivalConfirm?: () => void;
 }
 
 export const GuideBar = ({ message, hasArrived, onArrivalConfirm }: GuideBarProps) => {
+  // Web Speech API로 안내 메시지 읽어주기
+  useEffect(() => {
+    if (!message) return;
+    // 음성 합성 객체 생성
+    const utter = new window.SpeechSynthesisUtterance(message);
+    utter.lang = 'ko-KR'; // 한국어
+    window.speechSynthesis.cancel(); // 이전 음성 중단
+    window.speechSynthesis.speak(utter);
+    // 언마운트 시 음성 중단
+    return () => window.speechSynthesis.cancel();
+  }, [message]);
+
   return (
     <div css={guidanceBarStyle}>
       <div css={guidanceContentStyle}>

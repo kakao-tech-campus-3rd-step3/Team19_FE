@@ -241,6 +241,17 @@ export const typography = {
     fontWeight: 550,
     lineHeight: '2.8vh',
   },
+  // 모달 (Modal)
+  modal1: {
+    fontSize: '3.2vh', // 모달 주요 메시지 (ex: "음성 안내를 사용하시겠습니까?")
+    fontWeight: 600,
+    lineHeight: '3.6vh',
+  },
+  modal2: {
+    fontSize: '2.8vh', // 모달 버튼(예/아니요)
+    fontWeight: 600,
+    lineHeight: '3.4vh',
+  },
 } as const;
 
 /*

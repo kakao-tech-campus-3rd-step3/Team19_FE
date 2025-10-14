@@ -9,7 +9,18 @@ interface VoiceGuideModalProps {
 const VoiceGuideModal = ({ onSelect }: VoiceGuideModalProps) => (
   <div css={ttsModalStyle}>
     <div css={ttsModalBoxStyle}>
-      <div css={ttsModalTextStyle}>음성 안내를 사용하시겠습니까?</div>
+      <div css={ttsModalTextStyle}>
+        {'음성 안내를\n사용하시겠습니까?'.split('\n').map((line, idx) =>
+          idx === 0 ? (
+            line
+          ) : (
+            <>
+              <br key={idx} />
+              {line}
+            </>
+          ),
+        )}
+      </div>
       <div css={ttsModalBtnWrapStyle}>
         <button css={ttsModalBtnStyle} onClick={() => onSelect(true)}>
           예
@@ -40,14 +51,14 @@ const ttsModalBoxStyle = css`
   padding: 32px 28px 24px 28px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
   display: flex;
+  max-width: 80%;
   flex-direction: column;
   align-items: center;
 `;
 
 const ttsModalTextStyle = css`
-  font-size: 1.18rem;
+  ${theme.typography.modal1};
   color: #222;
-  font-weight: 600;
   margin-bottom: 24px;
   text-align: center;
 `;
@@ -58,13 +69,12 @@ const ttsModalBtnWrapStyle = css`
 `;
 
 const ttsModalBtnStyle = css`
+  ${theme.typography.modal2};
   background: ${theme.colors.button.black};
   color: #fff;
   border: none;
   border-radius: 8px;
   padding: 10px 28px;
-  font-size: 1rem;
-  font-weight: 500;
   cursor: pointer;
   transition: background 0.18s;
   &:hover {

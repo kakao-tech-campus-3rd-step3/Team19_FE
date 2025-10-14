@@ -58,7 +58,7 @@ const guidanceBarStyle = css`
 
 const guidanceContentStyle = css`
   display: flex;
-  flex-direction: row; /* 메시지와 버튼을 같은 행으로 정렬 */
+  flex-direction: column; /* 버튼을 메시지 아래로 정렬 */
   align-items: center; /* 수직 중앙 정렬 */
   justify-content: center; /* 수평 중앙 정렬 */
   gap: 12px;
@@ -102,7 +102,8 @@ const confirmButtonStyle = css`
   white-space: nowrap;
   transition: background-color 0.2s ease;
   align-self: center;
-  margin-left: 12px; /* 텍스트와 버튼 사이 여유 */
+  margin-left: 0;
+  margin-top: 8px; /* 메시지와 버튼 사이 여유 */
 
   &:hover {
     background: #b71c1c;

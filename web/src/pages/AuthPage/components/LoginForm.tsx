@@ -4,11 +4,16 @@ import theme from '@/styles/theme';
 import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
+import { login } from '@/api/userApi';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string>('');
+  const navigate = useNavigate();
   // TODO: 항상 로그인 상태 유지 정책: remember UI/state 제거했음.
 
   // 이메일 형식 및 비밀번호 기본 검증
@@ -19,8 +24,24 @@ const LoginForm = () => {
   // 제출 가능 여부: 이메일/비밀번호 조건 모두 만족해야 함
   const canSubmit = isEmailValid(email) && password.length >= 8;
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || submitting) return;
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      await login({ email, password });
+      navigate('/');
+    } catch (err: any) {
+      const message = err?.message || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="로그인 폼">
+    <form css={form} onSubmit={handleSubmit} aria-label="로그인 폼">
       {/* 이메일 */}
       <label css={label} htmlFor="login-email">
         <FaUser size={18} color="#777" />
@@ -76,15 +97,20 @@ const LoginForm = () => {
         type="submit"
         css={submitBtn}
         aria-label="로그인"
-        disabled={!canSubmit}
-        aria-disabled={!canSubmit}
+        disabled={!canSubmit || submitting}
+        aria-disabled={!canSubmit || submitting}
         style={{
-          opacity: canSubmit ? 1 : 0.5,
-          cursor: canSubmit ? 'pointer' : 'not-allowed',
+          opacity: canSubmit && !submitting ? 1 : 0.5,
+          cursor: canSubmit && !submitting ? 'pointer' : 'not-allowed',
         }}
       >
-        로그인
+        {submitting ? '로그인 중...' : '로그인'}
       </button>
+      {submitError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {submitError}
+        </div>
+      )}
 
       {/* 구분선 */}
       <div css={dividerWrap}>

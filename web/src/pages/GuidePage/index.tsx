@@ -49,6 +49,9 @@ const GuidePage = () => {
   const [shelterMarker, setShelterMarker] = useState<any>(null);
   const hasInitialRouteCalculatedRef = useRef<boolean>(false);
 
+  // 음성 안내 활성화 여부
+  const [ttsEnabled, setTtsEnabled] = useState<boolean | null>(null);
+
   // 타겟 대피소 초기화
   useEffect(() => {
     const routerState = location.state as { targetShelter?: Shelter } | null;
@@ -62,6 +65,11 @@ const GuidePage = () => {
       setTargetShelter(defaultShelter);
     }
   }, [location.state]);
+
+  // 음성 안내 모달 표시
+  useEffect(() => {
+    setTtsEnabled(null); // 페이지 진입 시마다 초기화
+  }, []);
 
   // 대피소 마커 업데이트
   const updateShelterMarker = (shelter: Shelter) => {
@@ -254,11 +262,30 @@ const GuidePage = () => {
     <div css={containerStyle}>
       <div css={mapContainerStyle}>
         <div ref={mapRef} css={mapStyle} />
+
+        {/* 음성 안내 사용 여부 모달 */}
+        {ttsEnabled === null && (
+          <div css={ttsModalStyle}>
+            <div css={ttsModalBoxStyle}>
+              <div css={ttsModalTextStyle}>음성 안내를 사용하시겠습니까?</div>
+              <div css={ttsModalBtnWrapStyle}>
+                <button css={ttsModalBtnStyle} onClick={() => setTtsEnabled(true)}>
+                  예
+                </button>
+                <button css={ttsModalBtnStyle} onClick={() => setTtsEnabled(false)}>
+                  아니요
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {(activeGuidance || guidanceSteps.length > 0) && (
           <GuideBar
             message={activeGuidance || guidanceSteps[0] || null}
             hasArrived={hasArrived}
             onArrivalConfirm={handleArrivalConfirm}
+            ttsEnabled={ttsEnabled === true}
           />
         )}
       </div>
@@ -283,6 +310,55 @@ const mapStyle = css`
   height: 100%;
   border: none;
   outline: none;
+`;
+
+/* 음성 안내 모달 스타일 */
+const ttsModalStyle = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ttsModalBoxStyle = css`
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ttsModalTextStyle = css`
+  font-size: 1.18rem;
+  color: #222;
+  font-weight: 600;
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+const ttsModalBtnWrapStyle = css`
+  display: flex;
+  gap: 18px;
+`;
+
+const ttsModalBtnStyle = css`
+  background: ${theme.colors.button.black};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s;
+  &:hover {
+    background: ${theme.colors.button.red};
+  }
 `;
 
 export default GuidePage;

@@ -7,12 +7,13 @@ export interface GuideBarProps {
   message: string | null;
   hasArrived?: boolean;
   onArrivalConfirm?: () => void;
+  ttsEnabled?: boolean; // 음성안내 활성화 여부
 }
 
-export const GuideBar = ({ message, hasArrived, onArrivalConfirm }: GuideBarProps) => {
+export const GuideBar = ({ message, hasArrived, onArrivalConfirm, ttsEnabled }: GuideBarProps) => {
   // Web Speech API로 안내 메시지 읽어주기
   useEffect(() => {
-    if (!message) return;
+    if (!message || !ttsEnabled) return;
     // 음성 합성 객체 생성
     const utter = new window.SpeechSynthesisUtterance(message);
     utter.lang = 'ko-KR'; // 한국어
@@ -20,7 +21,7 @@ export const GuideBar = ({ message, hasArrived, onArrivalConfirm }: GuideBarProp
     window.speechSynthesis.speak(utter);
     // 언마운트 시 음성 중단
     return () => window.speechSynthesis.cancel();
-  }, [message]);
+  }, [message, ttsEnabled]);
 
   return (
     <div css={guidanceBarStyle}>

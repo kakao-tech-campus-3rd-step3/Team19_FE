@@ -63,6 +63,7 @@ const App = () => {
             position: relative;
             padding-bottom: env(safe-area-inset-bottom);
 
+
             margin: 0 auto;
             background: white;
             /* Safe area 대응 */

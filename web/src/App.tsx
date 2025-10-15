@@ -57,8 +57,7 @@ const App = () => {
 
           #root {
             position: relative;
-            padding-bottom: env(safe-area-inset-bottom);
-            margin: 0 auto;
+\            margin: 0 auto;
             background: white;
           }
 

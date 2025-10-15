@@ -53,6 +53,10 @@ const App = () => {
             padding: 0;
             background: white;
             user-select: none; /* 텍스트 선택 비활성화 */
+            /* Safe area 대응 */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+    }
           }
 
           #root {
@@ -61,6 +65,8 @@ const App = () => {
             padding-top: ${theme.spacing.spacing16}; /* NavBar 높이만큼 패딩 추가 */
             margin: 0 auto;
             background: white;
+            /* Safe area 대응 */
+            padding-bottom: env(safe-area-inset-bottom);
           }
 
           * {
@@ -149,4 +155,6 @@ export default App;
 const appContainerStyle = css`
   width: 100%;
   height: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
 `;

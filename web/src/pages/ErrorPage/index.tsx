@@ -31,6 +31,7 @@ export default ErrorPage;
 
 const container = css`
   height: calc(100vh - ${theme.spacing.spacing16});
+  padding-top: ${theme.spacing.spacing16};
   display: flex;
   flex-direction: column;
   justify-content: center;

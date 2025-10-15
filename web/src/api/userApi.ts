@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, setStoredTokens, clearStoredTokens } from './client';
 
 export interface UserProfile {
   userId: number;
@@ -29,12 +29,22 @@ export async function signup({
 
 // 로그인
 export async function login({ email, password }: { email: string; password: string }) {
-  return apiClient.post('/api/users/login', { email, password });
+  const res = await apiClient.post('/api/users/login', { email, password });
+  // 서버가 토큰을 응답으로 내려주는 경우를 저장 (쿠키 병행 시에도 헤더용으로 사용)
+  if (res && (res as any).accessToken) {
+    setStoredTokens({
+      accessToken: (res as any).accessToken,
+      refreshToken: (res as any).refreshToken,
+    });
+  }
+  return res;
 }
 
 // 로그아웃
 export async function logout() {
-  return apiClient.post('/api/users/logout');
+  const res = await apiClient.post('/api/users/logout');
+  clearStoredTokens();
+  return res;
 }
 
 // 토큰 재발급 (서버가 Refresh Cookie를 사용한다면 헤더 불필요)

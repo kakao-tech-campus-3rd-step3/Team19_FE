@@ -62,29 +62,49 @@ function handleFetchError(err: any) {
   throw err;
 }
 
+async function fetchWithReissue(input: RequestInfo | URL, init: RequestInit = {}, retry = true) {
+  try {
+    const res = await fetch(input, init);
+    if (res.status === 401 && retry) {
+      try {
+        // 시도: 쿠키 기반 리프레시 재발급
+        const reissueRes = await fetch(`${BASE}/api/users/reissue`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (reissueRes.ok) {
+          // 원 요청 1회 재시도
+          const retryRes = await fetch(input, init);
+          return parseResponse(retryRes);
+        }
+      } catch (e) {
+        // 재발급 실패 시 원래 에러 처리 흐름으로
+      }
+      // 재발급 실패했거나 401 지속되면 에러 파싱 후 throw
+      return parseResponse(res);
+    }
+    return parseResponse(res);
+  } catch (err) {
+    return handleFetchError(err);
+  }
+}
+
 export const apiClient = {
-  get: (url: string) =>
-    fetch(`${BASE}${url}`, { credentials: 'include' }).then(parseResponse).catch(handleFetchError),
-  post: (url: string, body?: any) =>
-    fetch(`${BASE}${url}`, {
+  get: (url: string) => fetchWithReissue(`${BASE}${url}`, { credentials: 'include' }),
+  post: (url: string, body?: any, options?: { headers?: Record<string, string> }) =>
+    fetchWithReissue(`${BASE}${url}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
       credentials: 'include',
       body: body ? JSON.stringify(body) : undefined,
-    })
-      .then(parseResponse)
-      .catch(handleFetchError),
-  patch: (url: string, body?: any) =>
-    fetch(`${BASE}${url}`, {
+    }),
+  patch: (url: string, body?: any, options?: { headers?: Record<string, string> }) =>
+    fetchWithReissue(`${BASE}${url}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
       credentials: 'include',
       body: body ? JSON.stringify(body) : undefined,
-    })
-      .then(parseResponse)
-      .catch(handleFetchError),
+    }),
   delete: (url: string) =>
-    fetch(`${BASE}${url}`, { method: 'DELETE', credentials: 'include' })
-      .then(parseResponse)
-      .catch(handleFetchError),
+    fetchWithReissue(`${BASE}${url}`, { method: 'DELETE', credentials: 'include' }),
 };

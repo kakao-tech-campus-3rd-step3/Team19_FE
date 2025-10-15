@@ -32,6 +32,18 @@ export async function login({ email, password }: { email: string; password: stri
   return apiClient.post('/api/users/login', { email, password });
 }
 
+// 로그아웃
+export async function logout() {
+  return apiClient.post('/api/users/logout');
+}
+
+// 토큰 재발급 (서버가 Refresh Cookie를 사용한다면 헤더 불필요)
+export async function reissue({ refreshToken }: { refreshToken?: string } = {}) {
+  const headers: Record<string, string> = {};
+  if (refreshToken) headers['Authorization-Refresh'] = `Bearer ${refreshToken}`;
+  return apiClient.post('/api/users/reissue', undefined, { headers });
+}
+
 // 내 정보 조회
 export async function getMyProfile(): Promise<UserProfile> {
   return apiClient.get('/api/users/me');

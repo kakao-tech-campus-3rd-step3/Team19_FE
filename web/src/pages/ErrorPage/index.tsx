@@ -48,6 +48,7 @@ const errorBox = css`
   padding: 36px 28px;
   text-align: center;
   margin-bottom: 32px;
+  width: 80%;
 `;
 
 const statusStyle = css`

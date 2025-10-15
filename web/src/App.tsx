@@ -46,20 +46,19 @@ const App = () => {
       <Global
         styles={css`
           html,
-          body {
+          body,
+          #root {
             width: 100%;
-            height: 100%;
+            height: 100%; /* 반드시 유지 */
             margin: 0;
             padding: 0;
             background: white;
-            user-select: none; /* 텍스트 선택 비활성화 */
+            user-select: none;
           }
 
-          #root {
-            position: relative;
-            margin: 0 auto;
-            background: white;
-          }
+          /* 주의: 전역에서 safe-area 인셋을 주지 마세요. 각 고정 컴포넌트에서만 사용 */
+          /* padding-top: env(safe-area-inset-top); */
+          /* padding-bottom: env(safe-area-inset-bottom); */
 
           * {
             outline: none !important;

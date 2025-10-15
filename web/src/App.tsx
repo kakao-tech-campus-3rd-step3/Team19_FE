@@ -57,7 +57,7 @@ const App = () => {
 
           #root {
             position: relative;
-\            margin: 0 auto;
+            margin: 0 auto;
             background: white;
           }
 

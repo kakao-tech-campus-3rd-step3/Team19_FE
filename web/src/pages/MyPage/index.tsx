@@ -73,6 +73,7 @@ const container = css`
   padding: 0;
   font-family: 'Pretendard', sans-serif;
   height: calc(100vh - ${theme.spacing.spacing16});
+  padding-top: ${theme.spacing.spacing16};
   display: flex;
   flex-direction: column;
 `;

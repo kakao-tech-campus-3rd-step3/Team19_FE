@@ -112,6 +112,8 @@ const pageContainerStyle = css`
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: calc(100vh - ${theme.spacing.spacing16});
+  padding-top: ${theme.spacing.spacing16};
 `;
 
 const header = css`
@@ -149,7 +151,8 @@ const emptyStateStyle = css`
   width: 100%;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
+  height: calc(100vh - ${theme.spacing.spacing16});
+  padding-top: ${theme.spacing.spacing16};
   text-align: center;
   background: #000;
   overflow: hidden;

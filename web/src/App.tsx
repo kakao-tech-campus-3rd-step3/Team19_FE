@@ -7,7 +7,6 @@ import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './components/NavBar';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import theme from './styles/theme';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { useEffect } from 'react';
 import MyPage from './pages/MyPage';
@@ -19,6 +18,7 @@ import WriteReviewPage from './pages/WriteReviewPage';
 import ErrorPage from './pages/ErrorPage';
 import { ErrorBoundary } from 'react-error-boundary';
 import AuthPage from './pages/AuthPage';
+import ScrollToTop from './components/ScrollToTop';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
@@ -53,14 +53,19 @@ const App = () => {
             padding: 0;
             background: white;
             user-select: none; /* 텍스트 선택 비활성화 */
+            /* Safe area 대응 */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+    }
           }
 
           #root {
             position: relative;
-            height: calc(100vh - ${theme.spacing.spacing16}); /* NavBar를 제외한 높이 */
-            padding-top: ${theme.spacing.spacing16}; /* NavBar 높이만큼 패딩 추가 */
+
             margin: 0 auto;
             background: white;
+            /* Safe area 대응 */
+            padding-bottom: env(safe-area-inset-bottom);
           }
 
           * {
@@ -140,6 +145,7 @@ const App = () => {
           <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
         </div>
       </ErrorBoundary>
+      <ScrollToTop />
     </>
   );
 };
@@ -149,4 +155,5 @@ export default App;
 const appContainerStyle = css`
   width: 100%;
   height: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
 `;

@@ -68,6 +68,7 @@ const container = css`
   width: 100%;
   max-width: 500px; /* 페이지 레이아웃 단일화 */
   height: calc(100vh - ${theme.spacing.spacing16});
+  padding-top: ${theme.spacing.spacing16};
   margin: auto auto; /* 중앙 정렬 */
   display: flex;
   flex-direction: column;
@@ -104,5 +105,5 @@ const tabsBar = css`
 
 const topSpacer = css`
   width: 100%;
-  flex: 0 0 10%; /* 컨테이너 높이의 10% */
+  flex: 0 0 20%; /* 컨테이너 높이의 20% */
 `;

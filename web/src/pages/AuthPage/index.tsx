@@ -69,7 +69,7 @@ const container = css`
   max-width: 500px; /* 페이지 레이아웃 단일화 */
   height: calc(100vh - ${theme.spacing.spacing16});
   padding-top: ${theme.spacing.spacing16};
-  margin: auto auto; /* 중앙 정렬 */
+  margin: 0 auto; /* 중앙 정렬 */
   display: flex;
   flex-direction: column;
   align-items: stretch; /* 자식이 부모 폭을 100% 사용 */

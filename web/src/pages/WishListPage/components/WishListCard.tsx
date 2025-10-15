@@ -22,7 +22,6 @@ interface WishShelter {
 interface WishListCardProps {
   item: WishShelter;
   onClick: (shelterId: number) => void;
-  userId: number;
   refetchWishList: () => void;
 }
 
@@ -30,14 +29,14 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-const WishListCard = ({ item, onClick, userId, refetchWishList }: WishListCardProps) => {
+const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => {
   const [isFavorite, setIsFavorite] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
   // 찜 삭제 mutation
   const deleteWishMutation = useMutation({
-    mutationFn: () => deleteWish({ userId, shelterId: item.shelterId }),
+    mutationFn: () => deleteWish({ shelterId: item.shelterId }),
     onSuccess: () => {
       setIsFavorite(false);
       setToastMessage('찜 목록에서\n삭제되었습니다');
@@ -50,7 +49,7 @@ const WishListCard = ({ item, onClick, userId, refetchWishList }: WishListCardPr
 
   // 찜 추가 mutation
   const addWishMutation = useMutation({
-    mutationFn: () => addWish({ userId, shelterId: item.shelterId }),
+    mutationFn: () => addWish({ shelterId: item.shelterId }),
     onSuccess: () => {
       setIsFavorite(true);
       setToastMessage('찜 목록에\n추가되었습니다');

@@ -79,9 +79,7 @@ const container = css`
 `;
 
 const mypageTitle = css`
-  font-size: ${theme.typography.my1.fontSize};
-  font-weight: ${theme.typography.my1.fontWeight};
-  line-height: ${theme.typography.my1.lineHeight};
+  ${theme.typography.my1};
   padding: 4% 5%;
   text-align: center;
   text-shadow: 2px 2px 6px #bbb;
@@ -110,9 +108,7 @@ const userNameRow = css`
 `;
 
 const userName = css`
-  font-size: ${theme.typography.my2.fontSize};
-  font-weight: ${theme.typography.my2.fontWeight};
-  line-height: ${theme.typography.my2.lineHeight};
+  ${theme.typography.my2};
 `;
 
 const editIcon = css`
@@ -134,9 +130,7 @@ const menuBtn = css`
   background: ${theme.colors.button.gray100};
   border: none;
   border-radius: 12px;
-  font-size: ${theme.typography.my3.fontSize};
-  font-weight: ${theme.typography.my3.fontWeight};
-  line-height: ${theme.typography.my3.lineHeight};
+  ${theme.typography.my3};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -151,9 +145,7 @@ const logoutBtn = css`
   color: #fff;
   border: none;
   border-radius: 12px;
-  font-size: ${theme.typography.my4.fontSize};
-  font-weight: ${theme.typography.my4.fontWeight};
-  line-height: ${theme.typography.my4.lineHeight};
+  ${theme.typography.my4};
   cursor: pointer;
 `;
 

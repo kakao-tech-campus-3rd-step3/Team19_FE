@@ -19,7 +19,6 @@ import ErrorPage from './pages/ErrorPage';
 import { ErrorBoundary } from 'react-error-boundary';
 import AuthPage from './pages/AuthPage';
 import ScrollToTop from './components/ScrollToTop';
-import theme from './styles/theme';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
@@ -62,8 +61,7 @@ const App = () => {
 
           #root {
             position: relative;
-            height: calc(100vh - ${theme.spacing.spacing16}); /* NavBar를 제외한 높이 */
-            padding-top: ${theme.spacing.spacing16}; /* NavBar 높이만큼 패딩 추가 */
+            padding-bottom: env(safe-area-inset-bottom);
 
             margin: 0 auto;
             background: white;

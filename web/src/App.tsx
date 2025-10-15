@@ -53,21 +53,13 @@ const App = () => {
             padding: 0;
             background: white;
             user-select: none; /* 텍스트 선택 비활성화 */
-            /* Safe area 대응 */
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-    }
           }
 
           #root {
             position: relative;
             padding-bottom: env(safe-area-inset-bottom);
-
-
             margin: 0 auto;
             background: white;
-            /* Safe area 대응 */
-            padding-bottom: env(safe-area-inset-bottom);
           }
 
           * {

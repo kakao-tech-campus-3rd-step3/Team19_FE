@@ -46,19 +46,14 @@ const App = () => {
       <Global
         styles={css`
           html,
-          body {
+          body,
+          #root {
             width: 100%;
-            height: 100%;
+            height: 100%; /* 반드시 유지 */
             margin: 0;
             padding: 0;
             background: white;
-            user-select: none; /* 텍스트 선택 비활성화 */
-          }
-
-          #root {
-            position: relative;
-            margin: 0 auto;
-            background: white;
+            user-select: none;
           }
 
           * {

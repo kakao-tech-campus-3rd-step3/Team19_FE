@@ -20,6 +20,7 @@ const ScrollToTop = () => {
     updateOverflow();
 
     // body 변화 감지
+    // TODO: 더보기 버튼 클릭 시 DOM 변화가 생기므로 이를 감지하여 overflow 업데이트 -> 근데 확인 필요함...!
     const observer = new MutationObserver(updateOverflow);
     observer.observe(body, { childList: true, subtree: true });
 

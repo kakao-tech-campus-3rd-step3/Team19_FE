@@ -209,8 +209,6 @@ export default MapView;
 /* 스타일 */
 const mapStyle = css`
   width: 100%;
-  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-top));
-  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   margin: 0;
   position: relative;
 `;

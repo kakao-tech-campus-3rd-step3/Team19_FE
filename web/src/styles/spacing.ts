@@ -19,4 +19,6 @@ export const spacing = {
   spacing16: '64px',
   spacing17: '68px',
   spacing18: '72px',
+
+  spacing32: '128px',
 } as const;

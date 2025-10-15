@@ -62,7 +62,7 @@ const App = () => {
 
           #root {
             position: relative;
-            height: calc(100vh - ${theme.spacing.spacing16}); /* NavBar를 제외한 높이 */
+            height: calc(100vh - ${theme.spacing.spacing32}); /* NavBar를 제외한 높이 */
             padding-top: ${theme.spacing.spacing16}; /* NavBar 높이만큼 패딩 추가 */
             margin: 0 auto;
             background: white;

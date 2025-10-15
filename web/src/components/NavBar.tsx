@@ -5,6 +5,7 @@ import { FaUser } from 'react-icons/fa';
 import theme from '@/styles/theme';
 import logo from '@/assets/images/logo.png';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getMyProfile } from '@/api/userApi';
 
 interface NavBarProps {
   onBackClick?: () => void;
@@ -33,13 +34,17 @@ const NavBar = ({ onBackClick, onLogoClick, onUserClick }: NavBarProps) => {
     navigate(-1); // 이전 페이지로 이동
   };
 
-  const handleUserClick = () => {
+  const handleUserClick = async () => {
     if (onUserClick) {
       onUserClick();
       return;
     }
-    // TODO: 로그인 검증 필요. 추후 추가 해야함!!!!!
-    navigate('/mypage');
+    try {
+      await getMyProfile();
+      navigate('/mypage');
+    } catch {
+      navigate('/auth');
+    }
   };
 
   return (

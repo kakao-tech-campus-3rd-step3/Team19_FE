@@ -52,7 +52,7 @@ const navStyle = css`
   transform: translateX(-50%);
   max-width: 500px; // App.css의 루트(#root) 레이아웃 너비와 동일하게 설정하여 좌우가 튀어나가지 않도록 함
   width: 100%;
-  height: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
+  height: ${theme.spacing.spacing16};
   padding-top: env(safe-area-inset-top);
 
   display: flex;

@@ -156,5 +156,4 @@ const appContainerStyle = css`
   width: 100%;
   height: 100%;
   padding-bottom: env(safe-area-inset-bottom);
-  padding-top: env(safe-area-inset-top);
 `;

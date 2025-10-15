@@ -200,7 +200,7 @@ export const typography = {
 
   // 길찾기 페이지 (GuidePage)
   guide1: {
-    fontSize: '2.8vh', // 하단 경로안내 바 텍스트
+    fontSize: '3vh', // 하단 경로안내 바 텍스트
     fontWeight: 700,
     lineHeight: '3.4vh',
   },
@@ -240,6 +240,17 @@ export const typography = {
     fontSize: '2.4vh', // 비밀번호 찾기/약관 링크 등
     fontWeight: 550,
     lineHeight: '2.8vh',
+  },
+  // 모달 (Modal)
+  modal1: {
+    fontSize: '3.2vh', // 모달 주요 메시지 (ex: "음성 안내를 사용하시겠습니까?")
+    fontWeight: 600,
+    lineHeight: '3.6vh',
+  },
+  modal2: {
+    fontSize: '2.8vh', // 모달 버튼(예/아니요)
+    fontWeight: 600,
+    lineHeight: '3.4vh',
   },
 } as const;
 

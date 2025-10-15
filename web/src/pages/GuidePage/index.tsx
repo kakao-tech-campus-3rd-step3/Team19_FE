@@ -284,7 +284,7 @@ const containerStyle = css`
   width: 100%;
   height: calc(100vh - ${theme.spacing.spacing16});
   padding-top: ${theme.spacing.spacing16};
-  overflow-y: hidden;
+  overflow: hidden;
   position: relative;
 `;
 

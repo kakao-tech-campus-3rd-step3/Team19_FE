@@ -3,7 +3,9 @@ package com.example.musuimsa // 본인 프로젝트의 패키지 이름
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
+import android.webkit.WebSettings
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -26,6 +28,19 @@ class MainActivity : AppCompatActivity() {
 
         // 2. 웹뷰의 설정을 변경합니다. 리액트 웹을 로드하려면 JavaScript 실행이 필수입니다.
         webView.settings.javaScriptEnabled = true
+
+        // 2-1. 인증 관련 웹 저장소 활성화 (토큰/쿠키 지원)
+        webView.settings.domStorageEnabled = true      // localStorage 지원 (토큰 저장용)
+        webView.settings.databaseEnabled = true        // WebSQL/IndexedDB 지원
+        webView.settings.cacheMode = WebSettings.LOAD_DEFAULT // 캐시 정책
+        
+        // 2-2. 쿠키 매니저 설정 (백업 인증 수단)
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)                    // 쿠키 허용
+        cookieManager.setAcceptThirdPartyCookies(webView, true) // 크로스도메인 쿠키 허용
+        
+        // 2-3. HTTPS 혼합 콘텐츠 허용 (필요 시)
+        webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
         // 3. 웹뷰가 새 창을 열지 않고 현재 창에서 페이지를 로드하도록 설정합니다.
         webView.webViewClient = WebViewClient()

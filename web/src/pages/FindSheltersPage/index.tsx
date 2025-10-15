@@ -23,8 +23,7 @@ const FindSheltersPage = () => {
   // API 호출(toggleWish) -> 성공 시 훅의 로컬 토글 호출
   const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {
     try {
-      const userId = 1; // TODO: 로그인 연동 후 실제 userId 사용
-      await toggleWish({ shelterId, userId, isFavorite });
+      await toggleWish({ shelterId, isFavorite });
       // 로컬 UI 즉시 반영
       handleToggleFavorite(shelterId);
     } catch (err) {

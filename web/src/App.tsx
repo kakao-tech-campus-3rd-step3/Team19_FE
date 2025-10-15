@@ -7,7 +7,6 @@ import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './components/NavBar';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import theme from './styles/theme';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { useEffect } from 'react';
 import MyPage from './pages/MyPage';
@@ -64,6 +63,7 @@ const App = () => {
             position: relative;
             height: calc(100vh - ${theme.spacing.spacing32}); /* NavBar를 제외한 높이 */
             padding-top: ${theme.spacing.spacing16}; /* NavBar 높이만큼 패딩 추가 */
+
             margin: 0 auto;
             background: white;
             /* Safe area 대응 */

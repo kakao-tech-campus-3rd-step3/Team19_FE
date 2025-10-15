@@ -59,6 +59,21 @@ const tab = css`
   white-space: nowrap; /* 좁은 폭에서도 줄바꿈 방지 */
   overflow: hidden;
   text-overflow: ellipsis;
+  outline: none;
+  -webkit-tap-highlight-color: transparent; /* 모바일 사파리/크롬 파란 터치 효과 제거 */
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+  &:active {
+    outline: none;
+    box-shadow: none;
+    background: transparent; /* 클릭 시 배경색 변화도 제거 */
+  }
 `;
 
 const tabActive = css`

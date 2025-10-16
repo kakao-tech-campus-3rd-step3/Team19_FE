@@ -49,15 +49,15 @@ const App = () => {
           body,
           #root {
             width: 100%;
-            height: 100%;
+            height: 100%; /* 반드시 유지 */
             margin: 0;
             padding: 0;
             background: white;
             user-select: none;
+            box-sizing: border-box;
           }
 
           * {
-            box-sizing: border-box;
             outline: none !important;
             box-shadow: none !important;
             -webkit-tap-highlight-color: transparent !important;

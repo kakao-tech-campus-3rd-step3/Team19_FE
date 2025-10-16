@@ -49,7 +49,9 @@ const App = () => {
           body,
           #root {
             width: 100%;
-            height: 100%; /* 반드시 유지 */
+            height: calc(
+              100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+            ); /* 반드시 유지 */
             margin: 0;
             padding: 0;
             background: white;
@@ -57,6 +59,7 @@ const App = () => {
           }
 
           * {
+            box-sizing: border-box;
             outline: none !important;
             box-shadow: none !important;
             -webkit-tap-highlight-color: transparent !important;
@@ -143,5 +146,4 @@ export default App;
 const appContainerStyle = css`
   width: 100%;
   height: 100%;
-  padding-bottom: env(safe-area-inset-bottom);
 `;

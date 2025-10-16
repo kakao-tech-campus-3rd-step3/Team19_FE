@@ -54,7 +54,6 @@ const App = () => {
             padding: 0;
             background: white;
             user-select: none;
-            box-sizing: border-box;
           }
 
           * {

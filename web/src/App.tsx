@@ -56,10 +56,10 @@ const App = () => {
             padding: 0;
             background: white;
             user-select: none;
-            box-sizing: border-box;
           }
 
           * {
+            box-sizing: border-box;
             outline: none !important;
             box-shadow: none !important;
             -webkit-tap-highlight-color: transparent !important;

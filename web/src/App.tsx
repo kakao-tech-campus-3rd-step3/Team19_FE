@@ -49,7 +49,7 @@ const App = () => {
           body,
           #root {
             width: 100%;
-            height: 100%; /* 반드시 유지 */
+            height: 100%;
             margin: 0;
             padding: 0;
             background: white;

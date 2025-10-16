@@ -56,10 +56,6 @@ const App = () => {
             user-select: none;
           }
 
-          /* 주의: 전역에서 safe-area 인셋을 주지 마세요. 각 고정 컴포넌트에서만 사용 */
-          /* padding-top: env(safe-area-inset-top); */
-          /* padding-bottom: env(safe-area-inset-bottom); */
-
           * {
             outline: none !important;
             box-shadow: none !important;

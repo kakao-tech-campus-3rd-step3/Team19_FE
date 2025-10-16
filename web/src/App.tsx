@@ -49,9 +49,7 @@ const App = () => {
           body,
           #root {
             width: 100%;
-            height: calc(
-              100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-            ); /* 반드시 유지 */
+            height: 100%;
             margin: 0;
             padding: 0;
             background: white;

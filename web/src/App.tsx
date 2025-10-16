@@ -57,6 +57,7 @@ const App = () => {
           }
 
           * {
+            box-sizing: border-box;
             outline: none !important;
             box-shadow: none !important;
             -webkit-tap-highlight-color: transparent !important;

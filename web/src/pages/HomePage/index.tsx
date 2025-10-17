@@ -67,7 +67,7 @@ export default HomePage;
 const containerStyle = css`
   width: 100%;
   display: flex;
-  height: calc(100vh - ${theme.spacing.spacing16});
+  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
   padding-top: ${theme.spacing.spacing16};
   overflow: hidden;
   position: relative;

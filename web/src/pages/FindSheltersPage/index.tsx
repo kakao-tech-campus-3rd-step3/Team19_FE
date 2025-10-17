@@ -69,12 +69,12 @@ const FindSheltersPage = () => {
 export default FindSheltersPage;
 
 const pageContainerStyle = css`
-  position: relative;
+  background: #ffffffff;
+  padding: 0;
   height: calc(100vh - ${theme.spacing.spacing16});
   padding-top: ${theme.spacing.spacing16};
-  margin: 0 auto;
-  background: white;
-  padding-top: 1vh;
+  display: flex;
+  flex-direction: column;
 `;
 
 const emptyStateStyle = css`

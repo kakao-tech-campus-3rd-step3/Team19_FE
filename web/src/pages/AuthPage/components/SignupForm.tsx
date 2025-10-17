@@ -4,7 +4,7 @@ import theme from '@/styles/theme';
 import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
-import { signup } from '@/api/userApi';
+import { signup, login } from '@/api/userApi';
 import { useNavigate } from 'react-router-dom';
 
 const SignupForm = () => {
@@ -48,13 +48,18 @@ const SignupForm = () => {
     setSubmitError('');
     setSubmitting(true);
     try {
+      // 1. 회원가입
       await signup({
         email,
         password,
         nickname: name.trim(),
         profileImageUrl: '',
       });
-      // 회원가입 성공 후 홈으로 이동하거나 로그인 탭으로 유도
+
+      // 2. 회원가입 성공 후 자동 로그인
+      await login({ email, password });
+
+      // 3. 홈으로 이동
       navigate('/');
     } catch (err: any) {
       const message = err?.message || '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.';

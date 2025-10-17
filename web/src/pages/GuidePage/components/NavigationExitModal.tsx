@@ -10,7 +10,10 @@ interface NavigationExitModalProps {
 const NavigationExitModal = ({ onConfirm, onCancel }: NavigationExitModalProps) => (
   <div css={modalStyle}>
     <div css={modalBoxStyle}>
-      <div css={modalTextStyle}>경로 안내를 종료할까요?</div>
+      <div css={modalTextStyle}>
+        경로 안내를
+        <wbr /> 종료할까요?
+      </div>
       <div css={modalBtnWrapStyle}>
         <button css={modalBtnStyle} onClick={onConfirm}>
           예
@@ -51,6 +54,7 @@ const modalTextStyle = css`
   color: #222;
   margin-bottom: 24px;
   text-align: center;
+  word-break: keep-all;
 `;
 
 const modalBtnWrapStyle = css`

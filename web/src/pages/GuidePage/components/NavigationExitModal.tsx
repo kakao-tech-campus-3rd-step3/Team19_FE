@@ -10,24 +10,13 @@ interface NavigationExitModalProps {
 const NavigationExitModal = ({ onConfirm, onCancel }: NavigationExitModalProps) => (
   <div css={modalStyle}>
     <div css={modalBoxStyle}>
-      <div css={modalTextStyle}>
-        {'경로 안내를 종료하고\n페이지를 이동하시겠습니까?'.split('\n').map((line, idx) =>
-          idx === 0 ? (
-            line
-          ) : (
-            <>
-              <br key={idx} />
-              {line}
-            </>
-          ),
-        )}
-      </div>
+      <div css={modalTextStyle}>경로 안내를 종료할까요?</div>
       <div css={modalBtnWrapStyle}>
         <button css={modalBtnStyle} onClick={onConfirm}>
-          이동
+          예
         </button>
         <button css={modalBtnStyle} onClick={onCancel}>
-          취소
+          아니요
         </button>
       </div>
     </div>

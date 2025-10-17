@@ -10,6 +10,8 @@ import { useRouteCalculation } from './hooks/useRouteCalculation';
 import { useGuidanceLogic } from './hooks/useGuidanceLogic';
 import { GuideBar } from './components/GuideBar';
 import VoiceGuideModal from './components/VoiceGuideModal';
+import NavigationExitModal from './components/NavigationExitModal';
+import NavBar from '@/components/NavBar';
 import theme from '@/styles/theme';
 
 const GuidePage = () => {
@@ -52,6 +54,10 @@ const GuidePage = () => {
 
   // 음성 안내 활성화 여부
   const [ttsEnabled, setTtsEnabled] = useState<boolean | null>(null);
+
+  // 네비게이션 이탈 모달 상태
+  const [showExitModal, setShowExitModal] = useState<boolean>(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
   // 타겟 대피소 초기화
   useEffect(() => {
@@ -295,27 +301,73 @@ const GuidePage = () => {
     navigate('/');
   };
 
+  // 네비게이션 이탈 경고 모달 핸들러
+  const handleNavigationAttempt = (navigationCallback: () => void) => {
+    setPendingNavigation(() => navigationCallback);
+    setShowExitModal(true);
+  };
+
+  const handleExitConfirm = () => {
+    setShowExitModal(false);
+    if (pendingNavigation) {
+      pendingNavigation();
+    }
+    setPendingNavigation(null);
+  };
+
+  const handleExitCancel = () => {
+    setShowExitModal(false);
+    setPendingNavigation(null);
+  };
+
+  // NavBar 커스텀 핸들러
+  const handleNavBackClick = () => {
+    handleNavigationAttempt(() => navigate(-1));
+  };
+
+  const handleNavLogoClick = () => {
+    handleNavigationAttempt(() => navigate('/'));
+  };
+
+  const handleNavUserClick = () => {
+    handleNavigationAttempt(() => navigate('/mypage'));
+  };
+
   // NOTE: guidancePoints를 훅에서 직접 꺼내지 못해, 임시로 window에 저장된 routeData를 확장하거나
   // 별도 반환을 추가해야 한다. 여기서는 훅 내에 guidancePoints 상태를 노출했다고 가정.
 
   return (
-    <div css={containerStyle}>
-      <div css={mapContainerStyle}>
-        <div ref={mapRef} css={mapStyle} />
+    <>
+      {/* 커스텀 NavBar */}
+      <NavBar
+        onBackClick={handleNavBackClick}
+        onLogoClick={handleNavLogoClick}
+        onUserClick={handleNavUserClick}
+      />
 
-        {/* 음성 안내 사용 여부 모달 */}
-        {ttsEnabled === null && <VoiceGuideModal onSelect={setTtsEnabled} />}
+      <div css={containerStyle}>
+        <div css={mapContainerStyle}>
+          <div ref={mapRef} css={mapStyle} />
 
-        {(activeGuidance || guidanceSteps.length > 0) && (
-          <GuideBar
-            message={activeGuidance || guidanceSteps[0] || null}
-            hasArrived={hasArrived}
-            onArrivalConfirm={handleArrivalConfirm}
-            ttsEnabled={ttsEnabled === true}
-          />
-        )}
+          {/* 음성 안내 사용 여부 모달 */}
+          {ttsEnabled === null && <VoiceGuideModal onSelect={setTtsEnabled} />}
+
+          {/* 네비게이션 이탈 경고 모달 */}
+          {showExitModal && (
+            <NavigationExitModal onConfirm={handleExitConfirm} onCancel={handleExitCancel} />
+          )}
+
+          {(activeGuidance || guidanceSteps.length > 0) && (
+            <GuideBar
+              message={activeGuidance || guidanceSteps[0] || null}
+              hasArrived={hasArrived}
+              onArrivalConfirm={handleArrivalConfirm}
+              ttsEnabled={ttsEnabled === true}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

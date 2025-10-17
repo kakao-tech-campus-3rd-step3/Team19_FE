@@ -1,16 +1,15 @@
 /** @jsxImportSource @emotion/react */
 import MapOverlayButtons from './components/MapOverlayButtons';
 import MapView from './components/MapView';
+import { getNearbyShelters } from '@/api/shelterApi';
 import { useMap } from './hooks/useMap';
 import theme from '@/styles/theme';
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
-import { getNearbyShelters } from '@/api/shelterApi';
 
 const HomePage = () => {
   // useMap에서 지도 준비 및 내 위치 이동 함수 가져오기
   const { handleMapReady, handleMyLocation, handleInitialLocation } = useMap();
-
   const [shelters, setShelters] = useState<any[]>([]);
   const [, setShelterError] = useState<string | null>(null);
 
@@ -24,12 +23,11 @@ const HomePage = () => {
       async (pos) => {
         if (!mounted) return;
         try {
-          const data = await getNearbyShelters({
+          const res = await getNearbyShelters({
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
           });
-          // API 응답 형태에 따라 조정: array 또는 { items: [...] } 등
-          const list = Array.isArray(data) ? data : (data && data.items) || [];
+          const list = Array.isArray(res) ? res : (res?.items ?? res?.shelters ?? res?.data ?? []);
           if (!mounted) return;
           setShelters(list);
         } catch (err) {
@@ -38,7 +36,7 @@ const HomePage = () => {
         }
       },
       (err) => {
-        console.warn('geolocation error', err);
+        console.warn('geolocation 에러', err);
         setShelterError('위치 권한 거부 또는 오류');
       },
       { enableHighAccuracy: true, timeout: 10000 },

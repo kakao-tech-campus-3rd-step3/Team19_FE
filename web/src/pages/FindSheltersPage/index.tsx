@@ -70,9 +70,9 @@ export default FindSheltersPage;
 
 const pageContainerStyle = css`
   position: relative;
+  display: flex;
   height: calc(100vh - ${theme.spacing.spacing16});
-  padding-top: ${theme.spacing.spacing16};
-  margin: 0 auto;
+  margin-top: ${theme.spacing.spacing16};
   background: white;
   padding-top: 1vh;
 `;

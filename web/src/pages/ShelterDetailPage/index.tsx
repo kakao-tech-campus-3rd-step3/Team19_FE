@@ -7,6 +7,7 @@ import ShelterDetailInfo from './components/ShelterDetailInfo';
 import ShelterReviewSection from './components/ShelterReviewSection';
 import { useShelterDetail } from './hooks/useShelterDetail';
 import { toggleWish } from '@/api/wishApi';
+import theme from '@/styles/theme';
 
 const ShelterDetailPage = () => {
   const { id } = useParams();
@@ -104,7 +105,7 @@ const ShelterDetailPage = () => {
 export default ShelterDetailPage;
 
 const container = css`
-  padding: 16px;
+  padding-top: ${theme.spacing.spacing16};
   margin-top: 0px;
   background: white;
 `;

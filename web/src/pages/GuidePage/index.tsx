@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { nearbyShelters } from '@/mock/nearbyShelters';
+import { getNearbyShelters } from '@/api/shelterApi';
 import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
@@ -55,17 +55,56 @@ const GuidePage = () => {
 
   // 타겟 대피소 초기화
   useEffect(() => {
-    const routerState = location.state as { targetShelter?: Shelter } | null;
+    let mounted = true;
 
-    if (routerState?.targetShelter) {
-      console.log('전달받은 타겟 대피소:', routerState.targetShelter);
-      setTargetShelter(routerState.targetShelter);
-    } else {
-      const defaultShelter = nearbyShelters[0];
-      console.log('기본 타겟 대피소 설정:', defaultShelter);
-      setTargetShelter(defaultShelter);
-    }
-  }, [location.state]);
+    const initTargetShelter = async () => {
+      const routerState = location.state as { targetShelter?: Shelter } | null;
+      if (routerState?.targetShelter) {
+        setTargetShelter(routerState.targetShelter);
+        return;
+      }
+
+      // 우선 현재 페이지의 currentLocation이 있으면 사용, 없으면 getCurrentLocation 시도
+      try {
+        const loc =
+          currentLocation ??
+          (await (async () => {
+            try {
+              return await getCurrentLocation();
+            } catch {
+              return null;
+            }
+          })());
+
+        if (!mounted) return;
+        if (!loc) {
+          console.warn('현재 위치를 얻지 못해 기본 대피소를 설정하지 못했습니다.');
+          return;
+        }
+
+        const res = await getNearbyShelters({
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+        });
+        if (!mounted) return;
+
+        const list = Array.isArray(res) ? res : (res && (res.items || res.data)) || [];
+        if (list && list.length > 0) {
+          console.log('API로부터 기본 타겟 대피소 설정:', list[0]);
+          setTargetShelter(list[0]);
+        } else {
+          console.warn('근처 대피소가 없습니다.');
+        }
+      } catch (err) {
+        console.error('기본 대피소 조회 실패:', err);
+      }
+    };
+
+    initTargetShelter();
+    return () => {
+      mounted = false;
+    };
+  }, [location.state, currentLocation, getCurrentLocation]);
 
   // 음성 안내 모달 표시
   useEffect(() => {

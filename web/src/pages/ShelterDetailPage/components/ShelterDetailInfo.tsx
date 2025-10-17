@@ -108,7 +108,7 @@ export default ShelterDetailInfo;
 /* 상세 정보 스타일 */
 const title = css`
   text-align: center;
-  margin-top: 0px;
+  margin-top: 16px;
   ${theme.typography.detail1};
   color: ${theme.colors.button.blue};
 `;

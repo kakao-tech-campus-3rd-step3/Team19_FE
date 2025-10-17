@@ -16,6 +16,7 @@ interface Props {
 const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const shelterMarkersRef = useRef<any[]>([]);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
 
@@ -95,8 +96,25 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const addShelterMarkers = (map: any) => {
     if (!map || !window.Tmapv3) return;
 
+    // 이전 마커 제거
+    try {
+      shelterMarkersRef.current.forEach((m) => {
+        try {
+          m.setMap(null);
+        } catch {}
+      });
+    } catch {}
+    shelterMarkersRef.current = [];
+
     shelters.forEach((shelter) => {
       try {
+        const lat = shelter?.latitude != null ? Number(shelter.latitude) : NaN;
+        const lng = shelter?.longitude != null ? Number(shelter.longitude) : NaN;
+        if (!isFinite(lat) || !isFinite(lng)) {
+          console.warn('invalid shelter coords, skip marker', shelter);
+          return;
+        }
+
         const shelterMarker = new window.Tmapv3.Marker({
           position: new window.Tmapv3.LatLng(shelter.latitude, shelter.longitude),
           iconSize: new window.Tmapv3.Size(24, 35),
@@ -109,7 +127,7 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
           setSelectedShelter(shelter);
         });
       } catch (err) {
-        console.error('마커 생성 실패:', err);
+        console.error('마커 생성 실패:', err, shelter);
       }
     });
   };
@@ -174,6 +192,14 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
       isMounted = false;
     };
   }, []);
+
+  // shelters prop 변경 시 마커 갱신
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (map && window.Tmapv3) {
+      addShelterMarkers(map);
+    }
+  }, [shelters]);
 
   if (permissionDenied) {
     return (

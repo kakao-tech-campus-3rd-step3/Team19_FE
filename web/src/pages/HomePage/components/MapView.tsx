@@ -16,6 +16,7 @@ interface Props {
 const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const shelterMarkersRef = useRef<any[]>([]); // 변경: 생성한 마커 보관
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
 
@@ -93,23 +94,48 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
 
   // 쉼터 마커 추가
   const addShelterMarkers = (map: any) => {
-    if (!map || !window.Tmapv3) return;
+    if (!map || !window.Tmapv3) {
+      console.warn('addShelterMarkers: map 또는 Tmapv3 없음', { map, hasTmap: !!window.Tmapv3 });
+      return;
+    }
 
-    shelters.forEach((shelter) => {
+    // 기존 마커 제거
+    try {
+      shelterMarkersRef.current.forEach((m) => {
+        try {
+          m.setMap(null);
+        } catch {}
+      });
+    } catch {}
+    shelterMarkersRef.current = [];
+
+    shelters.forEach((shelter, idx) => {
       try {
+        const lat = shelter?.latitude != null ? Number(shelter.latitude) : NaN;
+        const lng = shelter?.longitude != null ? Number(shelter.longitude) : NaN;
+        if (!isFinite(lat) || !isFinite(lng)) {
+          console.warn(`invalid coords, skip marker index=${idx}`, shelter);
+          return;
+        }
+
         const shelterMarker = new window.Tmapv3.Marker({
-          position: new window.Tmapv3.LatLng(shelter.latitude, shelter.longitude),
+          position: new window.Tmapv3.LatLng(lat, lng),
           iconSize: new window.Tmapv3.Size(24, 35),
-          icon: markerImage, // 이미지 URL 사용
+          icon: typeof markerImage === 'string' ? markerImage : undefined,
           map: map,
         });
 
-        // 마커 클릭 이벤트
-        shelterMarker.on('click', () => {
-          setSelectedShelter(shelter);
-        });
+        if (typeof (shelterMarker as any).on === 'function') {
+          shelterMarker.on('click', () => setSelectedShelter(shelter));
+        } else if ((window as any).Tmapv3?.event?.addListener) {
+          (window as any).Tmapv3.event.addListener(shelterMarker, 'click', () =>
+            setSelectedShelter(shelter),
+          );
+        }
+
+        shelterMarkersRef.current.push(shelterMarker);
       } catch (err) {
-        console.error('마커 생성 실패:', err);
+        console.error('마커 생성 실패:', err, shelter);
       }
     });
   };
@@ -172,8 +198,19 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
 
     return () => {
       isMounted = false;
+      // 언마운트 시 마커 제거
+      try {
+        shelterMarkersRef.current.forEach((m) => m.setMap(null));
+        shelterMarkersRef.current = [];
+      } catch {}
     };
   }, []);
+
+  // shelters prop 변경 시 마커 갱신
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (map && window.Tmapv3) addShelterMarkers(map);
+  }, [shelters]);
 
   if (permissionDenied) {
     return (

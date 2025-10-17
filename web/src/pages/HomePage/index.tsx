@@ -47,6 +47,43 @@ const HomePage = () => {
     };
   }, []);
 
+  const [shelters, setShelters] = useState<any[]>([]);
+  const [, setShelterError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!navigator.geolocation) {
+      setShelterError('위치 정보 미지원');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        if (!mounted) return;
+        try {
+          const data = await getNearbyShelters({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+          // API 응답 형태에 따라 조정: array 또는 { items: [...] } 등
+          const list = Array.isArray(data) ? data : (data && data.items) || [];
+          if (!mounted) return;
+          setShelters(list);
+        } catch (err) {
+          console.error('getNearbyShelters 실패', err);
+          setShelterError('쉼터 조회 실패');
+        }
+      },
+      (err) => {
+        console.warn('geolocation error', err);
+        setShelterError('위치 권한 거부 또는 오류');
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <div css={containerStyle}>
       {/* 지도 준비 시 handleMapReady를 넘기고, 쉼터 마커는 그대로 */}

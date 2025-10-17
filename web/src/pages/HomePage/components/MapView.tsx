@@ -16,6 +16,7 @@ interface Props {
 const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  // 생성한 쉼터 마커들을 보관해 갱신 시 제거할 수 있게 함
   const shelterMarkersRef = useRef<any[]>([]);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
@@ -92,7 +93,7 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
     }
   };
 
-  // 쉼터 마커 추가
+  // 쉼터 마커 추가 (기존 마커 제거 후 재생성)
   const addShelterMarkers = (map: any) => {
     if (!map || !window.Tmapv3) return;
 
@@ -126,6 +127,9 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
         shelterMarker.on('click', () => {
           setSelectedShelter(shelter);
         });
+
+        // 저장
+        shelterMarkersRef.current.push(shelterMarker);
       } catch (err) {
         console.error('마커 생성 실패:', err, shelter);
       }
@@ -190,6 +194,11 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
 
     return () => {
       isMounted = false;
+      // 컴포넌트 언마운트 시 마커 제거
+      try {
+        shelterMarkersRef.current.forEach((m) => m.setMap(null));
+        shelterMarkersRef.current = [];
+      } catch {}
     };
   }, []);
 

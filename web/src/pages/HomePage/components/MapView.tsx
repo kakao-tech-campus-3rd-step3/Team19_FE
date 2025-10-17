@@ -17,6 +17,7 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const shelterMarkersRef = useRef<any[]>([]); // 변경: 생성한 마커 보관
+  const [isMapReady, setIsMapReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
 
@@ -81,6 +82,7 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
             onUpdateMyLocation(location.latitude, location.longitude, true);
           }
           attachMapDismissHandlers(mapInstance);
+          setIsMapReady(true);
         } else {
           setTimeout(checkMapLoaded, 100);
         }
@@ -209,8 +211,16 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   // shelters prop 변경 시 마커 갱신
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (map && window.Tmapv3) addShelterMarkers(map);
+    if (isMapFullyLoaded(map) && window.Tmapv3) addShelterMarkers(map);
   }, [shelters]);
+
+  // 지도 준비 완료되었을 때 현재 shelters로 마커 갱신 (shelters가 먼저 로드된 경우 대비)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (isMapReady && isMapFullyLoaded(map) && window.Tmapv3) {
+      addShelterMarkers(map);
+    }
+  }, [isMapReady, shelters]);
 
   if (permissionDenied) {
     return (

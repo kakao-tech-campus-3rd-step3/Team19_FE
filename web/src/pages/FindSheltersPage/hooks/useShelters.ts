@@ -18,28 +18,47 @@ export const useShelters = () => {
   const [shelters, setShelters] = useState<Shelter[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isFetchingMore, setIsFetchingMore] = useState<boolean>(false);
   const [error, setError] = useState<any>(null);
   const [hasMoreItems, setHasMoreItems] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
 
-  const fetchNearby = useCallback(async (latitude: number, longitude: number) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getNearbyShelters({ latitude, longitude });
-      // API가 배열을 반환한다고 가정
-      setShelters(Array.isArray(data) ? data : []);
-      // 단순히 더불어 사용할 플래그 (nearby는 페이징 없으므로 false)
-      setHasMoreItems(false);
-    } catch (err) {
-      console.error('[useShelters] fetchNearby error', err);
-      setError(err);
-      setShelters([]);
-      setHasMoreItems(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [page, setPage] = useState<number>(1);
+  const PAGE_SIZE = 20; // 필요 시 API 페이지 크기에 맞게 변경
+
+  const fetchNearby = useCallback(
+    async (latitude: number, longitude: number, pageParam = 1, append = false) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await (getNearbyShelters as any)({
+          latitude,
+          longitude,
+          page: pageParam,
+        });
+        const list = Array.isArray(data)
+          ? data
+          : (data?.items ?? data?.shelters ?? data?.data ?? []);
+        if (append) {
+          setShelters((prev) => [...prev, ...list]);
+        } else {
+          setShelters(list);
+        }
+        // 간단한 hasMore 판단: 반환 항목이 페이지 사이즈보다 작으면 끝
+        setHasMoreItems(Array.isArray(list) ? list.length >= PAGE_SIZE : false);
+        setPage(pageParam);
+      } catch (err) {
+        console.error('[useShelters] fetchNearby error', err);
+        setError(err);
+        setShelters([]);
+        setHasMoreItems(false);
+      } finally {
+        setIsLoading(false);
+        setIsFetchingMore(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -53,7 +72,7 @@ export const useShelters = () => {
       (pos) => {
         if (!mounted) return;
         const { latitude, longitude } = pos.coords;
-        fetchNearby(latitude, longitude);
+        fetchNearby(latitude, longitude, 1, false);
       },
       (err) => {
         console.warn('[useShelters] geolocation error', err);
@@ -78,8 +97,25 @@ export const useShelters = () => {
   };
 
   const handleLoadMore = async () => {
-    // nearby API는 페이징이 없으므로 기본 noop
-    setToastMessage('더 불러올 항목이 없습니다.');
+    if (isLoading || isFetchingMore || !hasMoreItems) return;
+    setIsFetchingMore(true);
+    try {
+      // 현재 위치로 다음 페이지 요청
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const nextPage = page + 1;
+          await fetchNearby(pos.coords.latitude, pos.coords.longitude, nextPage, true);
+        },
+        (err) => {
+          console.warn('[useShelters] loadMore geolocation error', err);
+          setIsFetchingMore(false);
+        },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 },
+      );
+    } catch (e) {
+      console.error('[useShelters] handleLoadMore error', e);
+      setIsFetchingMore(false);
+    }
   };
 
   return {
@@ -88,6 +124,7 @@ export const useShelters = () => {
     isLoading,
     error,
     hasMoreItems,
+    isFetchingMore,
     toastMessage,
     setToastMessage,
     handleToggleFavorite,
@@ -97,7 +134,7 @@ export const useShelters = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          fetchNearby(latitude, longitude);
+          fetchNearby(latitude, longitude, 1, false);
         },
         (err) => {
           console.warn('[useShelters] refresh geolocation error', err);

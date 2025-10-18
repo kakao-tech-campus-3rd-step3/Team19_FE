@@ -92,7 +92,6 @@ export default MyPage;
 // 스타일
 const container = css`
   background: #ffffffff;
-  padding: 0;
   font-family: 'Pretendard', sans-serif;
   height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
   padding-top: ${theme.spacing.spacing16};
@@ -102,6 +101,7 @@ const container = css`
 
 const mypageTitle = css`
   ${theme.typography.my1};
+  margin-top: 16px;
   padding: 4% 5%;
   text-align: center;
   text-shadow: 2px 2px 6px #bbb;

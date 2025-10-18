@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { FaRegCommentDots } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import emptyReviewImg from '@/assets/images/empty-review.png';
+import emptyReviewImg from '@/assets/images/empty-review2.jpg';
 import theme from '@/styles/theme';
 import { useEffect, useState } from 'react';
 import { getMyReviews } from '@/api/reviewApi';
@@ -121,7 +121,7 @@ const header = css`
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding-top: 24px;
+  margin-top: 16px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;
@@ -162,7 +162,7 @@ const emptyHeader = css`
   display: flex;
   gap: 8px;
   width: 100%;
-  padding-top: 24px;
+  margin-top: 16px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;
@@ -184,7 +184,7 @@ const emptyBox = css`
 `;
 
 const emptyImg = css`
-  width: 140px;
+  width: 180px;
   height: auto;
   object-fit: contain;
 `;

@@ -4,7 +4,7 @@ import { FaHeart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getWishList } from '@/api/wishApi';
-import emptyWishImg from '@/assets/images/empty-wish.png';
+import emptyWishImg from '@/assets/images/empty-wish2.jpg';
 import theme from '@/styles/theme';
 import WishListCard from './components/WishListCard';
 
@@ -106,7 +106,7 @@ const header = css`
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding-top: 24px;
+  margin-top: 16px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;
@@ -146,7 +146,7 @@ const emptyHeader = css`
   display: flex;
   gap: 8px;
   width: 100%;
-  padding-top: 24px;
+  margin-top: 16px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;
@@ -168,7 +168,7 @@ const emptyBox = css`
 `;
 
 const emptyImg = css`
-  width: 160px;
+  width: 180px;
   height: auto;
   object-fit: contain;
 `;

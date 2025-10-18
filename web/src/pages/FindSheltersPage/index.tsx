@@ -1,9 +1,8 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import ShelterList from './components/ShelterList';
-import BottomControls from './components/BottomControls';
 import ToastMessage from '@/components/ToastMessage';
-import emptyShelterImage from '@/assets/images/empty-shelter.png';
+import emptyShelterImage from '@/assets/images/empty-shelter2.gif';
 import { useShelters } from './hooks/useShelters';
 import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';
@@ -15,7 +14,7 @@ const FindSheltersPage = () => {
     toastMessage,
     isLoading,
     error,
-    hasMoreItems,
+    isFetchingMore,
     handleLoadMore,
     handleToggleFavorite,
   } = useShelters();
@@ -49,8 +48,9 @@ const FindSheltersPage = () => {
             shelters={shelters}
             favoriteIds={favoriteIds}
             onToggleFavorite={handleToggleWithApi} // 시그니처: (shelterId, isFavorite)
+            onLoadMore={handleLoadMore}
+            isFetchingMore={isFetchingMore}
           />
-          <BottomControls hasMoreItems={hasMoreItems} onLoadMore={handleLoadMore} />
           {toastMessage && <ToastMessage message={toastMessage} />}
         </div>
       ) : (
@@ -71,6 +71,10 @@ export default FindSheltersPage;
 const pageContainerStyle = css`
   position: relative;
   display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 16px;
+  padding-right: 16px;
   height: calc(100vh - ${theme.spacing.spacing16});
   margin-top: ${theme.spacing.spacing16};
   background: white;

@@ -57,7 +57,7 @@ export default ScrollToTopButton;
 
 const scrollToTopButtonStyle = css`
   position: fixed;
-  bottom: 32px;
+  bottom: calc(2rem + env(safe-area-inset-bottom));
   right: 24px;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);

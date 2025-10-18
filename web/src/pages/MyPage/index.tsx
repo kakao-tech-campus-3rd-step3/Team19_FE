@@ -5,14 +5,35 @@ import { useState } from 'react';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 import { useNavigate } from 'react-router-dom';
+import { logout } from '@/api/userApi';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from './hooks/useUser';
 
 const MyPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [imgError, setImgError] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // TODO: 실제 로그인 연동 시 변경 필요.
   const { user, error, isLoading, isMock } = useUser();
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await logout();
+      // 사용자 캐시 초기화
+      queryClient.clear();
+      // 인증 페이지로 이동
+      navigate('/auth');
+    } catch (err) {
+      console.error('로그아웃 실패:', err);
+      alert('로그아웃에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   if (isLoading) return <div css={container}>로딩 중...</div>;
 
@@ -59,8 +80,9 @@ const MyPage = () => {
         <button css={menuBtn}>앱 푸쉬 알림 ON/OFF</button>
       </div>
 
-      {/* TODO: 로그아웃 버튼 기능 추가 */}
-      <button css={logoutBtn}>로그아웃</button>
+      <button css={logoutBtn} onClick={handleLogout} disabled={loggingOut}>
+        {loggingOut ? '로그아웃 중...' : '로그아웃'}
+      </button>
     </div>
   );
 };
@@ -71,7 +93,7 @@ export default MyPage;
 const container = css`
   background: #ffffffff;
   font-family: 'Pretendard', sans-serif;
-  height: calc(100vh - ${theme.spacing.spacing16});
+  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
   padding-top: ${theme.spacing.spacing16};
   display: flex;
   flex-direction: column;

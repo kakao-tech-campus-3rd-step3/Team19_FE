@@ -4,6 +4,8 @@ import theme from '@/styles/theme';
 import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
+import { signup, login } from '@/api/userApi';
+import { useNavigate } from 'react-router-dom';
 
 const SignupForm = () => {
   const [name, setName] = useState('');
@@ -12,6 +14,9 @@ const SignupForm = () => {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string>('');
+  const navigate = useNavigate();
   const isPasswordValid = (pw: string) => {
     if (!pw) return false;
     const lengthOk = pw.length >= 8;
@@ -37,8 +42,35 @@ const SignupForm = () => {
     isPasswordValid(password) &&
     passwordConfirm === password;
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || submitting) return;
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      // 1. 회원가입
+      await signup({
+        email,
+        password,
+        nickname: name.trim(),
+        profileImageUrl: '',
+      });
+
+      // 2. 회원가입 성공 후 자동 로그인
+      await login({ email, password });
+
+      // 3. 홈으로 이동
+      navigate('/');
+    } catch (err: any) {
+      const message = err?.message || '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="회원가입 폼">
+    <form css={form} onSubmit={handleSubmit} aria-label="회원가입 폼">
       {/* 이름 */}
       <label css={label} htmlFor="signup-name">
         이름
@@ -143,15 +175,21 @@ const SignupForm = () => {
       <button
         type="submit"
         css={submitBtn}
-        disabled={!canSubmit}
-        aria-disabled={!canSubmit}
+        disabled={!canSubmit || submitting}
+        aria-disabled={!canSubmit || submitting}
         style={{
-          opacity: canSubmit ? 1 : 0.5,
-          cursor: canSubmit ? 'pointer' : 'not-allowed',
+          opacity: canSubmit && !submitting ? 1 : 0.5,
+          cursor: canSubmit && !submitting ? 'pointer' : 'not-allowed',
         }}
       >
-        회원가입
+        {submitting ? '가입 중...' : '회원가입'}
       </button>
+
+      {submitError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {submitError}
+        </div>
+      )}
     </form>
   );
 };

@@ -121,7 +121,7 @@ const header = css`
   align-items: center;
   gap: 8px;
   width: 100%;
-  margin-top: 16px;
+  margin-top: 28px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;
@@ -162,7 +162,7 @@ const emptyHeader = css`
   display: flex;
   gap: 8px;
   width: 100%;
-  margin-top: 16px;
+  margin-top: 28px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;

@@ -146,7 +146,7 @@ const emptyHeader = css`
   display: flex;
   gap: 8px;
   width: 100%;
-  margin-top: 28px;  
+  margin-top: 28px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;
@@ -168,7 +168,7 @@ const emptyBox = css`
 `;
 
 const emptyImg = css`
-  width: 180px;
+  width: 160px;
   height: auto;
   object-fit: contain;
 `;

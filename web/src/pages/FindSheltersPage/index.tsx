@@ -1,7 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import ShelterList from './components/ShelterList';
-import BottomControls from './components/BottomControls';
 import ToastMessage from '@/components/ToastMessage';
 import emptyShelterImage from '@/assets/images/empty-shelter.png';
 import { useShelters } from './hooks/useShelters';
@@ -15,7 +14,7 @@ const FindSheltersPage = () => {
     toastMessage,
     isLoading,
     error,
-    hasMoreItems,
+    isFetchingMore,
     handleLoadMore,
     handleToggleFavorite,
   } = useShelters();
@@ -49,8 +48,9 @@ const FindSheltersPage = () => {
             shelters={shelters}
             favoriteIds={favoriteIds}
             onToggleFavorite={handleToggleWithApi} // 시그니처: (shelterId, isFavorite)
+            onLoadMore={handleLoadMore}
+            isFetchingMore={isFetchingMore}
           />
-          <BottomControls hasMoreItems={hasMoreItems} onLoadMore={handleLoadMore} />
           {toastMessage && <ToastMessage message={toastMessage} />}
         </div>
       ) : (

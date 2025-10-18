@@ -4,7 +4,7 @@ import { FaHeart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getWishList } from '@/api/wishApi';
-import emptyWishImg from '@/assets/images/empty-wish.png';
+import emptyWishImg from '@/assets/images/emtpy-wish2.png';
 import theme from '@/styles/theme';
 import WishListCard from './components/WishListCard';
 

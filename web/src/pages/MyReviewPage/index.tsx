@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { FaRegCommentDots } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import emptyReviewImg from '@/assets/images/empty-review.png';
+import emptyReviewImg from '@/assets/images/empty-review2.png';
 import theme from '@/styles/theme';
 import { useEffect, useState } from 'react';
 import { getMyReviews } from '@/api/reviewApi';

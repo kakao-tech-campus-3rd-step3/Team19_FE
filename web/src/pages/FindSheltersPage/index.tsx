@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import ShelterList from './components/ShelterList';
 import ToastMessage from '@/components/ToastMessage';
-import emptyShelterImage from '@/assets/images/empty-shelter.png';
+import emptyShelterImage from '@/assets/images/empty-shelter2.gif';
 import { useShelters } from './hooks/useShelters';
 import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';

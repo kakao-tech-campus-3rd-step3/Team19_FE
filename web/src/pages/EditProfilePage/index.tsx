@@ -181,6 +181,7 @@ const titleRow = css`
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 16px;
   padding: 4% 5%;
 `;
 

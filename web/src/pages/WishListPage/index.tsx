@@ -4,7 +4,7 @@ import { FaHeart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getWishList } from '@/api/wishApi';
-import emptyWishImg from '@/assets/images/emtpy-wish2.png';
+import emptyWishImg from '@/assets/images/emtpy-wish2.jpg';
 import theme from '@/styles/theme';
 import WishListCard from './components/WishListCard';
 
@@ -168,7 +168,7 @@ const emptyBox = css`
 `;
 
 const emptyImg = css`
-  width: 160px;
+  width: 180px;
   height: auto;
   object-fit: contain;
 `;

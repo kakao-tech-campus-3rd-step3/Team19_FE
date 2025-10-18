@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { FaRegCommentDots } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import emptyReviewImg from '@/assets/images/empty-review2.png';
+import emptyReviewImg from '@/assets/images/empty-review2.jpg';
 import theme from '@/styles/theme';
 import { useEffect, useState } from 'react';
 import { getMyReviews } from '@/api/reviewApi';
@@ -184,7 +184,7 @@ const emptyBox = css`
 `;
 
 const emptyImg = css`
-  width: 140px;
+  width: 180px;
   height: auto;
   object-fit: contain;
 `;

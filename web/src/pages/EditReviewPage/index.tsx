@@ -115,7 +115,7 @@ const container = css`
   background: #ffffffff;
   padding: 0 0;
   font-family: 'Pretendard', sans-serif;
-  height: calc(100vh - ${theme.spacing.spacing16});
+  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
   padding-top: ${theme.spacing.spacing16};
   display: flex;
   flex-direction: column;

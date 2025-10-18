@@ -45,7 +45,7 @@ const ErrorPage = ({ status, error, message, path }: ErrorProps) => {
 export default ErrorPage;
 
 const container = css`
-  height: calc(100vh - ${theme.spacing.spacing16});
+  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
   padding-top: ${theme.spacing.spacing16};
   display: flex;
   flex-direction: column;

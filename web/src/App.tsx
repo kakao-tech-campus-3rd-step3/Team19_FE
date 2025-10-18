@@ -40,6 +40,9 @@ const App = () => {
     window.scrollTo({ top: 0 });
   }, [location.pathname]);
 
+  // GuidePage에서는 NavBar를 자체적으로 렌더링하므로 여기서는 제외
+  const shouldShowNavBar = location.pathname !== '/guide';
+
   return (
     <>
       {/* 전역 스타일 정의 및 적용 */}
@@ -90,7 +93,7 @@ const App = () => {
           }
         `}
       />
-      <NavBar />
+      {shouldShowNavBar && <NavBar />}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <div css={appContainerStyle}>
           <main>

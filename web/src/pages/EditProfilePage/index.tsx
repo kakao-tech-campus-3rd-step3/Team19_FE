@@ -171,7 +171,7 @@ const container = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(100vh - ${theme.spacing.spacing16});
+  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
   padding-top: ${theme.spacing.spacing16};
   position: relative;
   overflow: hidden;

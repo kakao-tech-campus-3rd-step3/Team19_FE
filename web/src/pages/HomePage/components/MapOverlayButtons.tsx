@@ -33,7 +33,8 @@ export default MapOverlayButtons;
 const overlayButtonStyle = css`
   position: fixed;
   left: 50%;
-  bottom: calc(2rem + env(safe-area-inset-bottom));
+  bottom: 2rem;
+  //bottom: calc(2rem + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;

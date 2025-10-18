@@ -5,23 +5,46 @@ import { FaUser } from 'react-icons/fa';
 import theme from '@/styles/theme';
 import logo from '@/assets/images/logo.png';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getMyProfile } from '@/api/userApi';
 
-const NavBar = () => {
+interface NavBarProps {
+  onBackClick?: () => void;
+  onLogoClick?: () => void;
+  onUserClick?: () => void;
+}
+
+const NavBar = ({ onBackClick, onLogoClick, onUserClick }: NavBarProps) => {
   const navigate = useNavigate();
   const location = useLocation(); // 현재 경로 확인
 
   const handleLogoClick = () => {
+    if (onLogoClick) {
+      onLogoClick();
+      return;
+    }
     if (location.pathname === '/') return; // 현재 페이지가 홈페이지일 경우 클릭 막음
     navigate('/'); // 홈페이지가 아닐 경우 홈페이지로 이동
   };
 
   const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+      return;
+    }
     navigate(-1); // 이전 페이지로 이동
   };
 
-  const handleUserClick = () => {
-    // TODO: 로그인 검증 필요. 추후 추가 해야함!!!!!
-    navigate('/mypage');
+  const handleUserClick = async () => {
+    if (onUserClick) {
+      onUserClick();
+      return;
+    }
+    try {
+      await getMyProfile();
+      navigate('/mypage');
+    } catch {
+      navigate('/auth');
+    }
   };
 
   return (

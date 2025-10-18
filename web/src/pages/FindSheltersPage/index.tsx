@@ -6,7 +6,6 @@ import emptyShelterImage from '@/assets/images/empty-shelter.png';
 import { useShelters } from './hooks/useShelters';
 import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';
-import { nearbyShelters } from '@/mock/nearbyShelters'; // 임시 목데이터 사용
 
 const FindSheltersPage = () => {
   const {
@@ -41,16 +40,12 @@ const FindSheltersPage = () => {
       </div>
     );
 
-  // Fallback: API 데이터가 없으면 nearbyShelters(목) 사용
-  const visibleShelters = shelters.length > 0 ? shelters : nearbyShelters;
-
   return (
     <>
-      {visibleShelters.length > 0 ? (
+      {shelters.length > 0 ? (
         <div css={pageContainerStyle}>
           <ShelterList
-            // 개발/테스트용: 실제 API 데이터가 없을 때 nearbyShelters로 대체
-            shelters={visibleShelters}
+            shelters={shelters}
             favoriteIds={favoriteIds}
             onToggleFavorite={handleToggleWithApi} // 시그니처: (shelterId, isFavorite)
             onLoadMore={handleLoadMore}
@@ -76,6 +71,10 @@ export default FindSheltersPage;
 const pageContainerStyle = css`
   position: relative;
   display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 16px;
+  padding-right: 16px;
   height: calc(100vh - ${theme.spacing.spacing16});
   margin-top: ${theme.spacing.spacing16};
   background: white;

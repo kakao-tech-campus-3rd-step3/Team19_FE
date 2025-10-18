@@ -58,17 +58,20 @@ const ShelterList = ({
 
   return (
     <div css={listContainerStyle}>
-      {shelters.map((shelter) => {
+      {shelters.map((shelter, idx) => {
         const isFav = favoriteIds.includes(shelter.shelterId);
+        const isLast = idx === shelters.length - 1;
         return (
-          <ShelterInfoCard
-            key={shelter.shelterId}
-            shelter={shelter as any} // ShelterInfoCard prop 타입이 엄격하면 매핑 필요
-            variant="find"
-            isFavorite={isFav}
-            onToggleFavorite={() => onToggleFavorite(shelter.shelterId, isFav)}
-            onStart={() => console.log(`${shelter.name} 안내 시작`)}
-          />
+          <div key={shelter.shelterId}>
+            <ShelterInfoCard
+              shelter={shelter as any}
+              variant="find"
+              isFavorite={isFav}
+              onToggleFavorite={() => onToggleFavorite(shelter.shelterId, isFav)}
+              onStart={() => console.log(`${shelter.name} 안내 시작`)}
+            />
+            {!isLast && <div css={dividerStyle} />}
+          </div>
         );
       })}
       {/* sentinel: 리스트 끝에서 더 불러오기 트리거 */}
@@ -93,4 +96,11 @@ const sentinelStyle = css`
 const loadingMoreStyle = css`
   text-align: center;
   padding: 12px 0;
+`;
+
+const dividerStyle = css`
+  height: 1px;
+  background: #d2d2d2ff;
+  margin: 8px 0;
+  width: 100%;
 `;

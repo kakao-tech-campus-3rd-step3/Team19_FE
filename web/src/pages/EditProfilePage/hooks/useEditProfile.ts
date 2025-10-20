@@ -6,17 +6,11 @@ import NoProfile from '@/assets/images/NoProfile.png';
 import type { UserProfile } from '@/api/userApi';
 import { patchProfile, patchPassword, getMyProfile } from '@/api/userApi';
 
-//TODO: 실제 API 연동 시 아래 목데이터 삭제, 관련 코드 수정 필요
-// 목데이터: 기존 회원 정보
-const mockUser = {
-  userId: 1,
-  email: 'ksh58@gmail.com',
-  nickname: '김선희',
-  profileImageUrl: typeof NoProfile === 'string' ? NoProfile : '',
-};
-
 export const useEditProfile = () => {
-  const [profileImageUrl, setProfileImageUrl] = useState<string>(mockUser.profileImageUrl);
+  // 기본 프로필 이미지는 NoProfile로 초기화
+  const [profileImageUrl, setProfileImageUrl] = useState<string>(
+    typeof NoProfile === 'string' ? NoProfile : '',
+  );
   const [showProfileModal, setShowProfileModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imgError, setImgError] = useState(false);
@@ -47,7 +41,7 @@ export const useEditProfile = () => {
   // user 데이터가 도착하면 초기값 세팅
   useEffect(() => {
     if (user) {
-      setProfileImageUrl(user.profileImageUrl ?? mockUser.profileImageUrl);
+      setProfileImageUrl(user.profileImageUrl ?? (typeof NoProfile === 'string' ? NoProfile : ''));
       setNicknameInput(user.nickname ?? '');
       setImgError(false);
     }
@@ -79,7 +73,7 @@ export const useEditProfile = () => {
   const handleSetDefaultProfile = () => {
     setShowProfileModal(false);
     setImgError(false);
-    setProfileImageUrl(mockUser.profileImageUrl);
+    setProfileImageUrl(typeof NoProfile === 'string' ? NoProfile : '');
   };
 
   // 파일 선택 시 프로필 이미지 변경
@@ -118,11 +112,10 @@ export const useEditProfile = () => {
     profileMutation.mutate(
       {
         nickname:
-          nicknameInput && nicknameInput !== (user?.nickname ?? mockUser.nickname)
-            ? nicknameInput
-            : undefined,
+          nicknameInput && nicknameInput !== (user?.nickname ?? '') ? nicknameInput : undefined,
         profileImageUrl:
-          profileImageUrl !== (user?.profileImageUrl ?? mockUser.profileImageUrl)
+          profileImageUrl !==
+          (user?.profileImageUrl ?? (typeof NoProfile === 'string' ? NoProfile : ''))
             ? profileImageUrl
             : undefined,
       },
@@ -142,7 +135,6 @@ export const useEditProfile = () => {
   };
 
   return {
-    mockUser,
     user, // 실제 API 데이터 (없으면 undefined)
     profileImageUrl,
     setProfileImageUrl,

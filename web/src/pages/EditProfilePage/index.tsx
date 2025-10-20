@@ -3,12 +3,12 @@ import { css } from '@emotion/react';
 import { FaRegEdit } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { useEditProfile } from './hooks/useEditProfile';
+import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 
 const EditProfilePage = () => {
   // useEditProfile 훅 사용
   const {
-    mockUser,
     user,
     profileImageUrl,
     imgError,
@@ -36,8 +36,12 @@ const EditProfilePage = () => {
     setShowNewPassword,
   } = useEditProfile();
 
-  // displayUser: user가 있으면 API 데이터, 없으면 mockUser 사용
-  const displayUser = (user as any) ?? mockUser;
+  const displayUser = (user as any) ?? {
+    userId: 0,
+    email: '',
+    nickname: '',
+    profileImageUrl: typeof NoProfile === 'string' ? NoProfile : '',
+  };
 
   return (
     <div css={container}>
@@ -171,10 +175,8 @@ const container = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(
-    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-  );
-  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
+  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
+  padding-top: ${theme.spacing.spacing16};
   position: relative;
   overflow: hidden;
 `;

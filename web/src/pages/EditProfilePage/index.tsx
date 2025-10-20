@@ -51,10 +51,21 @@ const EditProfilePage = () => {
       </div>
       <div css={profileBox}>
         <img
-          src={imgError ? displayUser.profileImageUrl : profileImageUrl}
-          alt="프로필"
+          src={
+            !profileImageUrl || imgError
+              ? typeof NoProfile === 'string'
+                ? NoProfile
+                : ''
+              : profileImageUrl
+          }
+          alt="프로필 이미지"
           css={profileImg}
-          onError={() => setImgError(true)}
+          onError={(e) => {
+            // 에러 발생 시 NoProfile로 대체
+            setImgError(true);
+            (e.currentTarget as HTMLImageElement).src =
+              typeof NoProfile === 'string' ? NoProfile : '';
+          }}
         />
         <FaRegEdit css={editIcon} onClick={handleEditProfileImg} />
         {/* 프로필 이미지 편집 모달 */}

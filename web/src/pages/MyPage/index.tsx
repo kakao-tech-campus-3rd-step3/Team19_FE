@@ -15,8 +15,7 @@ const MyPage = () => {
   const [imgError, setImgError] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // TODO: 실제 로그인 연동 시 변경 필요.
-  const { user, error, isLoading, isMock } = useUser();
+  const { user, error, isLoading } = useUser();
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -37,7 +36,7 @@ const MyPage = () => {
 
   if (isLoading) return <div css={container}>로딩 중...</div>;
 
-  if (error && !isMock)
+  if (error)
     return (
       <div css={container}>
         <div css={errorMsgStyle}>사용자 정보를 불러오지 못했습니다.</div>

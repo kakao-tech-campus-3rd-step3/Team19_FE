@@ -75,8 +75,10 @@ const pageContainerStyle = css`
   box-sizing: border-box;
   padding-left: 16px;
   padding-right: 16px;
-  height: calc(100vh - ${theme.spacing.spacing16});
-  margin-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   background: white;
   padding-top: 1vh;
 `;

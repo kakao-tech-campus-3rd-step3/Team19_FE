@@ -97,8 +97,10 @@ const pageContainerStyle = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
-  padding-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
 `;
 
 const header = css`
@@ -106,7 +108,7 @@ const header = css`
   align-items: center;
   gap: 8px;
   width: 100%;
-  margin-top: 28px;
+  margin-top: 16px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;
@@ -135,8 +137,10 @@ const emptyStateStyle = css`
   width: 100%;
   flex-direction: column;
   align-items: center;
-  height: calc(100vh - ${theme.spacing.spacing16});
-  padding-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   text-align: center;
   background: #000;
   overflow: hidden;
@@ -146,7 +150,7 @@ const emptyHeader = css`
   display: flex;
   gap: 8px;
   width: 100%;
-  margin-top: 28px;
+  margin-top: 16px;
   padding-bottom: 24px;
   padding-left: 16px;
   box-sizing: border-box;

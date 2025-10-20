@@ -67,8 +67,10 @@ export default AuthPage;
 const container = css`
   width: 100%;
   max-width: 500px; /* 페이지 레이아웃 단일화 */
-  height: calc(100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom));
-  padding-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   margin: 0 auto; /* 중앙 정렬 */
   display: flex;
   flex-direction: column;

@@ -3,12 +3,15 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
+import { IoEye, IoEyeOff } from 'react-icons/io5';
 
 const SignupForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const isPasswordValid = (pw: string) => {
     if (!pw) return false;
     const lengthOk = pw.length >= 8;
@@ -26,6 +29,13 @@ const SignupForm = () => {
       : '';
   const confirmError =
     passwordConfirm && passwordConfirm !== password ? '비밀번호가 일치하지 않습니다.' : '';
+
+  // 제출 가능 여부: 이름 입력, 이메일/비밀번호 유효성, 비밀번호 확인 일치 모두 만족해야 함
+  const canSubmit =
+    name.trim().length > 0 &&
+    isEmailValid(email) &&
+    isPasswordValid(password) &&
+    passwordConfirm === password;
 
   return (
     <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="회원가입 폼">
@@ -50,15 +60,17 @@ const SignupForm = () => {
       </label>
       <input
         id="signup-email"
-        css={input}
+        css={[input, emailError && inputError]}
         type="email"
         placeholder="이메일을 입력해주세요"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
+        aria-invalid={!!emailError}
+        aria-describedby={emailError ? 'signup-email-error' : undefined}
       />
       {emailError && (
-        <div css={errorMsg} role="alert" aria-live="polite">
+        <div css={errorMsg} role="alert" aria-live="polite" id="signup-email-error">
           {emailError}
         </div>
       )}
@@ -68,17 +80,29 @@ const SignupForm = () => {
         <FaLock size={18} color="#777" />
         <span>비밀번호</span>
       </label>
-      <input
-        id="signup-password"
-        css={input}
-        type="password"
-        placeholder="8자 이상 영문, 숫자, 특수문자 포함"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
+      <div css={passwordWrapper}>
+        <input
+          id="signup-password"
+          css={[input, passwordField, passwordError && inputError]}
+          type={showPassword ? 'text' : 'password'}
+          placeholder="8자 이상 영문, 숫자, 특수문자 포함"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          aria-invalid={!!passwordError}
+          aria-describedby={passwordError ? 'signup-password-error' : undefined}
+        />
+        <button
+          type="button"
+          css={eyeBtn}
+          aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+          onClick={() => setShowPassword((s) => !s)}
+        >
+          {showPassword ? <IoEyeOff /> : <IoEye />}
+        </button>
+      </div>
       {passwordError && (
-        <div css={errorMsg} role="alert" aria-live="polite">
+        <div css={errorMsg} role="alert" aria-live="polite" id="signup-password-error">
           {passwordError}
         </div>
       )}
@@ -88,17 +112,29 @@ const SignupForm = () => {
         <FaLock size={18} color="#777" />
         <span>비밀번호 확인</span>
       </label>
-      <input
-        id="signup-password-confirm"
-        css={input}
-        type="password"
-        placeholder="비밀번호를 다시 입력해주세요"
-        value={passwordConfirm}
-        onChange={(e) => setPasswordConfirm(e.target.value)}
-        required
-      />
+      <div css={passwordWrapper}>
+        <input
+          id="signup-password-confirm"
+          css={[input, passwordField, confirmError && inputError]}
+          type={showPasswordConfirm ? 'text' : 'password'}
+          placeholder="비밀번호를 다시 입력해주세요"
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
+          required
+          aria-invalid={!!confirmError}
+          aria-describedby={confirmError ? 'signup-password-confirm-error' : undefined}
+        />
+        <button
+          type="button"
+          css={eyeBtn}
+          aria-label={showPasswordConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
+          onClick={() => setShowPasswordConfirm((s) => !s)}
+        >
+          {showPasswordConfirm ? <IoEyeOff /> : <IoEye />}
+        </button>
+      </div>
       {confirmError && (
-        <div css={errorMsg} role="alert" aria-live="polite">
+        <div css={errorMsg} role="alert" aria-live="polite" id="signup-password-confirm-error">
           {confirmError}
         </div>
       )}
@@ -107,8 +143,12 @@ const SignupForm = () => {
       <button
         type="submit"
         css={submitBtn}
-        disabled={Boolean(emailError || passwordError || confirmError)}
-        aria-disabled={Boolean(emailError || passwordError || confirmError)}
+        disabled={!canSubmit}
+        aria-disabled={!canSubmit}
+        style={{
+          opacity: canSubmit ? 1 : 0.5,
+          cursor: canSubmit ? 'pointer' : 'not-allowed',
+        }}
       >
         회원가입
       </button>
@@ -126,47 +166,79 @@ const form = css`
 `;
 
 const label = css`
-  font-size: ${theme.typography.authLabel.fontSize};
-  font-weight: ${theme.typography.authLabel.fontWeight};
-  line-height: ${theme.typography.authLabel.lineHeight};
+  ${theme.typography.authLabel};
   text-align: left;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
+  margin-top: 6px;
 `;
 
 const input = css`
   padding: 12px 14px;
   border: 1px solid #bbb;
   border-radius: 8px;
-  font-size: ${theme.typography.authInput.fontSize};
-  font-weight: ${theme.typography.authInput.fontWeight};
-  line-height: ${theme.typography.authInput.lineHeight};
+  margin-bottom: 0;
+  ${theme.typography.authInput};
   background: #fff;
+  width: 100%; /* 입력창이 wrapper 너비를 채우도록 */
+  box-sizing: border-box; /* padding 포함 너비 계산 */
+`;
+
+/* 비밀번호 입력용 추가 스타일: 오른쪽에 아이콘 위해 내부 여백 확보 */
+const passwordField = css`
+  padding-right: 48px; /* 아이콘 너비 + 여유 공간 확보 (버튼 크기에 맞춤) */
+`;
+
+const passwordWrapper = css`
+  position: relative;
+  display: block; /* wrapper가 전체 너비를 갖도록 변경 */
+  width: 100%;
+`;
+
+const eyeBtn = css`
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%); /* 세로 중앙 정렬 */
+  background: none;
+  border: none;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  /* 버튼이 input 위에 겹쳐도 입력 포인터는 유지하려면 pointer-events 유지 (버튼은 클릭 가능) */
 `;
 
 // row/flex1 제거
 
 const submitBtn = css`
-  margin-top: 6px;
+  margin-top: 24px;
   padding: 14px 16px;
   background: #000;
   color: #fff;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-size: ${theme.typography.authButton.fontSize};
-  font-weight: ${theme.typography.authButton.fontWeight};
-  line-height: ${theme.typography.authButton.lineHeight};
+  ${theme.typography.authButton};
 `;
 
 // secondaryBtn 제거
 
 const errorMsg = css`
-  margin-top: 4px;
+  margin-top: 0;
+  text-align: left;
   color: #e03131;
-  font-size: ${theme.typography.authHelper.fontSize};
-  font-weight: ${theme.typography.authHelper.fontWeight};
-  line-height: ${theme.typography.authHelper.lineHeight};
+  ${theme.typography.authHelper};
+`;
+
+/* 추가: 에러 시 적용되는 최소한의 스타일 (기존 input 유지) */
+const inputError = css`
+  border: 2px solid #e74c3c !important;
+  background: #fff0f0;
 `;

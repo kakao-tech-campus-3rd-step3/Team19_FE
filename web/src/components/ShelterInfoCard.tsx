@@ -146,7 +146,7 @@ const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         border-radius: 12px;
         position: absolute;
-        bottom: 2rem;
+        bottom: calc(2rem + env(safe-area-inset-bottom));
         left: 50%;
         transform: translateX(-50%);
         width: 90%;

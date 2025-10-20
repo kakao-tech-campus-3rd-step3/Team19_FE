@@ -34,42 +34,41 @@ const MOCK_WISHES: WishItem[] = [
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 /**
- * 찜 추가
+ * 찜 추가 (me 사용)
  */
-export async function addWish({ userId, shelterId }: { userId: number; shelterId: number }) {
+export async function addWish({ shelterId }: { shelterId: number }) {
   if (USE_MOCK) {
     return Promise.resolve({
       wishId: Date.now(),
       shelterId,
-      userId,
       createdAt: new Date().toISOString(),
     });
   }
 
   // 실제 API 호출
-  return apiClient.post(`/api/users/${userId}/wishes/${shelterId}`);
+  return apiClient.post(`/api/users/me/wishes/${shelterId}`);
 }
 
 /**
- * 위시 목록 조회
+ * 위시 목록 조회 (me 사용)
  */
-export async function getWishList(userId: number) {
+export async function getWishList() {
   if (USE_MOCK) {
     return Promise.resolve(MOCK_WISHES);
   }
 
-  return apiClient.get(`/api/users/${userId}/wishes`);
+  return apiClient.get(`/api/users/me/wishes`);
 }
 
 /**
- * 찜 삭제
+ * 찜 삭제 (me 사용)
  */
-export async function deleteWish({ userId, shelterId }: { userId: number; shelterId: number }) {
+export async function deleteWish({ shelterId }: { shelterId: number }) {
   if (USE_MOCK) {
     return Promise.resolve();
   }
 
-  return apiClient.delete(`/api/users/${userId}/wishes/${shelterId}`);
+  return apiClient.delete(`/api/users/me/wishes/${shelterId}`);
 }
 
 /**
@@ -77,11 +76,9 @@ export async function deleteWish({ userId, shelterId }: { userId: number; shelte
  */
 export async function toggleWish({
   shelterId,
-  userId,
   isFavorite,
 }: {
   shelterId: number | string;
-  userId: number;
   isFavorite: boolean;
 }) {
   if (USE_MOCK) {
@@ -94,11 +91,11 @@ export async function toggleWish({
 
   if (isFavorite) {
     // 현재 즐겨찾기중 -> 삭제
-    await deleteWish({ userId, shelterId: Number(shelterId) });
+    await deleteWish({ shelterId: Number(shelterId) });
     return { success: true, message: '찜 목록에서\n삭제되었습니다' };
   } else {
     // 추가
-    await addWish({ userId, shelterId: Number(shelterId) });
+    await addWish({ shelterId: Number(shelterId) });
     return { success: true, message: '찜 목록에\n추가되었습니다' };
   }
 }

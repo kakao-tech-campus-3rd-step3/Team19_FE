@@ -31,9 +31,9 @@ const MapOverlayButtons = ({ onMyLocation }: Props) => {
 export default MapOverlayButtons;
 
 const overlayButtonStyle = css`
-  position: absolute;
+  position: fixed;
   left: 50%;
-  bottom: 2rem;
+  bottom: calc(2rem + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;

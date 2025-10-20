@@ -39,7 +39,8 @@ export default AuthTabs;
 const tablist = css`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  width: 100%;
+  width: 95%;
+  margin: 0 auto;
   background: ${theme.colors.button.gray100};
   border-radius: 12px;
   padding: 4px; /* 안쪽 여백으로 흰색 탭을 더 작게 보이게 */
@@ -50,8 +51,7 @@ const tab = css`
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: ${theme.typography.authTab.fontSize};
-  font-weight: ${theme.typography.authTab.fontWeight};
+  ${theme.typography.authTab};
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -59,6 +59,21 @@ const tab = css`
   white-space: nowrap; /* 좁은 폭에서도 줄바꿈 방지 */
   overflow: hidden;
   text-overflow: ellipsis;
+  outline: none;
+  -webkit-tap-highlight-color: transparent; /* 모바일 사파리/크롬 파란 터치 효과 제거 */
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+  &:active {
+    outline: none;
+    box-shadow: none;
+    background: transparent; /* 클릭 시 배경색 변화도 제거 */
+  }
 `;
 
 const tabActive = css`

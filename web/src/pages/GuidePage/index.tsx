@@ -9,6 +9,7 @@ import { useCurrentLocation } from './hooks/useCurrentLocation';
 import { useRouteCalculation } from './hooks/useRouteCalculation';
 import { useGuidanceLogic } from './hooks/useGuidanceLogic';
 import { GuideBar } from './components/GuideBar';
+import VoiceGuideModal from './components/VoiceGuideModal';
 import theme from '@/styles/theme';
 
 const GuidePage = () => {
@@ -49,6 +50,9 @@ const GuidePage = () => {
   const [shelterMarker, setShelterMarker] = useState<any>(null);
   const hasInitialRouteCalculatedRef = useRef<boolean>(false);
 
+  // 음성 안내 활성화 여부
+  const [ttsEnabled, setTtsEnabled] = useState<boolean | null>(null);
+
   // 타겟 대피소 초기화
   useEffect(() => {
     const routerState = location.state as { targetShelter?: Shelter } | null;
@@ -62,6 +66,11 @@ const GuidePage = () => {
       setTargetShelter(defaultShelter);
     }
   }, [location.state]);
+
+  // 음성 안내 모달 표시
+  useEffect(() => {
+    setTtsEnabled(null); // 페이지 진입 시마다 초기화
+  }, []);
 
   // 대피소 마커 업데이트
   const updateShelterMarker = (shelter: Shelter) => {
@@ -254,11 +263,16 @@ const GuidePage = () => {
     <div css={containerStyle}>
       <div css={mapContainerStyle}>
         <div ref={mapRef} css={mapStyle} />
+
+        {/* 음성 안내 사용 여부 모달 */}
+        {ttsEnabled === null && <VoiceGuideModal onSelect={setTtsEnabled} />}
+
         {(activeGuidance || guidanceSteps.length > 0) && (
           <GuideBar
             message={activeGuidance || guidanceSteps[0] || null}
             hasArrived={hasArrived}
             onArrivalConfirm={handleArrivalConfirm}
+            ttsEnabled={ttsEnabled === true}
           />
         )}
       </div>
@@ -269,6 +283,8 @@ const GuidePage = () => {
 const containerStyle = css`
   width: 100%;
   height: calc(100vh - ${theme.spacing.spacing16});
+  padding-top: ${theme.spacing.spacing16};
+  overflow: hidden;
   position: relative;
 `;
 

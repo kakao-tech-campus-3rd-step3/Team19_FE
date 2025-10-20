@@ -2,6 +2,7 @@
 import theme from '@/styles/theme';
 import { css } from '@emotion/react';
 import errorGif from '@/assets/images/error.gif';
+import { useEffect } from 'react';
 
 interface ErrorProps {
   status: number;
@@ -11,6 +12,20 @@ interface ErrorProps {
 }
 
 const ErrorPage = ({ status, error, message, path }: ErrorProps) => {
+  // 뒤로가기 방지: 에러 페이지 진입 시 히스토리 replace 및 popstate 핸들링
+  useEffect(() => {
+    // 현재 페이지를 히스토리의 마지막으로 만듦
+    window.history.replaceState(null, '', window.location.href);
+    // popstate(뒤로가기) 발생 시 홈으로 이동
+    const handlePopState = () => {
+      window.location.href = '/';
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   return (
     <div css={container}>
       <div css={errorBox}>
@@ -31,6 +46,7 @@ export default ErrorPage;
 
 const container = css`
   height: calc(100vh - ${theme.spacing.spacing16});
+  padding-top: ${theme.spacing.spacing16};
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -47,6 +63,7 @@ const errorBox = css`
   padding: 36px 28px;
   text-align: center;
   margin-bottom: 32px;
+  width: 80%;
 `;
 
 const statusStyle = css`

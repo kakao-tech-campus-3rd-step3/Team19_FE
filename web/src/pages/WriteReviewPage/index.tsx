@@ -140,7 +140,7 @@ const container = css`
   height: calc(
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );
-  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top)));
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   display: flex;
   flex-direction: column;
   align-items: center;

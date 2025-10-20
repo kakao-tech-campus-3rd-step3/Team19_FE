@@ -100,7 +100,7 @@ const pageContainerStyle = css`
   height: calc(
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );
-  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top)));
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
 `;
 
 const header = css`
@@ -137,8 +137,10 @@ const emptyStateStyle = css`
   width: 100%;
   flex-direction: column;
   align-items: center;
-  height: calc(100vh - ${theme.spacing.spacing16});
-  padding-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   text-align: center;
   background: #000;
   overflow: hidden;

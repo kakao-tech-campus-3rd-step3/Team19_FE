@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
+import { useEffect, useState } from 'react';
 import ShelterList from './components/ShelterList';
 import ToastMessage from '@/components/ToastMessage';
 import emptyShelterImage from '@/assets/images/empty-shelter2.gif';
@@ -8,6 +9,7 @@ import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';
 
 const FindSheltersPage = () => {
+  const [hasScroll, setHasScroll] = useState(false);
   const {
     shelters,
     favoriteIds,
@@ -32,10 +34,30 @@ const FindSheltersPage = () => {
     }
   };
 
-  if (isLoading) return <div css={pageContainerStyle}>로딩 중...</div>;
+  useEffect(
+    () => {
+      const checkScroll = () => {
+        // 문서 높이가 뷰포트보다 크면 스크롤 존재
+        setHasScroll(document.documentElement.scrollHeight > window.innerHeight);
+      };
+      checkScroll();
+      window.addEventListener('resize', checkScroll);
+      window.addEventListener('load', checkScroll);
+      // 페이지 내용(예: shelters) 변경 시에도 확인되게끔 이벤트 외에 effect 의존성에서 처리
+      return () => {
+        window.removeEventListener('resize', checkScroll);
+        window.removeEventListener('load', checkScroll);
+      };
+    },
+    [
+      /* 빈 배열로 mount 시와 resize/load 이벤트로만 체크; 필요 시 shelters 의존성 추가 */
+    ],
+  );
+
+  if (isLoading) return <div css={pageContainerStyle(hasScroll)}>로딩 중...</div>;
   if (error)
     return (
-      <div css={pageContainerStyle}>
+      <div css={pageContainerStyle(hasScroll)}>
         <div css={emptyTextStyle}>근처 쉼터를 불러올 수 없습니다.</div>
       </div>
     );
@@ -43,7 +65,7 @@ const FindSheltersPage = () => {
   return (
     <>
       {shelters.length > 0 ? (
-        <div css={pageContainerStyle}>
+        <div css={pageContainerStyle(hasScroll)}>
           <ShelterList
             shelters={shelters}
             favoriteIds={favoriteIds}
@@ -68,7 +90,7 @@ const FindSheltersPage = () => {
 
 export default FindSheltersPage;
 
-const pageContainerStyle = css`
+const pageContainerStyle = (hasScroll: boolean) => css`
   position: relative;
   display: flex;
   justify-content: center;
@@ -76,6 +98,8 @@ const pageContainerStyle = css`
   box-sizing: border-box;
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   background: white;
+  /* 스크롤이 있을 때만 하단 안전영역 만큼 마진 확보 */
+  margin-bottom: ${hasScroll ? 'env(safe-area-inset-bottom)' : '0'};
 `;
 
 const emptyStateStyle = css`

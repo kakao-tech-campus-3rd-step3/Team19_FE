@@ -62,7 +62,7 @@ const ShelterList = ({
         const isFav = favoriteIds.includes(shelter.shelterId);
         const isLast = idx === shelters.length - 1;
         return (
-          <div key={shelter.shelterId}>
+          <div key={shelter.shelterId} css={cardWrapperStyle}>
             <ShelterInfoCard
               shelter={shelter as any}
               variant="find"
@@ -103,4 +103,11 @@ const dividerStyle = css`
   background: #d2d2d2ff;
   margin: 8px 0;
   width: 100%;
+`;
+
+const cardWrapperStyle = css`
+  width: 90%;
+  max-width: 820px;
+  margin: 0 auto;
+  box-sizing: border-box;
 `;

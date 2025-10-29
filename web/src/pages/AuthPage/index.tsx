@@ -67,9 +67,7 @@ export default AuthPage;
 const container = css`
   width: 100%;
   max-width: 500px; /* 페이지 레이아웃 단일화 */
-  height: calc(
-    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-  );
+  height: 100vh;
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   margin: 0 auto; /* 중앙 정렬 */
   display: flex;
@@ -91,7 +89,7 @@ const card = css`
 
 /* 스크롤이 생길 때만 적용할 하단 여유(24px) */
 const cardWithGap = css`
-  padding-bottom: 24px;
+  padding-bottom: env(safe-area-inset-bottom);
 `;
 
 const contentArea = css`

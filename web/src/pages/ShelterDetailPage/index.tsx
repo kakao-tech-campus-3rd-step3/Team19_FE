@@ -105,9 +105,6 @@ const ShelterDetailPage = () => {
 export default ShelterDetailPage;
 
 const container = css`
-  height: calc(
-    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-  );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   box-sizing: border-box;
   display: flex;

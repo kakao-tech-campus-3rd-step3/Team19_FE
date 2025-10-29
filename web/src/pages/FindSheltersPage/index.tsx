@@ -74,9 +74,6 @@ const pageContainerStyle = css`
   justify-content: center;
   width: 100%;
   box-sizing: border-box;
-  height: calc(
-    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-  );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   background: white;
 `;

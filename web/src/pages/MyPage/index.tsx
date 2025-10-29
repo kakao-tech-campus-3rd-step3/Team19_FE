@@ -146,6 +146,7 @@ const menuBox = css`
   gap: 18px;
   align-items: center;
   padding-top: 5%;
+  padding-bottom: 18px;
 `;
 
 const menuBtn = css`

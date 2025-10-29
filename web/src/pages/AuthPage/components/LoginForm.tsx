@@ -111,16 +111,6 @@ const LoginForm = () => {
           {submitError}
         </div>
       )}
-
-      {/* 구분선 */}
-      <div css={dividerWrap}>
-        <span css={divider} />
-      </div>
-
-      {/* 비밀번호 찾기 */}
-      <button type="button" css={linkBtn}>
-        비밀번호를 잊으셨나요?
-      </button>
     </form>
   );
 };
@@ -201,32 +191,9 @@ const submitBtn = css`
   ${theme.typography.authButton};
 `;
 
-const dividerWrap = css`
-  display: flex;
-  align-items: center;
-  margin: 10px 0;
-`;
-
-const divider = css`
-  flex: 1;
-  height: 1px;
-  background: ${theme.colors.button.black};
-  opacity: 0.2;
-`;
-
 const errorMsg = css`
   margin-top: 0;
   text-align: left;
   color: #e03131;
   ${theme.typography.authHelper};
-`;
-
-const linkBtn = css`
-  margin-top: 8px;
-  background: none;
-  border: none;
-  color: #1c7ed6;
-  cursor: pointer;
-  text-decoration: underline;
-  ${theme.typography.authLink};
 `;

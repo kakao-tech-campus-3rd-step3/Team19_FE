@@ -3,12 +3,12 @@ import { css } from '@emotion/react';
 import { FaRegEdit } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { useEditProfile } from './hooks/useEditProfile';
+import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 
 const EditProfilePage = () => {
   // useEditProfile 훅 사용
   const {
-    mockUser,
     user,
     profileImageUrl,
     imgError,
@@ -36,8 +36,12 @@ const EditProfilePage = () => {
     setShowNewPassword,
   } = useEditProfile();
 
-  // displayUser: user가 있으면 API 데이터, 없으면 mockUser 사용
-  const displayUser = (user as any) ?? mockUser;
+  const displayUser = (user as any) ?? {
+    userId: 0,
+    email: '',
+    nickname: '',
+    profileImageUrl: typeof NoProfile === 'string' ? NoProfile : '',
+  };
 
   return (
     <div css={container}>
@@ -47,10 +51,21 @@ const EditProfilePage = () => {
       </div>
       <div css={profileBox}>
         <img
-          src={imgError ? displayUser.profileImageUrl : profileImageUrl}
-          alt="프로필"
+          src={
+            !profileImageUrl || imgError
+              ? typeof NoProfile === 'string'
+                ? NoProfile
+                : ''
+              : profileImageUrl
+          }
+          alt="프로필 이미지"
           css={profileImg}
-          onError={() => setImgError(true)}
+          onError={(e) => {
+            // 에러 발생 시 NoProfile로 대체
+            setImgError(true);
+            (e.currentTarget as HTMLImageElement).src =
+              typeof NoProfile === 'string' ? NoProfile : '';
+          }}
         />
         <FaRegEdit css={editIcon} onClick={handleEditProfileImg} />
         {/* 프로필 이미지 편집 모달 */}

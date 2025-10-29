@@ -13,5 +13,5 @@ export const useUser = () => {
     retry: 1,
   });
 
-  return { user: user ?? null, error, isLoading, isMock: false };
+  return { user: user ?? null, error, isLoading };
 };

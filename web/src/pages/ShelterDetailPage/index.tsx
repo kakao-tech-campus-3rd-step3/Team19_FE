@@ -109,6 +109,7 @@ const container = css`
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;

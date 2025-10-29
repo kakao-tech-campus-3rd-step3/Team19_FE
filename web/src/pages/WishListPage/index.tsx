@@ -20,7 +20,9 @@ const WishListPage = () => {
     setIsLoading(true);
     getWishList()
       .then((data: any) => {
-        if (mounted) setWishList(Array.isArray(data) ? data : []);
+        if (!mounted) return;
+        const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+        setWishList(items);
       })
       .catch((e) => {
         if (mounted) setError(e);
@@ -59,7 +61,10 @@ const WishListPage = () => {
                 onClick={handleCardClick}
                 refetchWishList={() =>
                   getWishList()
-                    .then((d: any) => setWishList(Array.isArray(d) ? d : []))
+                    .then((d: any) => {
+                      const items = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
+                      setWishList(items);
+                    })
                     .catch(() => {
                       /* optional: set error state if needed */
                     })

@@ -217,9 +217,12 @@ const emptyStar = css`
 
 /* 리뷰 섹션 스타일 */
 const reviewSectionStyle = css`
-  margin-top: 32px;
+  margin: 32px auto 0; /* 상단 마진은 유지, 가운데 정렬 */
   padding: 16px;
   border-top: 1px solid ${theme.colors.text.gray500};
+  width: 90%; /* 화면의 90% 사용 */
+  max-width: 1100px; /* 필요 시 최대 너비 제한 (선택) */
+  box-sizing: border-box;
 `;
 
 const reviewHeader = css`
@@ -227,6 +230,7 @@ const reviewHeader = css`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  width: 100%; /* 부모(90%) 안에서 꽉 채움 */
 `;
 
 const reviewTitle = css`
@@ -255,6 +259,7 @@ const reviewListStyle = css`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%; /* 부모(90%) 안에서 꽉 채움 */
 `;
 
 const reviewCardStyle = css`
@@ -264,6 +269,8 @@ const reviewCardStyle = css`
   background: ${theme.colors.text.white};
   align-items: flex-start;
   text-align: left;
+  width: 100%; /* 카드가 부모 너비를 채우도록 */
+  box-sizing: border-box;
 `;
 
 const reviewLeft = css`

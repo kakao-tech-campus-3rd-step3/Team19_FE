@@ -71,10 +71,9 @@ export default FindSheltersPage;
 const pageContainerStyle = css`
   position: relative;
   display: flex;
+  justify-content: center;
   width: 100%;
   box-sizing: border-box;
-  padding-left: 16px;
-  padding-right: 16px;
   height: calc(
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );

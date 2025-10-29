@@ -80,7 +80,6 @@ const pageContainerStyle = css`
   );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   background: white;
-  padding-top: 1vh;
 `;
 
 const emptyStateStyle = css`

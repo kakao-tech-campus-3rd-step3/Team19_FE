@@ -9,6 +9,7 @@ import android.webkit.WebSettings
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.view.KeyEvent
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -75,15 +76,83 @@ class MainActivity : AppCompatActivity() {
                 if (webView.canGoBack()) {
                     webView.goBack()
                 } else {
-                    // 더 이상 뒤로 갈 페이지가 없으면, 앱을 종료합니다.
-                    // 이 콜백을 비활성화하고 기본 동작(앱 종료)을 실행하도록 합니다.
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
+                    // 메인(루트) 상태에서는 종료 확인 다이얼로그를 보여주고,
+                    // 다이얼로그가 떠 있는 상태에서 한 번 더 뒤로가기를 누르면 종료합니다.
+                    showExitConfirmOrExit()
                 }
             }
         }
         // 이 액티비티의 생명주기에 맞춰 콜백을 등록합니다.
         onBackPressedDispatcher.addCallback(this, callback)
+    }
+
+    private var exitDialog: androidx.appcompat.app.AlertDialog? = null
+
+    private fun showExitConfirmOrExit() {
+        // 다이얼로그가 이미 떠 있다면, 뒤로가기를 두 번째로 누른 것으로 간주하고 종료합니다.
+        if (exitDialog?.isShowing == true) {
+            exitApp()
+            return
+        }
+
+        // 큰 글씨 메시지 뷰 구성
+        val dialogView = layoutInflater.inflate(android.R.layout.simple_list_item_1, null)
+        val textView = dialogView.findViewById<android.widget.TextView>(android.R.id.text1)
+        textView.textSize = 32f
+        textView.text = "정말 종료하시겠어요?\n한 번 더 뒤로가기를 누르면 종료됩니다."
+
+        // 큰 아이콘 타이틀 구성
+        val titleView = android.widget.TextView(this).apply {
+            text = "⚠️"
+            textSize = 32f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+            setPadding(32, 32, 32, 16)
+        }
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setCustomTitle(titleView)
+            .setView(dialogView)
+            .setPositiveButton("종료") { _, _ ->
+                exitApp()
+            }
+            .setNegativeButton("취소") { d, _ -> d.dismiss() }
+            .create()
+
+        // 다이얼로그 표시 중 뒤로가기를 다시 누르면 완전 종료
+        dialog.setOnKeyListener { d, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                d.dismiss()
+                exitApp()
+                true
+            } else {
+                false
+            }
+        }
+
+        dialog.setOnShowListener {
+            val positive = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            val negative = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)
+
+            positive.textSize = 30f
+            negative.textSize = 30f
+            positive.isAllCaps = false
+            negative.isAllCaps = false
+            positive.setPadding(40, 24, 40, 24)
+            negative.setPadding(40, 24, 40, 24)
+
+            val density = resources.displayMetrics.density
+            val heightPx = (56 * density).toInt()
+            positive.layoutParams = positive.layoutParams.apply { height = heightPx }
+            negative.layoutParams = negative.layoutParams.apply { height = heightPx }
+        }
+
+        exitDialog = dialog
+        dialog.show()
+    }
+
+    private fun exitApp() {
+        finishAffinity() // 태스크의 모든 액티비티 종료 및 태스크 제거
     }
     
     // 위치 권한이 없으면 사용자에게 권한 요청

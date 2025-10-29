@@ -93,7 +93,8 @@ export default FindSheltersPage;
 const pageContainerStyle = (hasScroll: boolean) => css`
   position: relative;
   display: flex;
-  justify-content: center;
+  flex-direction: column; /* 세로 스택: 카드가 자연스럽게 아래로 쌓이며 높이 확장 허용 */
+  align-items: stretch; /* 내부 블록이 너비/높이를 자유롭게 가지도록 함 */
   width: 100%;
   box-sizing: border-box;
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));

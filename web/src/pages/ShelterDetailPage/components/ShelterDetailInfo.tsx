@@ -115,44 +115,34 @@ const title = css`
 
 const topSection = css`
   display: flex;
-  flex-direction: row;
-  gap: 16px;
-  align-items: flex-start;
+  flex-direction: column; /* 모바일 고정: 세로 스택 */
+  gap: 12px;
+  align-items: center;
   width: 100%;
   box-sizing: border-box;
-
-  /* 작은 화면에서는 세로로 쌓이도록 함 */
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: center;
-  }
 `;
 
 const thumbnail = css`
-  width: 120px;
-  height: 120px;
-  flex: 0 0 120px;
+  width: 220px; /* 고정 크기: 이미지가 너무 커지지 않도록 제한 */
+  height: 220px;
+  flex: 0 0 220px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   object-fit: cover;
   pointer-events: none;
   margin: 0;
-
-  @media (max-width: 480px) {
-    width: 90%;
-    height: auto;
-    flex: none;
-  }
 `;
 
 const infoText = css`
   flex: 1 1 auto;
-  min-width: 0; /* 긴 텍스트가 버튼 영역을 침범하지 않게 함 */
+  min-width: 0;
+  max-width: 820px;
+  margin: 0 auto; /* 블록 자체를 가로 중앙에 배치 */
   color: ${theme.colors.text.black};
   display: flex;
   flex-direction: column;
   gap: 6px;
-  text-align: left;
+  text-align: left; /* 내부 텍스트는 좌측 정렬 유지 */
   padding-bottom: 16px;
   align-items: flex-start;
 `;
@@ -161,8 +151,9 @@ const bottomSection = css`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
+  margin: 16px auto 0;
   width: 90%;
+  max-width: 820px;
   gap: 8px;
 `;
 

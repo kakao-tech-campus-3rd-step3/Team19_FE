@@ -110,6 +110,7 @@ const container = css`
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   overflow-y: auto;
   margin-top: 0px;
   background: white;

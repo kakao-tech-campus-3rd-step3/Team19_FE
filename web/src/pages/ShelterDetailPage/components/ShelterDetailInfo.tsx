@@ -118,7 +118,7 @@ const topSection = css`
   flex-direction: column; /* 모바일 고정: 세로 스택 */
   gap: 12px;
   align-items: center;
-  width: 100%;
+  width: 80%;
   box-sizing: border-box;
 `;
 

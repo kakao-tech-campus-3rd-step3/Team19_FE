@@ -150,4 +150,5 @@ const appContainerStyle = css`
   left: 50%;
   transform: translateX(-50%);
   max-width: 500px; // App.css의 루트(#root) 레이아웃 너비와 동일하게 설정하여 좌우가 튀어나가지 않도록 함
+  overflow: auto;
 `;

@@ -43,7 +43,7 @@ const guidanceBarStyle = css`
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: calc(2rem + env(safe-area-inset-bottom));
+  bottom: 2rem;
   background: ${theme.colors.button.black};
   color: ${theme.colors.text.white};
   border-radius: 12px;

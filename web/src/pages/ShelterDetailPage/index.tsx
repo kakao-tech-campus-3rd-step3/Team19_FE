@@ -112,6 +112,7 @@ const container = css`
   align-items: center;
   justify-content: center;
   overflow-y: auto;
+  margin-bottom: env(safe-area-inset-bottom);
   margin-top: 0px;
   background: white;
 `;

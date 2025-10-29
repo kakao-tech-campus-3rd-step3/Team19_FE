@@ -115,26 +115,43 @@ const title = css`
 
 const topSection = css`
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
+  flex-direction: row;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+
+  /* 작은 화면에서는 세로로 쌓이도록 함 */
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const thumbnail = css`
-  width: 70%;
-  height: 70%;
+  width: 120px;
+  height: 120px;
+  flex: 0 0 120px;
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); /* 사진 그림자 효과 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  object-fit: cover;
   pointer-events: none;
-  margin-bottom: 8px;
+  margin: 0;
+
+  @media (max-width: 480px) {
+    width: 90%;
+    height: auto;
+    flex: none;
+  }
 `;
 
 const infoText = css`
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0; /* 긴 텍스트가 버튼 영역을 침범하지 않게 함 */
   color: ${theme.colors.text.black};
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   text-align: left;
   padding-bottom: 16px;
   align-items: flex-start;
@@ -144,10 +161,14 @@ const bottomSection = css`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 16px;
+  width: 90%;
+  gap: 8px;
 `;
 
 const mainButton = css`
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   margin-right: 8px;
   padding: 12px;
   border: none;
@@ -162,6 +183,9 @@ const favoriteButton = css`
   background: white;
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const distanceStyle = css`

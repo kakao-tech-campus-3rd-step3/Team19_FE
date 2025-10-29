@@ -191,7 +191,7 @@ const container = css`
   );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   position: relative;
-  overflow: hidden;
+  overflow: auto;
 `;
 
 const titleRow = css`

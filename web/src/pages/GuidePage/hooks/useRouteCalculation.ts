@@ -242,62 +242,51 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
 
       // 도착지 마커와 경로 끝점이 연결되지 않은 경우 점선(대체 연결선) 추가
       if (pathCoordinates && pathCoordinates.length > 0) {
-        const lastPoint = pathCoordinates[pathCoordinates.length - 1];
-        const { lat: lastLat, lng: lastLng } = extractLatLng(lastPoint);
-        const destLat = destination.latitude;
-        const destLng = destination.longitude;
+        const allDots: any[] = [];
 
-        const gapMeters = haversineMeters(lastLat, lastLng, destLat, destLng);
+        // 공통 도트 생성 유틸
+        const createDotIcon = (diameter = 8, color = '#9CA3AF') => {
+          const dpr = window.devicePixelRatio || 1;
+          const canvas = document.createElement('canvas');
+          canvas.width = diameter * dpr;
+          canvas.height = diameter * dpr;
+          canvas.style.width = `${diameter}px`;
+          canvas.style.height = `${diameter}px`;
+          const ctx = canvas.getContext('2d')!;
+          ctx.scale(dpr, dpr);
+          ctx.clearRect(0, 0, diameter, diameter);
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(diameter / 2, diameter / 2, diameter / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill();
+          return canvas.toDataURL('image/png');
+        };
 
-        // 허용 임계치: 8미터 (필요시 조정)
-        const GAP_THRESHOLD_M = 8;
-        if (gapMeters > GAP_THRESHOLD_M) {
-          try {
-            // 도트(원) 마커로 연결: 일정 간격으로 작은 원형 마커를 생성
-            const dots: any[] = [];
+        const dotIconUrl = createDotIcon(8, '#9CA3AF');
+        const dotSpacing = 12;
+        const maxDots = 200;
+        const densityMultiplier = 1.5; // 도트 개수 비율 (원하시면 조정)
 
-            const startLat = lastLat;
-            const startLng = lastLng;
-            const endLat = destLat;
-            const endLng = destLng;
-
-            const totalDist = haversineMeters(startLat, startLng, endLat, endLng);
-            // 기존 산출값에 1.5배 적용 (maxDots로 제한)
-            const dotSpacing = 12;
-            const maxDots = 200;
+        // --- 도착지 쪽 연결 (기존 로직) ---
+        try {
+          const lastPoint = pathCoordinates[pathCoordinates.length - 1];
+          const { lat: lastLat, lng: lastLng } = extractLatLng(lastPoint);
+          const destLat = destination.latitude;
+          const destLng = destination.longitude;
+          const gapMeters = haversineMeters(lastLat, lastLng, destLat, destLng);
+          const GAP_THRESHOLD_M = 8;
+          if (gapMeters > GAP_THRESHOLD_M) {
+            const totalDist = haversineMeters(lastLat, lastLng, destLat, destLng);
             const approxCount = Math.floor(totalDist / dotSpacing);
-            const count = Math.max(1, Math.min(maxDots, Math.floor(approxCount * 1.5)));
-
-            // 하나의 도트 아이콘을 생성(캔버스)하여 재사용
-            const createDotIcon = (diameter = 8, color = '#9CA3AF') => {
-              const dpr = window.devicePixelRatio || 1;
-              const canvas = document.createElement('canvas');
-              canvas.width = diameter * dpr;
-              canvas.height = diameter * dpr;
-              canvas.style.width = `${diameter}px`;
-              canvas.style.height = `${diameter}px`;
-              const ctx = canvas.getContext('2d')!;
-              ctx.scale(dpr, dpr);
-              // 투명 배경
-              ctx.clearRect(0, 0, diameter, diameter);
-              // 그림자(선택적)
-              // ctx.shadowColor = 'rgba(0,0,0,0.15)';
-              // ctx.shadowBlur = 2;
-              ctx.fillStyle = color;
-              ctx.beginPath();
-              ctx.arc(diameter / 2, diameter / 2, diameter / 2, 0, Math.PI * 2);
-              ctx.closePath();
-              ctx.fill();
-              return canvas.toDataURL('image/png');
-            };
-
-            const dotIconUrl = createDotIcon(8, '#9CA3AF');
-
+            const count = Math.max(
+              1,
+              Math.min(maxDots, Math.floor(approxCount * densityMultiplier)),
+            );
             for (let i = 0; i <= count; i++) {
-              const t = (i + 0.5) / (count + 1); // 도트들을 구간 중앙에 배치
-              const lat = startLat + (endLat - startLat) * t;
-              const lng = startLng + (endLng - startLng) * t;
-
+              const t = (i + 0.5) / (count + 1);
+              const lat = lastLat + (destLat - lastLat) * t;
+              const lng = lastLng + (destLng - lastLng) * t;
               try {
                 const marker = new window.Tmapv3.Marker({
                   position: new window.Tmapv3.LatLng(lat, lng),
@@ -306,16 +295,55 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
                   map: map,
                   clickable: false,
                 });
-                dots.push(marker);
+                allDots.push(marker);
               } catch (markerErr) {
-                console.warn('도트 마커 생성 실패:', markerErr);
+                console.warn('도착지 도트 생성 실패:', markerErr);
               }
             }
-            setDottedSegments(dots);
-          } catch (err) {
-            console.warn('점선 연결 생성 실패:', err);
           }
+        } catch (e) {
+          console.warn('도착지 도트 처리 중 오류:', e);
         }
+
+        // --- 출발지 쪽 연결 (추가) ---
+        try {
+          const firstPoint = pathCoordinates[0];
+          const { lat: firstLat, lng: firstLng } = extractLatLng(firstPoint);
+          // start 파라미터는 함수 스코프의 start 객체 사용 가능
+          const startLat = start.latitude;
+          const startLng = start.longitude;
+          const gapStartMeters = haversineMeters(startLat, startLng, firstLat, firstLng);
+          const GAP_THRESHOLD_M = 8;
+          if (gapStartMeters > GAP_THRESHOLD_M) {
+            const totalDist = haversineMeters(startLat, startLng, firstLat, firstLng);
+            const approxCount = Math.floor(totalDist / dotSpacing);
+            const count = Math.max(
+              1,
+              Math.min(maxDots, Math.floor(approxCount * densityMultiplier)),
+            );
+            for (let i = 0; i <= count; i++) {
+              const t = (i + 0.5) / (count + 1);
+              const lat = startLat + (firstLat - startLat) * t;
+              const lng = startLng + (firstLng - startLng) * t;
+              try {
+                const marker = new window.Tmapv3.Marker({
+                  position: new window.Tmapv3.LatLng(lat, lng),
+                  iconSize: new window.Tmapv3.Size(8, 8),
+                  icon: dotIconUrl,
+                  map: map,
+                  clickable: false,
+                });
+                allDots.push(marker);
+              } catch (markerErr) {
+                console.warn('출발지 도트 생성 실패:', markerErr);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('출발지 도트 처리 중 오류:', e);
+        }
+
+        if (allDots.length > 0) setDottedSegments(allDots);
       }
 
       console.log('경로 계산 및 표시 완료');

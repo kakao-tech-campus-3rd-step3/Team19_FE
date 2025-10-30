@@ -99,3 +99,21 @@ export async function toggleWish({
     return { success: true, message: '찜 목록에\n추가되었습니다' };
   }
 }
+
+/**
+ * 사용자가 해당 쉼터를 찜했는지 여부 확인
+ */
+export async function checkIfShelterIsWished(shelterId: number): Promise<boolean> {
+  try {
+    const wishList = await getWishList();
+    // 응답이 { data: WishItem[] } 형태일 수도 있어서 보정
+    const list = Array.isArray(wishList) ? wishList : (wishList?.data ?? wishList ?? []);
+    return list.some((item: any) => Number(item.shelterId) === Number(shelterId));
+  } catch (err: any) {
+    // 비로그인/권한없음(401, 403) => false
+    if (err && (err.status === 401 || err.status === 403)) {
+      return false;
+    }
+    throw err;
+  }
+}

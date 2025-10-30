@@ -93,6 +93,8 @@ const App = () => {
           }
         `}
       />
+      {/* Persistent map container: 앱 전체에서 언마운트되지 않도록 최상단에 고정 */}
+      <div id="map-root" data-persistent-map-root />
       {shouldShowNavBar && <NavBar />}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <div css={appContainerStyle} data-scroll-container>

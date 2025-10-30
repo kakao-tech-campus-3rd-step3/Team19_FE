@@ -3,6 +3,7 @@ type TmapAny = any;
 const MapCache = {
   map: null as TmapAny | null,
   div: null as HTMLElement | null,
+  _persistentRoot: null as HTMLElement | null,
 
   // 전역 내위치 마커(하나만 유지)
   myMarker: null as any | null,
@@ -42,30 +43,42 @@ const MapCache = {
       return null;
     }
 
+    // 이미 생성된 map이 있으면 div를 재부착(또는 영속 루트에서 가져와 붙임)하고
+    // SDK에 따라 리레이아웃/리프레시를 시도한다.
     if (this.map && this.div) {
-      if (container && this.div.parentElement !== container) {
-        container.appendChild(this.div);
-      }
       try {
+        // 보통 container가 주어지면 그 안에 붙임, 없으면 persistent root에 보관
+        const target = container ?? this.getPersistentRoot();
+        if (this.div.parentElement !== target) {
+          target.appendChild(this.div);
+        }
+        // 마커 재부착 시도
         if (this.myMarker && typeof this.myMarker.setMap === 'function') {
           this.myMarker.setMap(this.map);
-          if (this.lastIcon) {
+          if (this.lastIcon && typeof this.myMarker.setIcon === 'function') {
             try {
-              if (typeof this.myMarker.setIcon === 'function') {
-                this.myMarker.setIcon(this.lastIcon);
-              } else {
-                const pos = this.myMarker.getPosition ? this.myMarker.getPosition() : null;
-                this.myMarker.setMap(null);
-                this.myMarker = new (window as any).Tmapv3.Marker({
-                  position: pos,
-                  iconSize: new (window as any).Tmapv3.Size(50, 50),
-                  icon: this.lastIcon,
-                  map: this.map,
-                });
-              }
+              this.myMarker.setIcon(this.lastIcon);
             } catch {}
           }
         }
+        // reflow/refresh 시도: SDK마다 메소드명이 다르므로 여러 시도
+        try {
+          if (this.map && typeof (this.map as any).updateSize === 'function') {
+            (this.map as any).updateSize();
+          } else if (this.map && typeof (this.map as any).refresh === 'function') {
+            (this.map as any).refresh();
+          } else if (this.map && typeof (this.map as any).repaint === 'function') {
+            (this.map as any).repaint();
+          } else if (
+            this.map &&
+            typeof (this.map as any).setCenter === 'function' &&
+            typeof (this.map as any).getCenter === 'function'
+          ) {
+            // 강제 redraw 트릭
+            const c = (this.map as any).getCenter();
+            (this.map as any).setCenter(c);
+          }
+        } catch {}
       } catch {}
       return this.map;
     }
@@ -75,6 +88,13 @@ const MapCache = {
       mapInstance && typeof mapInstance.getDiv === 'function' ? mapInstance.getDiv() : container;
     this.map = mapInstance;
     this.div = div instanceof HTMLElement ? div : null;
+
+    // 최초 생성 시, div가 문서에 붙지 않으면 persistent root에 먼저 보관
+    try {
+      if (this.div && !this.div.parentElement) {
+        this.getPersistentRoot().appendChild(this.div);
+      }
+    } catch {}
 
     try {
       if (this.myMarker && typeof this.myMarker.setMap === 'function') {
@@ -194,14 +214,22 @@ const MapCache = {
 
   detach() {
     try {
-      if (this.div && this.div.parentElement) {
-        this.div.parentElement.removeChild(this.div);
+      // 제거 대신 영속 루트로 이동하여 SDK 인스턴스가 유지되도록 함
+      if (this.div) {
+        try {
+          const persistent = this.getPersistentRoot();
+          if (this.div.parentElement !== persistent) {
+            persistent.appendChild(this.div);
+          }
+        } catch {
+          // fallback: 직접 제거(최후 수단)
+          try {
+            if (this.div.parentElement) this.div.parentElement.removeChild(this.div);
+          } catch {}
+        }
       }
       try {
-        if (this.myMarker && typeof this.myMarker.setMap === 'function') {
-          // 페이지에서 분리할 때는 마커를 map에서 떼지만 인스턴스는 유지
-          this.myMarker.setMap(null);
-        }
+        // 페이지에서 분리 시 마커를 map에서 떼지 않음(인스턴스 유지). 만약 필요하면 setMap(null) 대신 재사용 유지
       } catch {}
     } catch {}
   },
@@ -216,6 +244,31 @@ const MapCache = {
     this.div = null;
     this.myMarker = null;
     this.lastIcon = null;
+  },
+
+  // 영속 루트 엘리먼트 반환(없으면 생성)
+  getPersistentRoot(): HTMLElement {
+    if (this._persistentRoot) return this._persistentRoot;
+    try {
+      const id = 'tmap-persistent-root';
+      let el = document.getElementById(id) as HTMLElement | null;
+      if (!el) {
+        el = document.createElement('div');
+        el.id = id;
+        // 화면 밖에 두되 DOM에 남도록 (display:none은 일부 SDK 동작에 문제를 줄 수 있음)
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        el.style.top = '-9999px';
+        el.style.width = '1px';
+        el.style.height = '1px';
+        el.style.overflow = 'hidden';
+        document.body.appendChild(el);
+      }
+      this._persistentRoot = el;
+    } catch (e) {
+      this._persistentRoot = document.body;
+    }
+    return this._persistentRoot!;
   },
 };
 

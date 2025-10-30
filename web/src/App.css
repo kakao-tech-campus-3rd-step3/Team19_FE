@@ -41,3 +41,14 @@
 .read-the-docs {
   color: #888;
 }
+
+/* 영속 맵 루트: 화면 밖에 보이지 않게 두되 DOM에는 남아 있어 SDK 인스턴스 유지 */
+#map-root {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}

@@ -56,6 +56,21 @@ export const useMap = () => {
         MapCache.setMyMarkerOnMap(map, lat, lng, myLocationMarker);
       }
 
+      // 내위치 마커는 항상 최상단에 위치하도록 zIndex 보장
+      try {
+        const mm = MapCache.myMarker;
+        if (mm) {
+          if (typeof mm.setZIndex === 'function') {
+            mm.setZIndex(3000);
+          } else {
+            // SDK에 따라 직접 프로퍼티로 지정되는 경우 처리
+            (mm as any).zIndex = 3000;
+          }
+        }
+      } catch (zErr) {
+        // 무시
+      }
+
       myMarkerRef.current = MapCache.myMarker;
     } catch (err) {
       console.error('내 위치 마커 갱신 에러:', err);
@@ -119,6 +134,11 @@ export const useMap = () => {
             MapCache.myMarker.setIcon(MapCache.lastIcon);
           } catch {}
         }
+        // 재부착 시에도 내위치 마커가 최상위가 되도록 zIndex 보장
+        try {
+          if (typeof MapCache.myMarker.setZIndex === 'function') MapCache.myMarker.setZIndex(3000);
+          else (MapCache.myMarker as any).zIndex = 3000;
+        } catch {}
         myMarkerRef.current = MapCache.myMarker;
       }
     } catch (err) {

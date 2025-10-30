@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
+import loadingGif from '@/assets/images/loading.gif';
 import ShelterInfoCard from '@/components/ShelterInfoCard';
 import theme from '@/styles/theme';
 import { typography } from '@/styles/typography';
@@ -21,6 +22,9 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const dismissCleanupRef = useRef<() => void | null>(null); // 추가: 이벤트 cleanup
   const [isMapReady, setIsMapReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  // 로딩/에러 상태
+  const [isLoadingMap, setIsLoadingMap] = useState(true);
+  const [, setMapError] = useState<string | null>(null);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
 
   // TMAP SDK 준비 대기
@@ -137,6 +141,8 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const initializeMap = async (location: LocationState) => {
     if (!mapRef.current) return;
 
+    setIsLoadingMap(true);
+    setMapError(null);
     try {
       const createFn = () =>
         new window.Tmapv3.Map(mapRef.current as HTMLElement, {
@@ -149,6 +155,12 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
         });
 
       const mapInstance = await MapCache.ensureMap(mapRef.current, createFn);
+
+      if (!mapInstance) {
+        setMapError('지도 인스턴스를 생성할 수 없습니다.');
+        setIsLoadingMap(false);
+        return;
+      }
 
       // 재사용 시 중심 및 줌 보정
       try {
@@ -175,14 +187,17 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
           } catch {}
           dismissCleanupRef.current = attachMapDismissHandlers(mapInstance);
           setIsMapReady(true);
+          setIsLoadingMap(false);
         } else {
           setTimeout(checkMapLoaded, 100);
         }
       };
 
       setTimeout(checkMapLoaded, 300);
-    } catch (err) {
+    } catch (err: any) {
       console.error('지도 초기화 실패:', err);
+      setMapError(err?.message || '지도 초기화 중 오류가 발생했습니다.');
+      setIsLoadingMap(false);
     }
   };
 
@@ -194,8 +209,13 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
         if (!isMounted) return;
 
         // TMAP SDK 준비 대기
-        await waitForTmapSDK();
+        const sdkOk = await waitForTmapSDK();
         if (!isMounted) return;
+        if (!sdkOk) {
+          setMapError('지도 SDK를 불러오지 못했습니다.');
+          setIsLoadingMap(false);
+          return;
+        }
 
         // 현재 위치 획득
         navigator.geolocation.getCurrentPosition(
@@ -214,11 +234,14 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
           () => {
             if (!isMounted) return;
             setPermissionDenied(true);
+            setIsLoadingMap(false);
           },
           { enableHighAccuracy: true, timeout: 10000 },
         );
       } catch (err) {
         console.error('지도 설정 실패:', err);
+        setMapError('지도 설정 중 오류가 발생했습니다.');
+        setIsLoadingMap(false);
       }
     };
 
@@ -275,7 +298,16 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
 
   return (
     <div css={mapStyle}>
-      <div ref={mapRef} css={mapCanvas}></div>
+      <div ref={mapRef} css={mapCanvas} />
+
+      {/* 로딩/오류 오버레이 */}
+      {isLoadingMap && (
+        <div css={loadingOverlayStyle}>
+          <div css={loadingContentStyle}>
+            <img src={loadingGif} alt="loading" css={loadingImageStyle} />
+          </div>
+        </div>
+      )}
 
       {selectedShelter && (
         <ShelterInfoCard
@@ -316,4 +348,27 @@ const deniedStyle = css`
   color: ${theme.colors.text.black};
   background: ${theme.colors.button.white};
   ${typography.text1};
+`;
+
+const loadingOverlayStyle = css`
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+`;
+
+const loadingContentStyle = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+`;
+
+const loadingImageStyle = css`
+  width: 100%;
+  object-fit: contain;
+  z-index: 1300;
 `;

@@ -248,7 +248,7 @@ const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
         left: 50%;
         transform: translateX(-50%);
         width: 90%;
-        z-index: 1000;
+        z-index: 1500;
         padding: 12px 16px;
         padding-bottom: 16px;
       `

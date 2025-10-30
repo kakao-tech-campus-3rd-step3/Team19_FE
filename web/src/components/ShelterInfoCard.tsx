@@ -67,7 +67,7 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
 
   const nameRef = useRef<HTMLParagraphElement | null>(null);
 
-  // 두 줄 초과 시 JS로 잘라서 '--' 붙임 (기기별 레이아웃 차이 보정)
+  // 1줄로 만들기: 텍스트가 1줄을 초과하면 폰트 크기를 줄여 1줄에 들어가도록 조정
   useLayoutEffect(() => {
     const el = nameRef.current;
     if (!el) return;
@@ -75,55 +75,79 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     el.textContent = original;
 
     const cs = window.getComputedStyle(el);
+    // 현재 폰트 사이즈/라인하이트
+    const originalFontSize = parseFloat(cs.fontSize || '16');
     let lineHeight = parseFloat(cs.lineHeight);
-    if (isNaN(lineHeight)) {
-      const fontSize = parseFloat(cs.fontSize || '16');
-      lineHeight = fontSize * 1.2;
+    if (isNaN(lineHeight)) lineHeight = originalFontSize * 1.2;
+
+    // 단일 라인 높이로 판단 (한 줄 허용)
+    const singleLineHeight = lineHeight;
+
+    // 이미 한 줄이면 아무 작업도 안 함
+    if (el.scrollHeight <= singleLineHeight + 1) {
+      // ensure inline style removed if previously set
+      el.style.fontSize = '';
+      return;
     }
 
-    const maxHeight = lineHeight * 2; // 2줄 허용
-    if (el.scrollHeight <= maxHeight) return; // 2줄 이내면 변경 없음
+    // 최소 폰트 크기 (px) — 너무 작아지지 않도록 설정
+    const MIN_FONT_PX = 12;
+    const maxFont = originalFontSize;
+    const minFont = Math.max(MIN_FONT_PX, Math.floor(originalFontSize * 0.7));
 
-    // 이진탐색으로 텍스트 잘라내기
-    let low = 0;
-    let high = original.length;
-    let best = 0;
+    // 이진 탐색으로 한 줄에 들어가는 최대 폰트 크기 찾기
+    let low = minFont;
+    let high = maxFont;
+    let best = minFont;
     while (low <= high) {
       const mid = Math.floor((low + high) / 2);
-      el.textContent = original.slice(0, mid) + '..';
-      if (el.scrollHeight <= maxHeight) {
+      el.style.fontSize = `${mid}px`;
+      // force reflow to get updated scrollHeight
+      const fitsOneLine = el.scrollHeight <= singleLineHeight + 1;
+      if (fitsOneLine) {
         best = mid;
         low = mid + 1;
       } else {
         high = mid - 1;
       }
     }
-    el.textContent = original.slice(0, best) + '..';
 
-    // 창 크기 변경 시 재계산
+    // 적용
+    el.style.fontSize = `${best}px`;
+
+    // 창 크기 변경 시 및 폰트 상속 변경 시 재계산
     const onResize = () => {
       el.textContent = original;
-      if (el.scrollHeight > maxHeight) {
-        // 재실행 간단 처리: 전체 다시 잘라냄
-        let l = 0;
-        let h = original.length;
-        let b = 0;
-        while (l <= h) {
-          const m = Math.floor((l + h) / 2);
-          el.textContent = original.slice(0, m) + '..';
-          if (el.scrollHeight <= maxHeight) {
-            b = m;
-            l = m + 1;
-          } else {
-            h = m - 1;
-          }
+      el.style.fontSize = '';
+      const cs2 = window.getComputedStyle(el);
+      const fontSize2 = parseFloat(cs2.fontSize || `${originalFontSize}`);
+      let lh2 = parseFloat(cs2.lineHeight);
+      if (isNaN(lh2)) lh2 = fontSize2 * 1.2;
+      if (el.scrollHeight <= lh2 + 1) return;
+      // 빠르게 동일 알고리즘 재적용
+      let l = minFont;
+      let h = Math.max(minFont, fontSize2);
+      let b = minFont;
+      while (l <= h) {
+        const m = Math.floor((l + h) / 2);
+        el.style.fontSize = `${m}px`;
+        if (el.scrollHeight <= lh2 + 1) {
+          b = m;
+          l = m + 1;
+        } else {
+          h = m - 1;
         }
-        el.textContent = original.slice(0, b) + '..';
       }
+      el.style.fontSize = `${b}px`;
     };
+
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [shelter.name]);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      // cleanup: restore inline font-size only if we changed it
+      // (keep it if user still needs the reduced size)
+    };
+  }, [shelter.name, variant]); // variant가 바뀌면 재계산 해서 home/ find 모두 동작하도록 함
 
   return (
     <div css={infoCardStyle({ variant })}>

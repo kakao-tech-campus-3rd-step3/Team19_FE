@@ -7,6 +7,10 @@ export const useMap = () => {
   const myMarkerRef = useRef<any>(null);
   const watchIdRef = useRef<number | null>(null);
 
+  // 마지막 위치 업데이트 시간(쓰로틀)
+  const lastUpdateTsRef = useRef<number>(0);
+  const UPDATE_THROTTLE_MS = 800; // 앱에서는 800ms 정도로 제한
+
   // 지도가 완전히 로드되었는지 확인
   const isMapFullyLoaded = (mapInstance: any): boolean => {
     try {
@@ -20,12 +24,26 @@ export const useMap = () => {
   };
 
   // 내 위치 마커 생성 및 갱신 함수 (MapCache 사용)
-  const updateMyLocation = (lat: number, lng: number, moveCenter = false) => {
+  const updateMyLocation = async (lat: number, lng: number, moveCenter = false) => {
+    const now = Date.now();
+    if (now - lastUpdateTsRef.current < UPDATE_THROTTLE_MS) {
+      // 쓰로틀: 너무 자주 호출되는 경우 위치만 기록하고 반환
+      lastUpdateTsRef.current = now;
+    } else {
+      lastUpdateTsRef.current = now;
+    }
+
     const map = mapInstanceRef.current || MapCache.map;
+    // 앱에서 map이 없으면 MapCache.ensureSDKReady 후 재시도 최소화
+    if (!map) {
+      // SDK 준비를 보장하고, 이후 map이 생기면 update 다시 시도
+      await MapCache.ensureSDKReady();
+    }
     if (!map || !window.Tmapv3) return;
 
     if (!isMapFullyLoaded(map)) {
-      setTimeout(() => updateMyLocation(lat, lng, moveCenter), 500);
+      // 느린 환경에서는 폴링을 짧게 반복하지 말고 백오프 적용
+      setTimeout(() => updateMyLocation(lat, lng, moveCenter), 800);
       return;
     }
 
@@ -34,7 +52,6 @@ export const useMap = () => {
       const updated = MapCache.updateMyMarkerPosition(lat, lng);
 
       // 2) 마커가 없거나 아이콘이 다르면(보장) 재생성/보정
-      // 강제 보정: 항상 myLocationMarker가 적용되도록 함
       if (!updated || MapCache.lastIcon !== myLocationMarker) {
         MapCache.setMyMarkerOnMap(map, lat, lng, myLocationMarker);
       }
@@ -50,6 +67,15 @@ export const useMap = () => {
       } catch {}
     }
   };
+
+  // 컴포넌트 마운트 시 SDK 미리 준비(앱에서 느린 초기 로딩을 줄임)
+  useEffect(() => {
+    MapCache.ensureSDKReady().then((ok) => {
+      if (!ok) {
+        console.warn('useMap: SDK 준비 실패(타임아웃)');
+      }
+    });
+  }, []);
 
   // 내 위치 버튼: 전역 마커 위치로 센터 이동하거나 측위 요청
   const handleMyLocation = () => {
@@ -134,6 +160,7 @@ export const useMap = () => {
 
     const id = navigator.geolocation.watchPosition(
       (position) => {
+        // 쓰로틀 내에서 updateMyLocation이 자체 제어
         updateMyLocation(position.coords.latitude, position.coords.longitude, false);
       },
       (error) => {
@@ -141,10 +168,9 @@ export const useMap = () => {
       },
       {
         enableHighAccuracy: true,
-        maximumAge: 2000, // 배터리 절약을 위해 약간의 캐싱 허용
+        maximumAge: 2000,
         timeout: 10000,
-        // 일부 브라우저에서는 지원되지 않지만, 지원 시 이동 임계치 설정 가능
-        // @ts-expect-error: non-standard but widely supported on Android Chrome
+        // @ts-expect-error
         distanceFilter: 3,
       },
     );

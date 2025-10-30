@@ -8,7 +8,40 @@ const MapCache = {
   myMarker: null as any | null,
   lastIcon: null as any | null,
 
+  // SDK 로드/준비를 나타내는 전역 Promise (앱에서 반복 폴링을 피하기 위함)
+  sdkReady: null as Promise<boolean> | null,
+
+  // SDK 준비를 보장하는 헬퍼: 이미 준비중이면 기존 Promise 반환
+  ensureSDKReady(timeoutMs = 15000) {
+    if (this.sdkReady) return this.sdkReady;
+    this.sdkReady = new Promise((resolve) => {
+      const start = Date.now();
+      const check = () => {
+        if ((window as any).Tmapv3 && (window as any).Tmapv3.Map) {
+          resolve(true);
+          return;
+        }
+        if (Date.now() - start > timeoutMs) {
+          console.warn('Tmap SDK 로드 타임아웃');
+          resolve(false);
+          return;
+        }
+        setTimeout(check, 300);
+      };
+      check();
+    });
+    return this.sdkReady;
+  },
+
   async ensureMap(container: HTMLElement, createFn: () => any) {
+    // SDK 준비 보장 (앱에서 느릴 수 있으니 await)
+    const sdkOk = await this.ensureSDKReady();
+    if (!sdkOk) {
+      // SDK가 준비되지 않으면 createFn 호출하지 않고 null 반환
+      console.warn('ensureMap: Tmap SDK가 준비되지 않았음');
+      return null;
+    }
+
     if (this.map && this.div) {
       if (container && this.div.parentElement !== container) {
         container.appendChild(this.div);
@@ -21,7 +54,6 @@ const MapCache = {
               if (typeof this.myMarker.setIcon === 'function') {
                 this.myMarker.setIcon(this.lastIcon);
               } else {
-                // setIcon이 없으면 재생성해서 아이콘을 보장
                 const pos = this.myMarker.getPosition ? this.myMarker.getPosition() : null;
                 this.myMarker.setMap(null);
                 this.myMarker = new (window as any).Tmapv3.Marker({

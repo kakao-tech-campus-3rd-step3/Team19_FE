@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import myLocationMarker from '@/assets/images/myLocationMarker.png';
+import MapCache from '@/lib/MapCache'; // 추가
 
 export const useMap = () => {
   // TMAP SDK 타입으로 변경
@@ -21,60 +22,45 @@ export const useMap = () => {
 
   // 내 위치 마커 생성 및 갱신 함수
   const updateMyLocation = (lat: number, lng: number, moveCenter = false) => {
-    const map = mapInstanceRef.current;
+    const map = mapInstanceRef.current || MapCache.map;
     if (!map || !window.Tmapv3) return;
 
     // 지도가 완전히 로드되었는지 확인
     if (!isMapFullyLoaded(map)) {
-      console.warn('지도가 아직 완전히 로드되지 않음, 내 위치 마커 생성 500ms 후 재시도');
       setTimeout(() => updateMyLocation(lat, lng, moveCenter), 500);
       return;
     }
 
     console.log('내 위치 마커 업데이트 시작:', { lat, lng });
 
-    const locPosition = new window.Tmapv3.LatLng(lat, lng);
-
-    // 기존 마커 제거
-    if (myMarkerRef.current) {
-      try {
-        myMarkerRef.current.setMap(null);
-      } catch (err) {
-        console.warn('기존 내 위치 마커 제거 중 오류:', err);
-      }
-    }
-
     try {
-      // 새 마커 생성
-      myMarkerRef.current = new window.Tmapv3.Marker({
-        position: locPosition,
-        iconSize: new window.Tmapv3.Size(50, 50),
-        icon: myLocationMarker,
-        map: map,
-      });
-
-      console.log('내 위치 마커 업데이트 완료');
+      // MapCache를 통해 전역적으로 하나의 마커만 유지
+      MapCache.updateMyMarkerPosition(lat, lng) ||
+        MapCache.setMyMarkerOnMap(map, lat, lng, myLocationMarker);
     } catch (err) {
-      console.error('내 위치 마커 생성 중 오류:', err);
-      // 마커 생성 실패 시 재시도
+      console.error('내 위치 마커 갱신 에러:', err);
       setTimeout(() => updateMyLocation(lat, lng, moveCenter), 1000);
       return;
     }
 
     if (moveCenter) {
-      map.setCenter(locPosition);
+      try {
+        map.setCenter(new window.Tmapv3.LatLng(lat, lng));
+      } catch {}
     }
   };
 
   // 내 위치 버튼 클릭 시: 이미 표시 중인 내 위치 마커가 있으면 그 좌표로 센터 이동만 수행
   // 마커가 없거나 초기화 전이면 1회 측위 후 보정
   const handleMyLocation = () => {
-    const map = mapInstanceRef.current;
+    const map = mapInstanceRef.current || MapCache.map;
     if (!map || !window.Tmapv3) return;
 
     try {
-      if (myMarkerRef.current && myMarkerRef.current.getPosition) {
-        const pos = myMarkerRef.current.getPosition();
+      // MapCache에 저장된 전역 myMarker 확인
+      const existingMarker = MapCache.myMarker || myMarkerRef.current;
+      if (existingMarker && typeof existingMarker.getPosition === 'function') {
+        const pos = existingMarker.getPosition();
         map.setCenter(pos);
         return;
       }
@@ -98,6 +84,14 @@ export const useMap = () => {
   // 지도 준비 완료 시
   const handleMapReady = (map: any) => {
     mapInstanceRef.current = map;
+    // MapCache와 동기화: 재사용 중이면 myMarker를 다시 map에 붙임
+    try {
+      if (MapCache.myMarker && typeof MapCache.myMarker.setMap === 'function') {
+        MapCache.myMarker.setMap(map);
+        // myMarkerRef도 동기화해서 기존 코드가 참조할 수 있게 함
+        myMarkerRef.current = MapCache.myMarker;
+      }
+    } catch {}
   };
 
   const handleInitialLocation = (lat?: number, lng?: number, moveCenter: boolean = true) => {

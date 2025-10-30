@@ -7,7 +7,6 @@ import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './components/NavBar';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import ScrollToTopButton from './components/ScrollToTopButton';
 import { useEffect } from 'react';
 import MyPage from './pages/MyPage';
 import WishListPage from './pages/WishListPage';
@@ -136,7 +135,7 @@ const App = () => {
             </Routes>
           </main>
         </div>
-        <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
+        {/* <ScrollToTopButton /> 맨 위로 가기 버튼 => 없는게 좋을 듯 합니다 */}
       </ErrorBoundary>
       <ScrollToTop />
     </>

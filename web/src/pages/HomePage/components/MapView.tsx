@@ -24,6 +24,8 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const [permissionDenied, setPermissionDenied] = useState(false);
   // 로딩/에러 상태
   const [isLoadingMap, setIsLoadingMap] = useState(true);
+  // 오버레이 페이드 아웃 상태
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const [, setMapError] = useState<string | null>(null);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
 
@@ -187,7 +189,14 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
           } catch {}
           dismissCleanupRef.current = attachMapDismissHandlers(mapInstance);
           setIsMapReady(true);
-          setIsLoadingMap(false);
+          // 페이드 아웃으로 전환
+          setIsFadingOut(true);
+          // CSS 전환 시간과 일치시킴 (아래 loadingOverlayStyle의 transition 시간과 동일하게 유지)
+          const FADE_MS = 320;
+          setTimeout(() => {
+            setIsLoadingMap(false);
+            setIsFadingOut(false);
+          }, FADE_MS);
         } else {
           setTimeout(checkMapLoaded, 100);
         }
@@ -301,8 +310,12 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
       <div ref={mapRef} css={mapCanvas} />
 
       {/* 로딩/오류 오버레이 */}
-      {isLoadingMap && (
-        <div css={loadingOverlayStyle}>
+      {(isLoadingMap || isFadingOut) && (
+        <div
+          css={loadingOverlayStyle}
+          // opacity 제어로 페이드 인/아웃. isFadingOut true면 0으로 => fade out
+          style={{ opacity: isFadingOut ? 0 : 1 }}
+        >
           <div css={loadingContentStyle}>
             <img src={loadingGif} alt="loading" css={loadingImageStyle} />
           </div>
@@ -358,6 +371,8 @@ const loadingOverlayStyle = css`
   align-items: center;
   justify-content: center;
   z-index: 1200;
+  transition: opacity 320ms ease;
+  pointer-events: none; /* 버튼 클릭을 방해하지 않도록 */
 `;
 
 const loadingContentStyle = css`

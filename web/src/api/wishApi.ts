@@ -106,8 +106,8 @@ export async function toggleWish({
 export async function checkIfShelterIsWished(shelterId: number): Promise<boolean> {
   try {
     const wishList = await getWishList();
-    // 응답이 { data: WishItem[] } 형태일 수도 있어서 보정
-    const list = Array.isArray(wishList) ? wishList : (wishList?.data ?? wishList ?? []);
+    // 응답 형태: {items: [...]} 또는 [...] 또는 {data: [...]}
+    const list = Array.isArray(wishList) ? wishList : (wishList?.items ?? wishList?.data ?? []);
     return list.some((item: any) => Number(item.shelterId) === Number(shelterId));
   } catch (err: any) {
     // 비로그인/권한없음(401, 403) => false

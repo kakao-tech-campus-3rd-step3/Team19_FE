@@ -253,43 +253,65 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
         const GAP_THRESHOLD_M = 8;
         if (gapMeters > GAP_THRESHOLD_M) {
           try {
-            // 점선 그리기: 짧은 선분들을 간격을 두고 생성
-            const segments: any[] = [];
+            // 도트(원) 마커로 연결: 일정 간격으로 작은 원형 마커를 생성
+            const dots: any[] = [];
 
             const startLat = lastLat;
             const startLng = lastLng;
             const endLat = destLat;
             const endLng = destLng;
 
-            // 단순 보간: 총 길이, segment 길이 및 간격 설정
             const totalDist = haversineMeters(startLat, startLng, endLat, endLng);
-            const segLen = 6; // 각 표시 선분 길이(m)
-            const gapLen = 6; // 각 선분 사이 간격(m)
-            const step = segLen + gapLen;
-            const approxCount = Math.floor(totalDist / step);
-            const maxCount = 200;
-            const count = Math.max(1, Math.min(maxCount, approxCount));
+            // 기존 산출값에 1.5배 적용 (maxDots로 제한)
+            const dotSpacing = 12;
+            const maxDots = 200;
+            const approxCount = Math.floor(totalDist / dotSpacing);
+            const count = Math.max(1, Math.min(maxDots, Math.floor(approxCount * 1.5)));
+
+            // 하나의 도트 아이콘을 생성(캔버스)하여 재사용
+            const createDotIcon = (diameter = 8, color = '#9CA3AF') => {
+              const dpr = window.devicePixelRatio || 1;
+              const canvas = document.createElement('canvas');
+              canvas.width = diameter * dpr;
+              canvas.height = diameter * dpr;
+              canvas.style.width = `${diameter}px`;
+              canvas.style.height = `${diameter}px`;
+              const ctx = canvas.getContext('2d')!;
+              ctx.scale(dpr, dpr);
+              // 투명 배경
+              ctx.clearRect(0, 0, diameter, diameter);
+              // 그림자(선택적)
+              // ctx.shadowColor = 'rgba(0,0,0,0.15)';
+              // ctx.shadowBlur = 2;
+              ctx.fillStyle = color;
+              ctx.beginPath();
+              ctx.arc(diameter / 2, diameter / 2, diameter / 2, 0, Math.PI * 2);
+              ctx.closePath();
+              ctx.fill();
+              return canvas.toDataURL('image/png');
+            };
+
+            const dotIconUrl = createDotIcon(8, '#9CA3AF');
 
             for (let i = 0; i <= count; i++) {
-              const tStart = (i * step) / totalDist;
-              const tEnd = Math.min((i * step + segLen) / totalDist, 1);
-              if (tStart >= 1) break;
-              // 선분 시작/끝 보간 (위경도 직선 보간; 짧은 거리에서 충분)
-              const latA = startLat + (endLat - startLat) * tStart;
-              const lngA = startLng + (endLng - startLng) * tStart;
-              const latB = startLat + (endLat - startLat) * tEnd;
-              const lngB = startLng + (endLng - startLng) * tEnd;
+              const t = (i + 0.5) / (count + 1); // 도트들을 구간 중앙에 배치
+              const lat = startLat + (endLat - startLat) * t;
+              const lng = startLng + (endLng - startLng) * t;
 
-              const segPolyline = new window.Tmapv3.Polyline({
-                path: [new window.Tmapv3.LatLng(latA, lngA), new window.Tmapv3.LatLng(latB, lngB)],
-                strokeColor: '#9CA3AF', // 점선 색상 (회색)
-                strokeWeight: 6,
-                strokeOpacity: 0.9,
-                map: map,
-              });
-              segments.push(segPolyline);
+              try {
+                const marker = new window.Tmapv3.Marker({
+                  position: new window.Tmapv3.LatLng(lat, lng),
+                  iconSize: new window.Tmapv3.Size(8, 8),
+                  icon: dotIconUrl,
+                  map: map,
+                  clickable: false,
+                });
+                dots.push(marker);
+              } catch (markerErr) {
+                console.warn('도트 마커 생성 실패:', markerErr);
+              }
             }
-            setDottedSegments(segments);
+            setDottedSegments(dots);
           } catch (err) {
             console.warn('점선 연결 생성 실패:', err);
           }

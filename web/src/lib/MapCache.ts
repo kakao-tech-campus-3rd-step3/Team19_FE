@@ -4,63 +4,123 @@ const MapCache = {
   map: null as TmapAny | null,
   div: null as HTMLElement | null,
 
-  // 새로 추가: 내 위치 마커 전역 저장
+  // 전역 내위치 마커(하나만 유지)
   myMarker: null as any | null,
+  lastIcon: null as any | null,
 
-  // container: 현재 렌더링된 wrapper element (mapRef.current)
-  // createFn: 실제로 new window.Tmapv3.Map를 호출하는 함수 (container에 마운트되어야 함)
   async ensureMap(container: HTMLElement, createFn: () => any) {
     if (this.map && this.div) {
-      // 기존 div가 다른 부모에 붙어있으면 새 부모에 옮김
       if (container && this.div.parentElement !== container) {
         container.appendChild(this.div);
       }
-      // reattach marker to the reused map
       try {
         if (this.myMarker && typeof this.myMarker.setMap === 'function') {
           this.myMarker.setMap(this.map);
+          if (this.lastIcon) {
+            try {
+              if (typeof this.myMarker.setIcon === 'function') {
+                this.myMarker.setIcon(this.lastIcon);
+              } else {
+                // setIcon이 없으면 재생성해서 아이콘을 보장
+                const pos = this.myMarker.getPosition ? this.myMarker.getPosition() : null;
+                this.myMarker.setMap(null);
+                this.myMarker = new (window as any).Tmapv3.Marker({
+                  position: pos,
+                  iconSize: new (window as any).Tmapv3.Size(50, 50),
+                  icon: this.lastIcon,
+                  map: this.map,
+                });
+              }
+            } catch {}
+          }
         }
       } catch {}
       return this.map;
     }
 
-    // 새로 생성 (createFn은 container를 직접 사용하여 Map 생성)
     const mapInstance = createFn();
-    // Tmap SDK의 Map 인스턴스에서 getDiv()를 제공하면 그 값을 저장
     const div =
       mapInstance && typeof mapInstance.getDiv === 'function' ? mapInstance.getDiv() : container;
     this.map = mapInstance;
     this.div = div instanceof HTMLElement ? div : null;
 
-    // 새로 생성한 map에 기존에 저장된 myMarker가 있으면 붙여줌
     try {
       if (this.myMarker && typeof this.myMarker.setMap === 'function') {
         this.myMarker.setMap(this.map);
+        if (this.lastIcon) {
+          try {
+            if (typeof this.myMarker.setIcon === 'function') {
+              this.myMarker.setIcon(this.lastIcon);
+            }
+          } catch {}
+        }
       }
     } catch {}
 
     return this.map;
   },
 
-  // 내 위치 마커를 전역으로 하나만 유지하도록 하는 헬퍼들
+  // myMarker를 하나만 유지하도록 재사용 로직 적용
   setMyMarkerOnMap(map: any, lat: number, lng: number, icon?: string | any) {
     try {
-      // 이전 마커 제거(있으면)
-      if (this.myMarker && typeof this.myMarker.setMap === 'function') {
+      const LatLng = (window as any).Tmapv3?.LatLng;
+      if (!LatLng) throw new Error('Tmapv3 LatLng 없음');
+
+      const pos = new LatLng(lat, lng);
+
+      // 이미 전역 마커가 있으면 재사용(위치/맵)하고, 아이콘이 제공되면 적용 시도
+      if (this.myMarker) {
         try {
-          this.myMarker.setMap(null);
-        } catch {}
+          if (typeof this.myMarker.setPosition === 'function') {
+            this.myMarker.setPosition(pos);
+          }
+          if (typeof this.myMarker.setMap === 'function') {
+            this.myMarker.setMap(map);
+          }
+
+          if (icon) {
+            if (typeof this.myMarker.setIcon === 'function') {
+              // setIcon이 있으면 적용
+              this.myMarker.setIcon(icon);
+              this.lastIcon = icon;
+              this.map = map;
+              return this.myMarker;
+            } else {
+              // setIcon이 없으면 안전하게 제거 후 재생성
+              try {
+                this.myMarker.setMap(null);
+              } catch {}
+              this.myMarker = null;
+            }
+          } else {
+            // 아이콘 미지정이면 위치/맵 갱신만으로 충분
+            this.map = map;
+            return this.myMarker;
+          }
+        } catch (err) {
+          // 재사용 실패하면 제거 후 재생성
+          try {
+            this.myMarker.setMap(null);
+          } catch {}
+          this.myMarker = null;
+        }
       }
 
-      // 새 마커 생성 및 저장
-      const marker = new (window as any).Tmapv3.Marker({
-        position: new (window as any).Tmapv3.LatLng(lat, lng),
-        iconSize: new (window as any).Tmapv3.Size(50, 50),
-        icon: icon,
+      // 새로 생성 (아이콘 포함)
+      const Marker = (window as any).Tmapv3?.Marker;
+      const Size = (window as any).Tmapv3?.Size;
+      if (!Marker) throw new Error('Tmapv3 Marker 없음');
+
+      this.myMarker = new Marker({
+        position: pos,
+        iconSize: Size ? new Size(50, 50) : undefined,
+        icon: icon ?? undefined,
         map: map,
       });
-      this.myMarker = marker;
-      return marker;
+
+      this.lastIcon = icon ?? null;
+      this.map = map;
+      return this.myMarker;
     } catch (err) {
       console.warn('setMyMarkerOnMap 실패', err);
       return null;
@@ -69,13 +129,18 @@ const MapCache = {
 
   updateMyMarkerPosition(lat: number, lng: number) {
     try {
+      const LatLng = (window as any).Tmapv3?.LatLng;
+      if (!LatLng) return false;
+      const pos = new LatLng(lat, lng);
+
       if (this.myMarker && typeof this.myMarker.setPosition === 'function') {
-        this.myMarker.setPosition(new (window as any).Tmapv3.LatLng(lat, lng));
+        this.myMarker.setPosition(pos);
         return true;
       }
-      // myMarker가 없지만 map이 있으면 생성
+
+      // myMarker가 없지만 map이 있으면 lastIcon으로 생성
       if (this.map) {
-        this.setMyMarkerOnMap(this.map, lat, lng);
+        this.setMyMarkerOnMap(this.map, lat, lng, this.lastIcon ?? undefined);
         return true;
       }
     } catch (err) {
@@ -84,34 +149,41 @@ const MapCache = {
     return false;
   },
 
-  // 언마운트 시 map 자체는 파괴하지 않고 DOM에서만 제거
+  // 마커 완전 제거(필요 시 호출)
+  clearMyMarker() {
+    try {
+      if (this.myMarker && typeof this.myMarker.setMap === 'function') {
+        this.myMarker.setMap(null);
+      }
+    } catch {}
+    this.myMarker = null;
+    this.lastIcon = null;
+  },
+
   detach() {
     try {
       if (this.div && this.div.parentElement) {
         this.div.parentElement.removeChild(this.div);
       }
-      // 마커는 map에서 분리하되 인스턴스는 유지 (재사용 목적)
       try {
         if (this.myMarker && typeof this.myMarker.setMap === 'function') {
+          // 페이지에서 분리할 때는 마커를 map에서 떼지만 인스턴스는 유지
           this.myMarker.setMap(null);
         }
       } catch {}
-    } catch (err) {
-      // 안전하게 무시
-    }
+    } catch {}
   },
 
-  // (선택) 필요 시 캐시 완전 초기화
   destroy() {
     try {
       if (this.map && typeof this.map.destroy === 'function') {
-        // Tmap 라이브러리가 destroy 메서드를 제공할 경우 호출
         this.map.destroy();
       }
     } catch {}
     this.map = null;
     this.div = null;
     this.myMarker = null;
+    this.lastIcon = null;
   },
 };
 

@@ -1,8 +1,8 @@
 import { useRef, useEffect } from 'react';
+import MapCache from '@/lib/MapCache';
 import myLocationMarker from '@/assets/images/myLocationMarker.png';
 
 export const useMap = () => {
-  // TMAP SDK 타입으로 변경
   const mapInstanceRef = useRef<any>(null);
   const myMarkerRef = useRef<any>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -19,64 +19,47 @@ export const useMap = () => {
     }
   };
 
-  // 내 위치 마커 생성 및 갱신 함수 (여기서 변경됨)
+  // 내 위치 마커 생성 및 갱신 함수 (MapCache 사용)
   const updateMyLocation = (lat: number, lng: number, moveCenter = false) => {
-    const map = mapInstanceRef.current;
+    const map = mapInstanceRef.current || MapCache.map;
     if (!map || !window.Tmapv3) return;
 
-    // 지도가 완전히 로드되었는지 확인
     if (!isMapFullyLoaded(map)) {
-      console.warn('지도가 아직 완전히 로드되지 않음, 내 위치 마커 생성 500ms 후 재시도');
       setTimeout(() => updateMyLocation(lat, lng, moveCenter), 500);
       return;
     }
 
-    console.log('내 위치 마커 업데이트 시작:', { lat, lng });
-
-    const locPosition = new window.Tmapv3.LatLng(lat, lng);
-
-    // 기존 마커 제거
-    if (myMarkerRef.current) {
-      try {
-        myMarkerRef.current.setMap(null);
-      } catch (err) {
-        console.warn('기존 내 위치 마커 제거 중 오류:', err);
-      }
-    }
-
     try {
-      // 새 마커 생성 (아이콘: myLocationMarker)
-      myMarkerRef.current = new window.Tmapv3.Marker({
-        position: locPosition,
-        iconSize: new window.Tmapv3.Size(50, 50),
-        icon: myLocationMarker,
-        map: map,
-      });
+      // 1) 위치 업데이트 시도
+      const updated = MapCache.updateMyMarkerPosition(lat, lng);
 
-      console.log('내 위치 마커 업데이트 완료');
+      // 2) 마커가 없거나 아이콘이 다르면(보장) 재생성/보정
+      // 강제 보정: 항상 myLocationMarker가 적용되도록 함
+      if (!updated || MapCache.lastIcon !== myLocationMarker) {
+        MapCache.setMyMarkerOnMap(map, lat, lng, myLocationMarker);
+      }
+
+      myMarkerRef.current = MapCache.myMarker;
     } catch (err) {
-      console.error('내 위치 마커 생성 중 오류:', err);
-      // 마커 생성 실패 시 재시도
-      setTimeout(() => updateMyLocation(lat, lng, moveCenter), 1000);
-      return;
+      console.error('내 위치 마커 갱신 에러:', err);
     }
 
     if (moveCenter) {
       try {
-        map.setCenter(locPosition);
+        map.setCenter(new window.Tmapv3.LatLng(lat, lng));
       } catch {}
     }
   };
 
-  // 내 위치 버튼 클릭 시: 이미 표시 중인 내 위치 마커가 있으면 그 좌표로 센터 이동만 수행
-  // 마커가 없거나 초기화 전이면 1회 측위 후 보정
+  // 내 위치 버튼: 전역 마커 위치로 센터 이동하거나 측위 요청
   const handleMyLocation = () => {
-    const map = mapInstanceRef.current;
+    const map = mapInstanceRef.current || MapCache.map;
     if (!map || !window.Tmapv3) return;
 
     try {
-      if (myMarkerRef.current && myMarkerRef.current.getPosition) {
-        const pos = myMarkerRef.current.getPosition();
+      const existingMarker = MapCache.myMarker || myMarkerRef.current;
+      if (existingMarker && typeof existingMarker.getPosition === 'function') {
+        const pos = existingMarker.getPosition();
         map.setCenter(pos);
         return;
       }
@@ -97,9 +80,24 @@ export const useMap = () => {
     );
   };
 
-  // 지도 준비 완료 시
+  // 지도 준비 완료 시: MapCache와 동기화 (마커가 있으면 재부착 및 아이콘 보정)
   const handleMapReady = (map: any) => {
     mapInstanceRef.current = map;
+    try {
+      // ensureMap을 통해 이미 캐시된 map과 div가 재사용되므로 여기선 마커만 재부착
+      if (MapCache.myMarker && typeof MapCache.myMarker.setMap === 'function') {
+        MapCache.myMarker.setMap(map);
+        // myLocationMarker가 lastIcon에 남아있지 않으면 보정
+        if (MapCache.lastIcon && typeof MapCache.myMarker.setIcon === 'function') {
+          try {
+            MapCache.myMarker.setIcon(MapCache.lastIcon);
+          } catch {}
+        }
+        myMarkerRef.current = MapCache.myMarker;
+      }
+    } catch (err) {
+      console.warn('handleMapReady 동기화 중 오류', err);
+    }
   };
 
   const handleInitialLocation = (lat?: number, lng?: number, moveCenter: boolean = true) => {

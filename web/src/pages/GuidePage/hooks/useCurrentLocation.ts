@@ -101,13 +101,21 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
     }
 
     try {
-      const marker = new window.Tmapv3.Marker({
+      const markerOptions: any = {
         position: new window.Tmapv3.LatLng(location.latitude, location.longitude),
         // 아이콘 이미지 사용 (번들러가 string URL 반환)
         iconSize: new window.Tmapv3.Size(50, 50),
         icon: myLocationMarker,
         map: map,
-      });
+      };
+      // 우선순위: 내위치 마커 최상위
+      markerOptions.zIndex = 3000;
+
+      const marker = new window.Tmapv3.Marker(markerOptions);
+      // SDK에 따라 setZIndex가 별도일 수 있으므로 안전하게 설정
+      try {
+        if (typeof marker.setZIndex === 'function') marker.setZIndex(3000);
+      } catch {}
 
       setCurrentLocationMarker(marker);
       setCurrentLocation(location);

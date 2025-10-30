@@ -155,6 +155,10 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
           strokeOpacity: 0.9,
           map: map,
         });
+        // 경로선 zIndex (마커보다 아래)
+        try {
+          if (typeof polyline.setZIndex === 'function') polyline.setZIndex(500);
+        } catch {}
 
         // 흰색 화살표 라인 (겹쳐서 화살표 표현)
         const arrowPolyline = new window.Tmapv3.Polyline({
@@ -165,6 +169,9 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
           direction: true,
           map: map,
         });
+        try {
+          if (typeof arrowPolyline.setZIndex === 'function') arrowPolyline.setZIndex(500);
+        } catch {}
 
         const allPolylines = [polyline, arrowPolyline];
         setRoutePolyline(allPolylines);
@@ -295,6 +302,10 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
                   map: map,
                   clickable: false,
                 });
+                // 도트(점) zIndex는 가장 아래
+                try {
+                  if (typeof marker.setZIndex === 'function') marker.setZIndex(100);
+                } catch {}
                 allDots.push(marker);
               } catch (markerErr) {
                 console.warn('도착지 도트 생성 실패:', markerErr);
@@ -333,6 +344,10 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
                   map: map,
                   clickable: false,
                 });
+                // 도트(점) zIndex는 가장 아래
+                try {
+                  if (typeof marker.setZIndex === 'function') marker.setZIndex(100);
+                } catch {}
                 allDots.push(marker);
               } catch (markerErr) {
                 console.warn('출발지 도트 생성 실패:', markerErr);

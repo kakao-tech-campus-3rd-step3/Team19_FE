@@ -6,6 +6,7 @@ import theme from '@/styles/theme';
 import { typography } from '@/styles/typography';
 import markerImage from '@/assets/images/marker.png';
 import type { LocationState, Shelter } from '../../GuidePage/types/tmap';
+import MapCache from '@/lib/MapCache'; // 추가: 전역 캐시
 
 interface Props {
   onMapReady?: (map: any) => void;
@@ -17,6 +18,7 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const shelterMarkersRef = useRef<any[]>([]); // 변경: 생성한 마커 보관
+  const dismissCleanupRef = useRef<() => void | null>(null); // 추가: 이벤트 cleanup
   const [isMapReady, setIsMapReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
@@ -53,44 +55,6 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
     } catch (err) {
       console.warn('지도 상태 확인 중 오류:', err);
       return false;
-    }
-  };
-
-  // 지도 초기화 함수
-  const initializeMap = async (location: LocationState) => {
-    if (!mapRef.current) return;
-
-    try {
-      const center = new window.Tmapv3.LatLng(location.latitude, location.longitude);
-
-      const mapInstance = new window.Tmapv3.Map(mapRef.current, {
-        center: center,
-        width: '100%',
-        height: '100%',
-        zoom: 15, // TODO: 반응형 줌 - 인접 쉼터(예: 3개) 좌표를 bounds로 계산해 모두 화면에 보이도록 fitBounds 적용. 사용자의 현재 위치도 포함해 margin(상하좌우) 고려하여 자동 줌/센터 설정할 것.
-        zoomControl: true,
-        scrollwheel: true,
-      });
-
-      // 지도 로드 완료 대기
-      const checkMapLoaded = () => {
-        if (isMapFullyLoaded(mapInstance)) {
-          mapInstanceRef.current = mapInstance;
-          if (onMapReady) onMapReady(mapInstance);
-          addShelterMarkers(mapInstance);
-          if (onUpdateMyLocation) {
-            onUpdateMyLocation(location.latitude, location.longitude, true);
-          }
-          attachMapDismissHandlers(mapInstance);
-          setIsMapReady(true);
-        } else {
-          setTimeout(checkMapLoaded, 100);
-        }
-      };
-
-      setTimeout(checkMapLoaded, 500);
-    } catch (err) {
-      console.error('지도 초기화 실패:', err);
     }
   };
 
@@ -143,10 +107,9 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
   };
 
   // 지도 클릭/터치 시 정보창 닫기 핸들러 부착
+  // 이제 cleanup 함수를 반환하도록 변경
   const attachMapDismissHandlers = (map: any) => {
-    if (!map) return;
-
-    // DOM 레벨 보강: getDiv()에 네이티브 이벤트 바인딩 (가장 안정적)
+    if (!map) return () => {};
     try {
       const container: HTMLElement | null = map.getDiv ? map.getDiv() : null;
       if (container) {
@@ -156,8 +119,71 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
         container.addEventListener('click', domDismiss, { passive: true });
         container.addEventListener('touchend', domDismiss, { passive: true });
         container.addEventListener('mousedown', domDismiss, { passive: true });
+
+        // cleanup
+        return () => {
+          try {
+            container.removeEventListener('click', domDismiss);
+            container.removeEventListener('touchend', domDismiss);
+            container.removeEventListener('mousedown', domDismiss);
+          } catch {}
+        };
       }
     } catch {}
+    return () => {};
+  };
+
+  // 지도 초기화 함수 (MapCache 사용하여 재사용)
+  const initializeMap = async (location: LocationState) => {
+    if (!mapRef.current) return;
+
+    try {
+      const createFn = () =>
+        new window.Tmapv3.Map(mapRef.current as HTMLElement, {
+          center: new window.Tmapv3.LatLng(location.latitude, location.longitude),
+          width: '100%',
+          height: '100%',
+          zoom: 15,
+          zoomControl: true,
+          scrollwheel: true,
+        });
+
+      const mapInstance = await MapCache.ensureMap(mapRef.current, createFn);
+
+      // 재사용 시 중심 및 줌 보정
+      try {
+        if (isMapFullyLoaded(mapInstance)) {
+          mapInstance.setCenter(new window.Tmapv3.LatLng(location.latitude, location.longitude));
+          mapInstance.setZoom && mapInstance.setZoom(15);
+        }
+      } catch {}
+
+      // mapInstance가 완전히 로드될 때까지 대기 후 초기 처리 실행
+      const checkMapLoaded = () => {
+        if (isMapFullyLoaded(mapInstance)) {
+          mapInstanceRef.current = mapInstance;
+          if (onMapReady) onMapReady(mapInstance);
+          addShelterMarkers(mapInstance);
+          if (onUpdateMyLocation) {
+            onUpdateMyLocation(location.latitude, location.longitude, true);
+          }
+          // 기존에 붙어있던 핸들러 정리 후 재부착
+          try {
+            if (dismissCleanupRef.current) {
+              dismissCleanupRef.current();
+            }
+          } catch {}
+          dismissCleanupRef.current = attachMapDismissHandlers(mapInstance);
+          setIsMapReady(true);
+        } else {
+          setTimeout(checkMapLoaded, 100);
+        }
+      };
+
+      setTimeout(checkMapLoaded, 300);
+    } catch (err) {
+      console.error('지도 초기화 실패:', err);
+    }
   };
 
   useEffect(() => {
@@ -200,10 +226,23 @@ const MapView = ({ onMapReady, onUpdateMyLocation, shelters = [] }: Props) => {
 
     return () => {
       isMounted = false;
-      // 언마운트 시 마커 제거
+      // 언마운트 시 마커 DOM만 제거하고 map 인스턴스는 캐시에 유지 (재사용 목적)
       try {
         shelterMarkersRef.current.forEach((m) => m.setMap(null));
         shelterMarkersRef.current = [];
+      } catch {}
+
+      // 이벤트 핸들러 정리
+      try {
+        if (dismissCleanupRef.current) {
+          dismissCleanupRef.current();
+          dismissCleanupRef.current = null;
+        }
+      } catch {}
+
+      // map DOM을 페이지 DOM에서 분리하되 인스턴스는 유지
+      try {
+        MapCache.detach();
       } catch {}
     };
   }, []);

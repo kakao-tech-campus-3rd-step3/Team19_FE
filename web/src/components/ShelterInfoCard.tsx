@@ -67,87 +67,99 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
 
   const nameRef = useRef<HTMLParagraphElement | null>(null);
 
-  // 1줄로 만들기: 텍스트가 1줄을 초과하면 폰트 크기를 줄여 1줄에 들어가도록 조정
+  // 텍스트 축소: 부모의 padding/실폭과 좌우 여백을 고려해 가운데 기준으로 scale 적용 (오버플로우 방지)
   useLayoutEffect(() => {
     const el = nameRef.current;
     if (!el) return;
     const original = shelter.name || '';
-    el.textContent = original;
 
-    const cs = window.getComputedStyle(el);
-    // 현재 폰트 사이즈/라인하이트
-    const originalFontSize = parseFloat(cs.fontSize || '16');
-    let lineHeight = parseFloat(cs.lineHeight);
-    if (isNaN(lineHeight)) lineHeight = originalFontSize * 1.2;
+    // 초기 스타일. 가운데 기준 축소를 위해 transform-origin center로 설정
+    el.style.visibility = 'hidden';
+    el.style.whiteSpace = 'nowrap';
+    el.style.display = 'inline-block';
+    el.style.transformOrigin = 'center center';
+    el.style.willChange = 'transform';
+    el.style.transition = 'transform 80ms linear';
+    // 안전하게 오버플로우 숨김
+    el.style.overflow = 'hidden';
+    el.style.textOverflow = 'ellipsis';
 
-    // 단일 라인 높이로 판단 (한 줄 허용)
-    const singleLineHeight = lineHeight;
-
-    // 이미 한 줄이면 아무 작업도 안 함
-    if (el.scrollHeight <= singleLineHeight + 1) {
-      // ensure inline style removed if previously set
-      el.style.fontSize = '';
-      return;
-    }
-
-    // 최소 폰트 크기 (px) — 너무 작아지지 않도록 설정
-    const MIN_FONT_PX = 12;
-    const maxFont = originalFontSize;
-    const minFont = Math.max(MIN_FONT_PX, Math.floor(originalFontSize * 0.7));
-
-    // 이진 탐색으로 한 줄에 들어가는 최대 폰트 크기 찾기
-    let low = minFont;
-    let high = maxFont;
-    let best = minFont;
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      el.style.fontSize = `${mid}px`;
-      // force reflow to get updated scrollHeight
-      const fitsOneLine = el.scrollHeight <= singleLineHeight + 1;
-      if (fitsOneLine) {
-        best = mid;
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
-    }
-
-    // 적용
-    el.style.fontSize = `${best}px`;
-
-    // 창 크기 변경 시 및 폰트 상속 변경 시 재계산
-    const onResize = () => {
+    const compute = () => {
       el.textContent = original;
-      el.style.fontSize = '';
-      const cs2 = window.getComputedStyle(el);
-      const fontSize2 = parseFloat(cs2.fontSize || `${originalFontSize}`);
-      let lh2 = parseFloat(cs2.lineHeight);
-      if (isNaN(lh2)) lh2 = fontSize2 * 1.2;
-      if (el.scrollHeight <= lh2 + 1) return;
-      // 빠르게 동일 알고리즘 재적용
-      let l = minFont;
-      let h = Math.max(minFont, fontSize2);
-      let b = minFont;
-      while (l <= h) {
-        const m = Math.floor((l + h) / 2);
-        el.style.fontSize = `${m}px`;
-        if (el.scrollHeight <= lh2 + 1) {
-          b = m;
-          l = m + 1;
-        } else {
-          h = m - 1;
-        }
+      el.style.transform = '';
+
+      // 부모 실제 사용가능 너비 계산: parent.width - paddingLeft - paddingRight - safetyMargin
+      const parent = el.parentElement;
+      const parentRect = parent ? parent.getBoundingClientRect() : el.getBoundingClientRect();
+      const parentStyle = parent
+        ? window.getComputedStyle(parent)
+        : ({ paddingLeft: '0px', paddingRight: '0px' } as any);
+      const padLeft = parseFloat(parentStyle.paddingLeft || '0');
+      const padRight = parseFloat(parentStyle.paddingRight || '0');
+      // 카드 내부에 thumbnail/infoText 등으로 인해 실제 보이는 중앙폭이 달라질 수 있으므로 안전마진 추가
+      const safety = 8; // px
+      const available = Math.max(20, parentRect.width - padLeft - padRight - safety);
+
+      // 텍스트 실제 폭(스크롤 폭) 측정
+      const textWidth = el.scrollWidth;
+      if (textWidth <= available) {
+        el.style.transform = '';
+        el.style.maxWidth = `${available}px`;
+        el.style.visibility = '';
+        return;
       }
-      el.style.fontSize = `${b}px`;
+
+      // scale 계산 및 최소 scale 제한
+      const MIN_SCALE = 0.72;
+      const scale = Math.max(MIN_SCALE, available / textWidth);
+      el.style.transform = `scale(${scale})`;
+      // 축소 후에도 좌우 여백 동일하게 보이도록 maxWidth 설정
+      el.style.maxWidth = `${available}px`;
+      el.style.visibility = '';
     };
 
-    window.addEventListener('resize', onResize);
+    // 폰트 로드/렌더 안정화 후 계산
+    const fontsReady =
+      (document as any).fonts && (document as any).fonts.ready
+        ? (document as any).fonts.ready
+        : Promise.resolve();
+    let rafId = 0;
+    fontsReady.then(() => {
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => compute());
+      });
+    });
+
+    // 부모/자식 크기 변경에 대응 (디바운스 via RAF)
+    let ro: ResizeObserver | null = null;
+    try {
+      ro = new ResizeObserver(() => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => compute());
+      });
+      ro.observe(el);
+      if (el.parentElement) ro.observe(el.parentElement);
+    } catch {
+      const onResize = () => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => compute());
+      };
+      window.addEventListener('resize', onResize);
+      return () => {
+        window.removeEventListener('resize', onResize);
+        cancelAnimationFrame(rafId);
+      };
+    }
+
     return () => {
-      window.removeEventListener('resize', onResize);
-      // cleanup: restore inline font-size only if we changed it
-      // (keep it if user still needs the reduced size)
+      cancelAnimationFrame(rafId);
+      if (ro) {
+        try {
+          ro.disconnect();
+        } catch {}
+      }
     };
-  }, [shelter.name, variant]); // variant가 바뀌면 재계산 해서 home/ find 모두 동작하도록 함
+  }, [shelter.name, variant]); // home/find 모두 적용
 
   return (
     <div css={infoCardStyle({ variant })}>
@@ -283,18 +295,20 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
   width: 100%;
   text-align: center;
   margin-top: 8px;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
   /* variant에 따라 달라지는 스타일 */
   ${variant === 'home'
     ? css`
         margin-bottom: 8px;
-
         ${theme.typography.cardh1};
         color: ${theme.colors.button.blue};
       `
     : css`
         margin-bottom: 8px;
-
         ${theme.typography.cardf1};
         color: ${theme.colors.button.blue};
       `}

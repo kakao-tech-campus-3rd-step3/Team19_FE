@@ -95,7 +95,7 @@ const App = () => {
       />
       {shouldShowNavBar && <NavBar />}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <div css={appContainerStyle}>
+        <div css={appContainerStyle} data-scroll-container>
           <main>
             <Routes>
               {/* path="/": 기본 주소일 때 HomePage를 보여줌 */}
@@ -133,8 +133,8 @@ const App = () => {
               />
             </Routes>
           </main>
-          <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
         </div>
+        <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
       </ErrorBoundary>
       <ScrollToTop />
     </>

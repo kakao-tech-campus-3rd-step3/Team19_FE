@@ -77,7 +77,4 @@ const ttsModalBtnStyle = css`
   padding: 10px 28px;
   cursor: pointer;
   transition: background 0.18s;
-  &:hover {
-    background: ${theme.colors.button.red};
-  }
 `;

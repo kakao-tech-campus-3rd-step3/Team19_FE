@@ -20,6 +20,42 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
   const [routeDataState, setRouteDataState] = useState<RouteData | null>(null);
   const [guidanceSteps, setGuidanceSteps] = useState<string[]>([]);
   const [guidancePoints, setGuidancePoints] = useState<GuidancePoint[]>([]);
+  const [dottedSegments, setDottedSegments] = useState<any[] | null>(null);
+
+  // Haversine distance (m)
+  const haversineMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const toRad = (v: number) => (v * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // 기존 폴리라인/점선 제거 헬퍼
+  const clearExistingRoute = () => {
+    if (routePolyline) {
+      try {
+        if (Array.isArray(routePolyline)) {
+          routePolyline.forEach((p) => p && p.setMap && p.setMap(null));
+        } else if (routePolyline && routePolyline.setMap) {
+          routePolyline.setMap(null);
+        }
+      } catch (err) {
+        console.warn('기존 경로 제거 중 오류:', err);
+      }
+      setRoutePolyline(null);
+    }
+    if (dottedSegments && Array.isArray(dottedSegments)) {
+      try {
+        dottedSegments.forEach((seg) => seg && seg.setMap && seg.setMap(null));
+      } catch {}
+      setDottedSegments(null);
+    }
+  };
 
   // 보행자 경로 계산 API 호출
   const calculatePedestrianRoute = async (
@@ -62,45 +98,43 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
     return data;
   };
 
-  // 경로를 지도에 표시 (지도 로드 상태 확인 포함)
-  const displayRouteOnMap = (routeData: RouteData) => {
+  // 지도상의 Tmap LatLng 객체에서 위/경도 추출 (호환성 확보)
+  const extractLatLng = (pt: any) => {
+    if (!pt) return { lat: 0, lng: 0 };
+    if (typeof pt.getLat === 'function' && typeof pt.getLng === 'function') {
+      return { lat: pt.getLat(), lng: pt.getLng() };
+    }
+    if ('_lat' in pt && '_lng' in pt) return { lat: pt._lat, lng: pt._lng };
+    if ('lat' in pt && 'lng' in pt) return { lat: pt.lat, lng: pt.lng };
+    if ('latitude' in pt && 'longitude' in pt) return { lat: pt.latitude, lng: pt.longitude };
+    return { lat: 0, lng: 0 };
+  };
+
+  // 경로를 지도에 표시 (경로 좌표 배열 반환)
+  const displayRouteOnMap = (routeData: RouteData): any[] => {
     if (!map || !window.Tmapv3) {
       console.warn('지도 또는 TMAP SDK가 준비되지 않음');
-      return;
+      return [];
     }
 
     // 지도가 완전히 로드되었는지 확인
     if (!isMapFullyLoaded(map)) {
       console.warn('지도가 아직 완전히 로드되지 않음, 1초 후 재시도');
       setTimeout(() => displayRouteOnMap(routeData), 1000);
-      return;
+      return [];
     }
 
     console.log('경로 표시 시작');
 
-    // 기존 경로 라인 제거
-    if (routePolyline) {
-      try {
-        if (Array.isArray(routePolyline)) {
-          routePolyline.forEach((polyline) => {
-            if (polyline && polyline.setMap) {
-              polyline.setMap(null);
-            }
-          });
-        } else if (routePolyline && routePolyline.setMap) {
-          routePolyline.setMap(null);
-        }
-      } catch (err) {
-        console.warn('기존 경로 제거 중 오류:', err);
-      }
-    }
+    // 기존 경로 및 점선 제거
+    clearExistingRoute();
 
     // 경로 좌표 배열 생성
     const pathCoordinates: any[] = [];
 
     // GeoJSON features에서 LineString만 추출
-    routeData.features.forEach((feature) => {
-      if (feature.geometry.type === 'LineString') {
+    routeData.features.forEach((feature: any) => {
+      if (feature.geometry && feature.geometry.type === 'LineString') {
         const coordinates = feature.geometry.coordinates as number[][];
         coordinates.forEach((coord) => {
           // [경도, 위도] 형태를 Tmapv3.LatLng로 변환
@@ -122,33 +156,21 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
           map: map,
         });
 
-        // 검은색 화살표 (파란선 위에 겹쳐서)
+        // 흰색 화살표 라인 (겹쳐서 화살표 표현)
         const arrowPolyline = new window.Tmapv3.Polyline({
           path: pathCoordinates,
-          strokeColor: '#FFFFFF', // 흰색
+          strokeColor: '#FFFFFF',
           strokeWeight: 9,
           strokeOpacity: 1,
           direction: true,
           map: map,
         });
 
-        // // 후보. 파란선에 검은색 화살표
-        // const polyline = new window.Tmapv3.Polyline({
-        //   path: pathCoordinates,
-        //   strokeColor: "#2B70F9", // 파란색
-        //   strokeWeight: 10,
-        //   strokeOpacity: 0.9,
-        //   direction: true,
-        //   map: map
-        // });
-
-        // 두 polyline을 배열로 관리
         const allPolylines = [polyline, arrowPolyline];
         setRoutePolyline(allPolylines);
         console.log('파란색 경로 + 흰색 화살표 표시 완료');
       } catch (err: any) {
         console.error('Polyline 생성 중 오류:', err);
-        // 스타일이 로드되지 않은 경우 재시도
         const errorMessage = err?.message || err?.toString() || '';
         if (errorMessage.includes('No style loaded')) {
           console.log('지도 스타일 로드 대기 중, 2초 후 재시도');
@@ -158,6 +180,8 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
     } else {
       console.warn('경로 좌표를 찾을 수 없습니다.');
     }
+
+    return pathCoordinates;
   };
 
   // 경로 계산 및 표시 메인 함수
@@ -182,8 +206,8 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
       try {
         const steps: string[] = [];
         const points: GuidancePoint[] = [];
-        routeResult.features.forEach((feature) => {
-          if (feature.geometry.type === 'Point') {
+        routeResult.features.forEach((feature: any) => {
+          if (feature.geometry && feature.geometry.type === 'Point') {
             const desc = feature.properties?.description?.toString()?.trim();
             const raw = feature.geometry.coordinates;
             if (desc) steps.push(desc);
@@ -213,8 +237,64 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
         setGuidancePoints([]);
       }
 
-      // 지도에 경로 표시
-      displayRouteOnMap(routeResult);
+      // 지도에 경로 표시 (pathCoordinates 반환)
+      const pathCoordinates = displayRouteOnMap(routeResult);
+
+      // 도착지 마커와 경로 끝점이 연결되지 않은 경우 점선(대체 연결선) 추가
+      if (pathCoordinates && pathCoordinates.length > 0) {
+        const lastPoint = pathCoordinates[pathCoordinates.length - 1];
+        const { lat: lastLat, lng: lastLng } = extractLatLng(lastPoint);
+        const destLat = destination.latitude;
+        const destLng = destination.longitude;
+
+        const gapMeters = haversineMeters(lastLat, lastLng, destLat, destLng);
+
+        // 허용 임계치: 8미터 (필요시 조정)
+        const GAP_THRESHOLD_M = 8;
+        if (gapMeters > GAP_THRESHOLD_M) {
+          try {
+            // 점선 그리기: 짧은 선분들을 간격을 두고 생성
+            const segments: any[] = [];
+
+            const startLat = lastLat;
+            const startLng = lastLng;
+            const endLat = destLat;
+            const endLng = destLng;
+
+            // 단순 보간: 총 길이, segment 길이 및 간격 설정
+            const totalDist = haversineMeters(startLat, startLng, endLat, endLng);
+            const segLen = 6; // 각 표시 선분 길이(m)
+            const gapLen = 6; // 각 선분 사이 간격(m)
+            const step = segLen + gapLen;
+            const approxCount = Math.floor(totalDist / step);
+            const maxCount = 200;
+            const count = Math.max(1, Math.min(maxCount, approxCount));
+
+            for (let i = 0; i <= count; i++) {
+              const tStart = (i * step) / totalDist;
+              const tEnd = Math.min((i * step + segLen) / totalDist, 1);
+              if (tStart >= 1) break;
+              // 선분 시작/끝 보간 (위경도 직선 보간; 짧은 거리에서 충분)
+              const latA = startLat + (endLat - startLat) * tStart;
+              const lngA = startLng + (endLng - startLng) * tStart;
+              const latB = startLat + (endLat - startLat) * tEnd;
+              const lngB = startLng + (endLng - startLng) * tEnd;
+
+              const segPolyline = new window.Tmapv3.Polyline({
+                path: [new window.Tmapv3.LatLng(latA, lngA), new window.Tmapv3.LatLng(latB, lngB)],
+                strokeColor: '#9CA3AF', // 점선 색상 (회색)
+                strokeWeight: 6,
+                strokeOpacity: 0.9,
+                map: map,
+              });
+              segments.push(segPolyline);
+            }
+            setDottedSegments(segments);
+          } catch (err) {
+            console.warn('점선 연결 생성 실패:', err);
+          }
+        }
+      }
 
       console.log('경로 계산 및 표시 완료');
     } catch (err: any) {

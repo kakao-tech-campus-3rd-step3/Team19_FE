@@ -7,14 +7,18 @@ import emptyShelterImage from '@/assets/images/empty-shelter2.gif';
 import { useShelters } from './hooks/useShelters';
 import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';
+import { checkLoginStatus } from '@/api/userApi';
+import { useNavigate } from 'react-router-dom';
 
 const FindSheltersPage = () => {
   const [hasScroll, setHasScroll] = useState(false);
+  const navigate = useNavigate();
   const {
     shelters, // 전체 목록 (빈 상태 판단용)
     visibleShelters, // 화면에 실제로 렌더할 항목
     favoriteIds,
     toastMessage,
+    setToastMessage,
     isLoading,
     error,
     isFetchingMore,
@@ -24,14 +28,26 @@ const FindSheltersPage = () => {
 
   // API 호출(toggleWish) -> 성공 시 훅의 로컬 토글 호출
   const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {
+    // ==== 로그인 검증 추가 ====
+    const isLoggedIn = await checkLoginStatus();
+    if (!isLoggedIn) {
+      setToastMessage && setToastMessage('로그인이 필요합니다.');
+      setTimeout(() => navigate('/auth'), 1000);
+      return;
+    }
     try {
       await toggleWish({ shelterId, isFavorite });
       // 로컬 UI 즉시 반영
       handleToggleFavorite(shelterId);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.status === 403 || err?.status === 401) {
+        setToastMessage && setToastMessage('로그인이 필요합니다.');
+        setTimeout(() => navigate('/auth'), 1000);
+        return;
+      }
       console.error('[FindSheltersPage] toggleWish error', err);
-      // 실패 시 사용자 알림
-      // ToastMessage는 상단에서 toastMessage로 보여주므로 set을 원하면 훅에 setToastMessage 추가 사용
+      // 기타 에러 사용자 알림
+      setToastMessage && setToastMessage('요청이 실패했습니다.');
     }
   };
 

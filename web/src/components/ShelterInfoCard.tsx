@@ -78,8 +78,9 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     el.style.whiteSpace = 'nowrap';
     el.style.display = 'inline-block';
     el.style.transformOrigin = 'center center';
-    el.style.willChange = 'transform';
-    el.style.transition = 'transform 80ms linear';
+    // 트랜지션 즉시 적용 (애니메이션 없음)
+    el.style.transition = 'none';
+
     // 안전하게 오버플로우 숨김
     el.style.overflow = 'hidden';
     el.style.textOverflow = 'ellipsis';
@@ -267,30 +268,6 @@ const cardTop = css`
   align-items: center;
 `;
 
-const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
-  ${variant === 'home'
-    ? css`
-        width: 30%;
-        height: 90%;
-        object-fit: cover;
-        border-radius: 8px;
-        margin-right: 12px;
-      `
-    : css`
-        width: 12vh;
-        height: 12vh;
-        object-fit: cover;
-        border-radius: 8px;
-        margin-right: 4px;
-      `}
-`;
-
-const infoText = css`
-  flex: 1;
-  text-align: left;
-  margin-bottom: 4px;
-`;
-
 const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
   width: 100%;
   text-align: center;
@@ -299,19 +276,47 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  transition: none;
 
   /* variant에 따라 달라지는 스타일 */
   ${variant === 'home'
     ? css`
         margin-bottom: 8px;
         ${theme.typography.cardh1};
-        color: ${theme.colors.button.blue};
+        color: ${theme.colors.text.blue};
       `
     : css`
         margin-bottom: 8px;
         ${theme.typography.cardf1};
-        color: ${theme.colors.button.blue};
+        color: ${theme.colors.text.blue};
       `}
+`;
+
+const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
+  ${variant === 'home'
+    ? css`
+        width: 30%;
+        height: 90%;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 12px;
+        transition: none;
+      `
+    : css`
+        width: 12vh;
+        height: 12vh;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 4px;
+        transition: none;
+      `}
+`;
+
+const infoText = css`
+  flex: 1;
+  text-align: left;
+  margin-bottom: 4px;
+  transition: none;
 `;
 
 const infoParagraph = ({ variant }: { variant: 'home' | 'find' }) => css`
@@ -350,6 +355,7 @@ const mainButton = ({ variant }: { variant: 'home' | 'find' }) => css`
   color: white;
   border: none;
   border-radius: 8px;
+  transition: none;
 
   cursor: pointer;
   ${variant === 'home'
@@ -373,6 +379,7 @@ const favoriteButton = css`
   border: none;
   padding: 6px;
   border-radius: 8px;
+  transition: none;
 
   cursor: pointer;
 `;

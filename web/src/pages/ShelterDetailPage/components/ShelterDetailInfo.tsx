@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
+import { useRef, useLayoutEffect } from 'react';
 import theme from '@/styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
@@ -49,6 +50,89 @@ const ShelterDetailInfo = ({
 }: ShelterDetailInfoProps) => {
   const navigate = useNavigate(); // 추가
 
+  // 제목 DOM 레퍼런스 (한 줄로 맞추기용)
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const original = shelter.name || '';
+
+    // 축소(스케일)로 한 줄에 맞추기
+    el.style.visibility = 'hidden';
+    el.style.whiteSpace = 'nowrap';
+    el.style.display = 'inline-block';
+    el.style.transformOrigin = 'center center';
+    el.style.willChange = 'transform';
+    // 즉시 적용: transition 제거하여 축소 애니메이션이 보이지 않도록 함
+    el.style.transition = 'none';
+    el.style.overflow = 'visible';
+
+    const compute = () => {
+      el.textContent = original;
+      el.style.transform = '';
+      const parent = el.parentElement;
+      const parentRect = parent ? parent.getBoundingClientRect() : el.getBoundingClientRect();
+      const pStyle = parent ? window.getComputedStyle(parent) : ({} as any);
+      const padLeft = parseFloat(pStyle.paddingLeft || '0');
+      const padRight = parseFloat(pStyle.paddingRight || '0');
+      const safety = 8;
+      const available = Math.max(40, parentRect.width - padLeft - padRight - safety);
+
+      const textWidth = el.scrollWidth;
+      if (textWidth <= available) {
+        el.style.transform = '';
+        el.style.visibility = '';
+        return;
+      }
+
+      const MIN_SCALE = 0.72;
+      const scale = Math.max(MIN_SCALE, available / textWidth);
+      el.style.transform = `scale(${scale})`;
+      el.style.visibility = '';
+    };
+
+    const fontsReady =
+      (document as any).fonts && (document as any).fonts.ready
+        ? (document as any).fonts.ready
+        : Promise.resolve();
+    let rafId = 0;
+    fontsReady.then(() => {
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => compute());
+      });
+    });
+
+    let ro: ResizeObserver | null = null;
+    try {
+      ro = new ResizeObserver(() => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => compute());
+      });
+      ro.observe(el);
+      if (el.parentElement) ro.observe(el.parentElement);
+    } catch {
+      const onResize = () => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => compute());
+      };
+      window.addEventListener('resize', onResize);
+      return () => {
+        window.removeEventListener('resize', onResize);
+        cancelAnimationFrame(rafId);
+      };
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (ro) {
+        try {
+          ro.disconnect();
+        } catch {}
+      }
+    };
+  }, [shelter.name]);
+
   const handleStartGuide = () => {
     console.log('안내 시작 버튼 클릭됨'); // 디버그
     try {
@@ -64,7 +148,23 @@ const ShelterDetailInfo = ({
 
   return (
     <>
-      <h2 css={title}>{shelter.name}</h2>
+      {/** '..' 가 이미 들어있으면 '..'을 기준으로 줄바꿈하여 표시, 그렇지 않으면 titleRef에 의해 스케일로 한줄 처리 */}
+      {shelter.name.includes('..') ? (
+        (() => {
+          const parts = shelter.name.split('..').map((s) => s.trim());
+          return (
+            <h2 css={title} ref={titleRef}>
+              <span>{parts[0]}</span>
+              {parts[1] ? <br /> : null}
+              {parts[1] ? <span>{parts[1]}</span> : null}
+            </h2>
+          );
+        })()
+      ) : (
+        <h2 css={title} ref={titleRef}>
+          {shelter.name}
+        </h2>
+      )}
       <div css={topSection}>
         <img
           src={shelter.photoUrl || NoImage}
@@ -198,14 +298,25 @@ const distanceStyle = css`
   ${theme.typography.detail2};
   margin-top: 4px;
   margin-bottom: 8px;
+  display: inline-block;
+  white-space: nowrap; /* 한 줄로 고정 */
+  overflow: hidden; /* 넘치면 숨김 */
+  text-overflow: ellipsis; /* 넘칠 때 말줄임 */
+  max-width: 100%;
+  box-sizing: border-box;
 `;
 
+// 기존 ratingRow 대체
 const ratingRow = css`
   display: flex;
   align-items: center;
   gap: 6px;
   ${theme.typography.detail2};
   margin-bottom: 20px;
+  white-space: nowrap; /* 한 줄로 고정 */
+  overflow: hidden; /* 넘치면 숨김 */
+  text-overflow: ellipsis; /* 넘칠 때 말줄임 */
+  min-width: 0; /* flex 축소 허용 (자식에 overflow 동작시키기 위해 필요) */
 `;
 
 const ratingNumber = css`

@@ -21,6 +21,6 @@ export const colors = {
     gray100: '#d5d3d3ff', // 별점 빈 별 색상
     gray50: '#e0dedeff', // 리뷰 카드 배경 색상
     yellow: ' #ffdc17ff', // 별점 채워진 별 색상
-    blue: '#337afdff', // 쉼터 이름 색상
+    blue: '#2a67daff', // 쉼터 이름 색상
   },
 };

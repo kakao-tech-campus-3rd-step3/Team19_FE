@@ -4,6 +4,7 @@ import theme from '@/styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import { formatOperatingHours } from '@/utils/date';
+import { useNavigate } from 'react-router-dom'; // 추가
 
 // ShelterDetailPage에서 내려주는 데이터 타입
 interface ShelterDetail {
@@ -46,6 +47,21 @@ const ShelterDetailInfo = ({
   onGuideStart,
   handleImageError,
 }: ShelterDetailInfoProps) => {
+  const navigate = useNavigate(); // 추가
+
+  const handleStartGuide = () => {
+    console.log('안내 시작 버튼 클릭됨'); // 디버그
+    try {
+      // 컴포넌트 외부에서 처리할 로직이 있으면 호출
+      onGuideStart && onGuideStart();
+    } catch (err) {
+      console.warn('onGuideStart 호출 중 오류', err);
+    }
+    // 항상 라우팅도 수행하여 FindSheltersPage와 동일 동작 보장
+    // shelterId를 쿼리로 전달 (필요에 따라 state로 변경 가능)
+    navigate(`/guide?shelterId=${shelter.shelterId}`);
+  };
+
   return (
     <>
       <h2 css={title}>{shelter.name}</h2>
@@ -84,14 +100,12 @@ const ShelterDetailInfo = ({
       <div css={bottomSection}>
         <button
           css={mainButton}
-          onClick={onGuideStart} // props로 받은 핸들러 사용
+          type="button"
+          onClick={handleStartGuide} // 변경: 직접 네비게이트 보장
         >
           안내 시작
         </button>
-        <button
-          css={favoriteButton}
-          onClick={onToggleFavorite} // props로 받은 핸들러 사용
-        >
+        <button css={favoriteButton} onClick={onToggleFavorite}>
           {isFavorite ? (
             <FaHeart size={36} color={theme.colors.button.red} />
           ) : (

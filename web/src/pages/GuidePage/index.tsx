@@ -13,6 +13,8 @@ import VoiceGuideModal from './components/VoiceGuideModal';
 import NavigationExitModal from './components/NavigationExitModal';
 import NavBar from '@/components/NavBar';
 import theme from '@/styles/theme';
+import arrivalMarker from '@/assets/images/arrival-marker.png'; // 추가: 도착지 이미지
+import startMarkerImg from '@/assets/images/start-marker.png'; // 추가: 출발지 이미지
 
 const GuidePage = () => {
   const location = useLocation();
@@ -50,6 +52,8 @@ const GuidePage = () => {
   // 타겟 대피소 정보 상태
   const [targetShelter, setTargetShelter] = useState<Shelter | null>(null);
   const [shelterMarker, setShelterMarker] = useState<any>(null);
+  const startMarkerRef = useRef<any | null>(null); // 출발지 마커 참조
+  const startMarkerInitializedRef = useRef<boolean>(false); // 최초 생성 여부
   const hasInitialRouteCalculatedRef = useRef<boolean>(false);
 
   // 음성 안내 활성화 여부
@@ -141,8 +145,8 @@ const GuidePage = () => {
     try {
       const marker = new window.Tmapv3.Marker({
         position: new window.Tmapv3.LatLng(shelter.latitude, shelter.longitude),
-        iconSize: new window.Tmapv3.Size(40, 53.33),
-        icon: window.Tmapv3.asset.Icon.get('arrival'),
+        iconSize: new window.Tmapv3.Size(60, 60), // 필요 시 조정
+        icon: arrivalMarker, // 번들된 이미지(URL)를 아이콘으로 사용
         map: map,
       });
 
@@ -150,6 +154,45 @@ const GuidePage = () => {
       console.log('대피소 마커 업데이트 완료');
     } catch (err) {
       console.error('대피소 마커 생성 중 오류:', err);
+    }
+  };
+
+  // 출발지(시작 위치) 마커 생성/갱신 (start-marker.png 사용)
+  const updateStartMarker = (loc: LocationState) => {
+    if (!map || !window.Tmapv3) return;
+
+    if (!isMapFullyLoaded(map)) {
+      console.warn('지도가 아직 완전히 로드되지 않음, 출발지 마커 생성 500ms 후 재시도');
+      setTimeout(() => updateStartMarker(loc), 500);
+      return;
+    }
+
+    try {
+      const pos = new window.Tmapv3.LatLng(loc.latitude, loc.longitude);
+
+      // 이미 최초 출발지 마커가 생성되어 있으면 위치를 변경하지 않고,
+      // map이 재마운트 되었을 경우만 재부착해줍니다 (위치는 고정)
+      if (startMarkerInitializedRef.current && startMarkerRef.current) {
+        try {
+          if (typeof startMarkerRef.current.setMap === 'function') {
+            startMarkerRef.current.setMap(map);
+          }
+        } catch {}
+        return;
+      }
+
+      // 번들된 이미지(start-marker.png)를 아이콘으로 사용
+      startMarkerRef.current = new window.Tmapv3.Marker({
+        position: pos,
+        iconSize: new window.Tmapv3.Size(60, 60), // 필요에 따라 조정
+        icon: startMarkerImg,
+        map: map,
+      });
+
+      // 최초 생성 플래그 설정 (한 번만 고정)
+      startMarkerInitializedRef.current = true;
+    } catch (err) {
+      console.error('출발지 마커 생성 중 오류:', err);
     }
   };
 
@@ -224,6 +267,8 @@ const GuidePage = () => {
         // 현재 위치가 있으면 즉시 마커 표시
         if (currentLocationData) {
           updateCurrentLocationMarker(currentLocationData);
+          // 출발지 마커도 표시
+          updateStartMarker(currentLocationData);
         }
 
         // 실시간 위치 추적 시작 (마운트 동안 유지)
@@ -250,10 +295,21 @@ const GuidePage = () => {
     }
   }, [map, targetShelter]);
 
-  // 지도가 준비되거나 현재 위치가 바뀔 때 현재 위치 마커 표시
+  // 지도가 준비되거나 현재 위치가 바뀔 때 현재 위치 마커는 항상 갱신,
+  // 출발지 마커는 최초 1회만 생성(고정)
   useEffect(() => {
     if (map && currentLocation) {
       updateCurrentLocationMarker(currentLocation);
+      if (!startMarkerInitializedRef.current) {
+        updateStartMarker(currentLocation);
+      } else {
+        // map이 재부착된 경우 출발지 마커를 map에 다시 붙여줌 (위치는 변경하지 않음)
+        try {
+          if (startMarkerRef.current && typeof startMarkerRef.current.setMap === 'function') {
+            startMarkerRef.current.setMap(map);
+          }
+        } catch {}
+      }
     }
   }, [map, currentLocation]);
 

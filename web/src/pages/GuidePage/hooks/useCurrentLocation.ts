@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import myLocationMarker from '@/assets/images/myLocationMarker.png';
 import type { LocationState } from '../types/tmap';
 
 interface UseCurrentLocationProps {
@@ -77,23 +78,39 @@ export const useCurrentLocation = ({ map, isMapFullyLoaded }: UseCurrentLocation
 
     console.log('현재 위치 마커 업데이트 시작:', location);
 
+    // 기존 마커가 있으면 위치만 갱신(중복 생성 방지)
     if (currentLocationMarker) {
       try {
-        currentLocationMarker.setMap(null);
+        if (typeof currentLocationMarker.setPosition === 'function') {
+          currentLocationMarker.setPosition(
+            new window.Tmapv3.LatLng(location.latitude, location.longitude),
+          );
+          // 재부착 필요한 경우 map 지정
+          if (typeof currentLocationMarker.setMap === 'function') {
+            currentLocationMarker.setMap(map);
+          }
+          setCurrentLocation(location);
+          return;
+        } else {
+          // setPosition이 없으면 기존 마커 제거
+          currentLocationMarker.setMap(null);
+        }
       } catch (err) {
-        console.warn('기존 현재 위치 마커 제거 중 오류:', err);
+        console.warn('기존 현재 위치 마커 제거/갱신 중 오류:', err);
       }
     }
 
     try {
       const marker = new window.Tmapv3.Marker({
         position: new window.Tmapv3.LatLng(location.latitude, location.longitude),
-        color: '#007bff', // Blue for current location
-        iconSize: new window.Tmapv3.Size(24, 24),
+        // 아이콘 이미지 사용 (번들러가 string URL 반환)
+        iconSize: new window.Tmapv3.Size(50, 50),
+        icon: myLocationMarker,
         map: map,
       });
 
       setCurrentLocationMarker(marker);
+      setCurrentLocation(location);
       console.log('현재 위치 마커 업데이트 완료');
     } catch (err) {
       console.error('현재 위치 마커 생성 중 오류:', err);

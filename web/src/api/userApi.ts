@@ -87,3 +87,16 @@ export async function patchPassword({
 }
 
 //TODO: 사용자 프로필 사진 수정/사용자 닉네임 수정 -> 필요하면 추가할 것
+
+// 로그인 여부 확인 (비동기)
+export async function checkLoginStatus(): Promise<boolean> {
+  try {
+    await getMyProfile();
+    return true;
+  } catch (err: any) {
+    if (err && (err.status === 401 || err.status === 403)) {
+      return false;
+    }
+    throw err; // 기타 에러는 그대로 던짐
+  }
+}

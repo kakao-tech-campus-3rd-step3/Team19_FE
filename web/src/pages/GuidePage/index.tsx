@@ -52,7 +52,8 @@ const GuidePage = () => {
   // 타겟 대피소 정보 상태
   const [targetShelter, setTargetShelter] = useState<Shelter | null>(null);
   const [shelterMarker, setShelterMarker] = useState<any>(null);
-  const startMarkerRef = useRef<any | null>(null); // 추가: 출발지 마커 참조
+  const startMarkerRef = useRef<any | null>(null); // 출발지 마커 참조
+  const startMarkerInitializedRef = useRef<boolean>(false); // 최초 생성 여부
   const hasInitialRouteCalculatedRef = useRef<boolean>(false);
 
   // 음성 안내 활성화 여부
@@ -169,21 +170,15 @@ const GuidePage = () => {
     try {
       const pos = new window.Tmapv3.LatLng(loc.latitude, loc.longitude);
 
-      if (startMarkerRef.current) {
+      // 이미 최초 출발지 마커가 생성되어 있으면 위치를 변경하지 않고,
+      // map이 재마운트 되었을 경우만 재부착해줍니다 (위치는 고정)
+      if (startMarkerInitializedRef.current && startMarkerRef.current) {
         try {
-          if (typeof startMarkerRef.current.setPosition === 'function') {
-            startMarkerRef.current.setPosition(pos);
-          }
           if (typeof startMarkerRef.current.setMap === 'function') {
             startMarkerRef.current.setMap(map);
           }
-          return;
-        } catch (err) {
-          try {
-            startMarkerRef.current.setMap(null);
-          } catch {}
-          startMarkerRef.current = null;
-        }
+        } catch {}
+        return;
       }
 
       // 번들된 이미지(start-marker.png)를 아이콘으로 사용
@@ -193,6 +188,9 @@ const GuidePage = () => {
         icon: startMarkerImg,
         map: map,
       });
+
+      // 최초 생성 플래그 설정 (한 번만 고정)
+      startMarkerInitializedRef.current = true;
     } catch (err) {
       console.error('출발지 마커 생성 중 오류:', err);
     }
@@ -297,12 +295,21 @@ const GuidePage = () => {
     }
   }, [map, targetShelter]);
 
-  // 지도가 준비되거나 현재 위치가 바뀔 때 현재 위치 마커 표시
+  // 지도가 준비되거나 현재 위치가 바뀔 때 현재 위치 마커는 항상 갱신,
+  // 출발지 마커는 최초 1회만 생성(고정)
   useEffect(() => {
     if (map && currentLocation) {
       updateCurrentLocationMarker(currentLocation);
-      // currentLocation 변경 시 출발지 마커 위치도 갱신
-      updateStartMarker(currentLocation);
+      if (!startMarkerInitializedRef.current) {
+        updateStartMarker(currentLocation);
+      } else {
+        // map이 재부착된 경우 출발지 마커를 map에 다시 붙여줌 (위치는 변경하지 않음)
+        try {
+          if (startMarkerRef.current && typeof startMarkerRef.current.setMap === 'function') {
+            startMarkerRef.current.setMap(map);
+          }
+        } catch {}
+      }
     }
   }, [map, currentLocation]);
 

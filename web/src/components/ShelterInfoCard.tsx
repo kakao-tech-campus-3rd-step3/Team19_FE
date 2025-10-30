@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
+import { useRef, useLayoutEffect } from 'react';
 import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
@@ -64,6 +65,66 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     isActuallyOpen = checkIfOpenNow(currentOperatingHours);
   }
 
+  const nameRef = useRef<HTMLParagraphElement | null>(null);
+
+  // 두 줄 초과 시 JS로 잘라서 '--' 붙임 (기기별 레이아웃 차이 보정)
+  useLayoutEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    const original = shelter.name || '';
+    el.textContent = original;
+
+    const cs = window.getComputedStyle(el);
+    let lineHeight = parseFloat(cs.lineHeight);
+    if (isNaN(lineHeight)) {
+      const fontSize = parseFloat(cs.fontSize || '16');
+      lineHeight = fontSize * 1.2;
+    }
+
+    const maxHeight = lineHeight * 2; // 2줄 허용
+    if (el.scrollHeight <= maxHeight) return; // 2줄 이내면 변경 없음
+
+    // 이진탐색으로 텍스트 잘라내기
+    let low = 0;
+    let high = original.length;
+    let best = 0;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      el.textContent = original.slice(0, mid) + '..';
+      if (el.scrollHeight <= maxHeight) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+    el.textContent = original.slice(0, best) + '..';
+
+    // 창 크기 변경 시 재계산
+    const onResize = () => {
+      el.textContent = original;
+      if (el.scrollHeight > maxHeight) {
+        // 재실행 간단 처리: 전체 다시 잘라냄
+        let l = 0;
+        let h = original.length;
+        let b = 0;
+        while (l <= h) {
+          const m = Math.floor((l + h) / 2);
+          el.textContent = original.slice(0, m) + '..';
+          if (el.scrollHeight <= maxHeight) {
+            b = m;
+            l = m + 1;
+          } else {
+            h = m - 1;
+          }
+        }
+        el.textContent = original.slice(0, b) + '..';
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [shelter.name]);
+
   return (
     <div css={infoCardStyle({ variant })}>
       {variant === 'home' && (
@@ -76,7 +137,7 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
           )}
         </div>
       )}
-      <p css={shelterName({ variant })} onClick={handleNavigateToDetail}>
+      <p ref={nameRef} css={shelterName({ variant })} onClick={handleNavigateToDetail}>
         {shelter.name}
       </p>
 
@@ -155,9 +216,10 @@ const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
         padding-bottom: 16px;
       `
     : css`
-        height: 27vh;
         position: relative;
         width: 100%;
+        padding: 8px 12px;
+        box-sizing: border-box;
       `}
 `;
 
@@ -190,6 +252,7 @@ const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
 const infoText = css`
   flex: 1;
   text-align: left;
+  margin-bottom: 4px;
 `;
 
 const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
@@ -206,7 +269,7 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
         color: ${theme.colors.button.blue};
       `
     : css`
-        margin-bottom: 0.7vh;
+        margin-bottom: 8px;
 
         ${theme.typography.cardf1};
         color: ${theme.colors.button.blue};

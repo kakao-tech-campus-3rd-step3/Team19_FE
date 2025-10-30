@@ -89,7 +89,7 @@ export default ShelterList;
 const listContainerStyle = css`
   display: flex;
   flex-direction: column;
-  align-items: center; /* 카드 래퍼를 가운데 정렬 */
+  align-items: stretch; /* 카드 래퍼가 가로 전체(max-width) 채우도록 */
   gap: 8px;
 `;
 
@@ -107,20 +107,21 @@ const dividerStyle = css`
   height: 1px;
   background: #d2d2d2;
   margin: 8px auto;
-  width: 90%; /* 카드와 동일한 가로 폭 */
+  width: 95%; /* 카드와 동일한 가로 폭 */
   max-width: 820px;
   box-sizing: border-box;
 `;
 
 const cardWrapperStyle = css`
-  width: 90%;
+  width: 100%;
   max-width: 820px;
-  margin: 0 auto;
+  margin: 0 auto; /* 가운데 정렬 유지 (부모가 stretch라서 내부가 max-width로 가운데 배치됨) */
   box-sizing: border-box;
   display: block;
   /* 카드 내부(컴포넌트)가 고정 height를 갖고 있더라도
      콘텐츠에 맞게 자동으로 늘어나도록 안전장치 추가 */
   & > * {
+    width: 100% !important; /* 내부 컴포넌트가 래퍼의 폭을 채우게 강제 */
     height: auto !important;
     min-height: 0 !important;
   }

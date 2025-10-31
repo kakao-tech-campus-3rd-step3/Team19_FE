@@ -4,7 +4,7 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import emptyReviewImg from '@/assets/images/empty-review2.jpg';
 import theme from '@/styles/theme';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getMyReviews } from '@/api/reviewApi';
 import ToastMessage from '@/components/ToastMessage';
 import ReviewListCard from './components/ReviewListCard';
@@ -28,6 +28,8 @@ const MyReviewPage = () => {
   const [error, setError] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [extraBottom, setExtraBottom] = useState<number>(0);
 
   useEffect(() => {
     let mounted = true;
@@ -54,6 +56,45 @@ const MyReviewPage = () => {
     };
   }, []);
 
+  // containerRef와 스크롤 여부에 따라 safe-area-inset-bottom 값을 측정해서 margin 추가
+  useEffect(() => {
+    let mounted = true;
+    const measure = () => {
+      if (!mounted) return;
+      const el = containerRef.current ?? document.documentElement;
+      const isScrollable = el.scrollHeight > el.clientHeight + 1;
+      if (!isScrollable) {
+        setExtraBottom(0);
+        return;
+      }
+      // 임시 엘리먼트로 CSS env(safe-area-inset-bottom) 측정
+      const tmp = document.createElement('div');
+      tmp.style.cssText =
+        'position:absolute;left:-9999px;top:-9999px;padding-bottom:env(safe-area-inset-bottom);';
+      document.body.appendChild(tmp);
+      const pad = parseFloat(getComputedStyle(tmp).paddingBottom) || 0;
+      document.body.removeChild(tmp);
+      // pad가 0인 경우도 있으므로 최소값 보정 가능 (원하면 0 대신 고정값 추가)
+      setExtraBottom(pad);
+    };
+
+    measure();
+    const onWin = () => {
+      // debounce via RAF
+      requestAnimationFrame(() => measure());
+    };
+    window.addEventListener('resize', onWin);
+    window.addEventListener('orientationchange', onWin);
+    // 데이터 변경(찜 목록)으로 스크롤 상태가 바뀌면 재측정
+    // (wishList 변경 이미 트리거되는 렌더에서 effect가 재실행되므로 추가 구독 불필요)
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('resize', onWin);
+      window.removeEventListener('orientationchange', onWin);
+    };
+  }, [reviews.length]);
+
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);
   };
@@ -65,7 +106,11 @@ const MyReviewPage = () => {
     <>
       {reviews.length > 0 ? (
         // 내가 쓴 리뷰가 있을 때 컨테이너
-        <div css={pageContainerStyle}>
+        <div
+          css={pageContainerStyle}
+          ref={containerRef}
+          style={extraBottom ? { marginBottom: `${extraBottom}px` } : undefined}
+        >
           <div css={header}>
             <FaRegCommentDots color="#222" size={43} css={reviewIcon} />
             <span css={title}>내가 쓴 리뷰</span>
@@ -83,7 +128,11 @@ const MyReviewPage = () => {
         </div>
       ) : (
         // 내가 쓴 리뷰가 없을 때 컨테이너 (API 실패도 여기로 표시)
-        <div css={emptyStateStyle}>
+        <div
+          css={emptyStateStyle}
+          ref={containerRef}
+          style={extraBottom ? { marginBottom: `${extraBottom}px` } : undefined}
+        >
           <div css={emptyHeader}>
             <FaRegCommentDots color="#fff" size={43} css={reviewIcon} />
             <span css={emptyTitle}>내가 쓴 리뷰</span>

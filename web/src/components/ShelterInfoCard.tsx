@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
+import { useRef, useLayoutEffect } from 'react';
 import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
@@ -64,6 +65,103 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     isActuallyOpen = checkIfOpenNow(currentOperatingHours);
   }
 
+  const nameRef = useRef<HTMLParagraphElement | null>(null);
+
+  // 텍스트 축소: 부모의 padding/실폭과 좌우 여백을 고려해 가운데 기준으로 scale 적용 (오버플로우 방지)
+  useLayoutEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    const original = shelter.name || '';
+
+    // 초기 스타일. 가운데 기준 축소를 위해 transform-origin center로 설정
+    el.style.visibility = 'hidden';
+    el.style.whiteSpace = 'nowrap';
+    el.style.display = 'inline-block';
+    el.style.transformOrigin = 'center center';
+    // 트랜지션 즉시 적용 (애니메이션 없음)
+    el.style.transition = 'none';
+
+    // 안전하게 오버플로우 숨김
+    el.style.overflow = 'hidden';
+    el.style.textOverflow = 'ellipsis';
+
+    const compute = () => {
+      el.textContent = original;
+      el.style.transform = '';
+
+      // 부모 실제 사용가능 너비 계산: parent.width - paddingLeft - paddingRight - safetyMargin
+      const parent = el.parentElement;
+      const parentRect = parent ? parent.getBoundingClientRect() : el.getBoundingClientRect();
+      const parentStyle = parent
+        ? window.getComputedStyle(parent)
+        : ({ paddingLeft: '0px', paddingRight: '0px' } as any);
+      const padLeft = parseFloat(parentStyle.paddingLeft || '0');
+      const padRight = parseFloat(parentStyle.paddingRight || '0');
+      // 카드 내부에 thumbnail/infoText 등으로 인해 실제 보이는 중앙폭이 달라질 수 있으므로 안전마진 추가
+      const safety = 8; // px
+      const available = Math.max(20, parentRect.width - padLeft - padRight - safety);
+
+      // 텍스트 실제 폭(스크롤 폭) 측정
+      const textWidth = el.scrollWidth;
+      if (textWidth <= available) {
+        el.style.transform = '';
+        el.style.maxWidth = `${available}px`;
+        el.style.visibility = '';
+        return;
+      }
+
+      // scale 계산 및 최소 scale 제한
+      const MIN_SCALE = 0.72;
+      const scale = Math.max(MIN_SCALE, available / textWidth);
+      el.style.transform = `scale(${scale})`;
+      // 축소 후에도 좌우 여백 동일하게 보이도록 maxWidth 설정
+      el.style.maxWidth = `${available}px`;
+      el.style.visibility = '';
+    };
+
+    // 폰트 로드/렌더 안정화 후 계산
+    const fontsReady =
+      (document as any).fonts && (document as any).fonts.ready
+        ? (document as any).fonts.ready
+        : Promise.resolve();
+    let rafId = 0;
+    fontsReady.then(() => {
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => compute());
+      });
+    });
+
+    // 부모/자식 크기 변경에 대응 (디바운스 via RAF)
+    let ro: ResizeObserver | null = null;
+    try {
+      ro = new ResizeObserver(() => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => compute());
+      });
+      ro.observe(el);
+      if (el.parentElement) ro.observe(el.parentElement);
+    } catch {
+      const onResize = () => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => compute());
+      };
+      window.addEventListener('resize', onResize);
+      return () => {
+        window.removeEventListener('resize', onResize);
+        cancelAnimationFrame(rafId);
+      };
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (ro) {
+        try {
+          ro.disconnect();
+        } catch {}
+      }
+    };
+  }, [shelter.name, variant]); // home/find 모두 적용
+
   return (
     <div css={infoCardStyle({ variant })}>
       {variant === 'home' && (
@@ -76,7 +174,7 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
           )}
         </div>
       )}
-      <p css={shelterName({ variant })} onClick={handleNavigateToDetail}>
+      <p ref={nameRef} css={shelterName({ variant })} onClick={handleNavigateToDetail}>
         {shelter.name}
       </p>
 
@@ -150,14 +248,15 @@ const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
         left: 50%;
         transform: translateX(-50%);
         width: 90%;
-        z-index: 1000;
+        z-index: 1500;
         padding: 12px 16px;
         padding-bottom: 16px;
       `
     : css`
-        height: 27vh;
         position: relative;
         width: 100%;
+        padding: 8px 12px;
+        box-sizing: border-box;
       `}
 `;
 
@@ -169,6 +268,30 @@ const cardTop = css`
   align-items: center;
 `;
 
+const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: none;
+
+  /* variant에 따라 달라지는 스타일 */
+  ${variant === 'home'
+    ? css`
+        margin-bottom: 8px;
+        ${theme.typography.cardh1};
+        color: ${theme.colors.text.blue};
+      `
+    : css`
+        margin-bottom: 8px;
+        ${theme.typography.cardf1};
+        color: ${theme.colors.text.blue};
+      `}
+`;
+
 const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
   ${variant === 'home'
     ? css`
@@ -177,6 +300,7 @@ const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
         object-fit: cover;
         border-radius: 8px;
         margin-right: 12px;
+        transition: none;
       `
     : css`
         width: 12vh;
@@ -184,33 +308,15 @@ const thumbnail = ({ variant }: { variant: 'home' | 'find' }) => css`
         object-fit: cover;
         border-radius: 8px;
         margin-right: 4px;
+        transition: none;
       `}
 `;
 
 const infoText = css`
   flex: 1;
   text-align: left;
-`;
-
-const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
-  width: 100%;
-  text-align: center;
-  margin-top: 8px;
-
-  /* variant에 따라 달라지는 스타일 */
-  ${variant === 'home'
-    ? css`
-        margin-bottom: 8px;
-
-        ${theme.typography.cardh1};
-        color: ${theme.colors.button.blue};
-      `
-    : css`
-        margin-bottom: 0.7vh;
-
-        ${theme.typography.cardf1};
-        color: ${theme.colors.button.blue};
-      `}
+  margin-bottom: 4px;
+  transition: none;
 `;
 
 const infoParagraph = ({ variant }: { variant: 'home' | 'find' }) => css`
@@ -249,6 +355,7 @@ const mainButton = ({ variant }: { variant: 'home' | 'find' }) => css`
   color: white;
   border: none;
   border-radius: 8px;
+  transition: none;
 
   cursor: pointer;
   ${variant === 'home'
@@ -272,6 +379,7 @@ const favoriteButton = css`
   border: none;
   padding: 6px;
   border-radius: 8px;
+  transition: none;
 
   cursor: pointer;
 `;

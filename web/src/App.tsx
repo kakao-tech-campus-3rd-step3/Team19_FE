@@ -7,7 +7,6 @@ import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './components/NavBar';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import ScrollToTopButton from './components/ScrollToTopButton';
 import { useEffect } from 'react';
 import MyPage from './pages/MyPage';
 import WishListPage from './pages/WishListPage';
@@ -93,9 +92,11 @@ const App = () => {
           }
         `}
       />
+      {/* Persistent map container: 앱 전체에서 언마운트되지 않도록 최상단에 고정 */}
+      <div id="map-root" data-persistent-map-root />
       {shouldShowNavBar && <NavBar />}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <div css={appContainerStyle}>
+        <div css={appContainerStyle} data-scroll-container>
           <main>
             <Routes>
               {/* path="/": 기본 주소일 때 HomePage를 보여줌 */}
@@ -133,8 +134,8 @@ const App = () => {
               />
             </Routes>
           </main>
-          <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
         </div>
+        {/* <ScrollToTopButton /> 맨 위로 가기 버튼 => 없는게 좋을 듯 합니다 */}
       </ErrorBoundary>
       <ScrollToTop />
     </>

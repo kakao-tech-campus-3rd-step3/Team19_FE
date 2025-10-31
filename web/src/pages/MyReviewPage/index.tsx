@@ -242,13 +242,13 @@ const emptyBox = css`
 `;
 
 const emptyImg = css`
-  width: 180px;
+  width: 150px;
   height: auto;
   object-fit: contain;
 `;
 
 const emptyText = css`
-  padding-top: 20%;
+  padding-top: 15%;
   font-size: 2rem;
   font-weight: 700;
   color: #fff;

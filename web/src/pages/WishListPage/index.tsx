@@ -160,6 +160,7 @@ const pageContainerStyle = css`
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
+  margin-bottom: env(safe-area-inset-bottom);
 `;
 
 const header = css`
@@ -196,12 +197,15 @@ const emptyStateStyle = css`
   width: 100%;
   flex-direction: column;
   align-items: center;
+  /* height에 safe-area 포함되어 있어도 fixed 요소는 아래 컨텐츠를 가릴 수 있으므로 padding으로 보완 */
   height: calc(
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   text-align: center;
   background: #000;
+  /* 하단 안전영역만큼 내부 여백 확보 (fixed에서 margin 대신 padding 사용) */
+  padding-bottom: env(safe-area-inset-bottom);
   overflow: hidden;
 `;
 

@@ -131,7 +131,8 @@ const MyReviewPage = () => {
         <div
           css={emptyStateStyle}
           ref={containerRef}
-          style={extraBottom ? { marginBottom: `${extraBottom}px` } : undefined}
+          // fixed 요소는 margin이 적용되지 않으므로 padding-bottom으로 공간 확보
+          style={extraBottom ? { paddingBottom: `${extraBottom}px` } : undefined}
         >
           <div css={emptyHeader}>
             <FaRegCommentDots color="#fff" size={43} css={reviewIcon} />
@@ -165,6 +166,8 @@ const pageContainerStyle = css`
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
+  /* 안전 영역 하단 여백 확보 (컨텐츠가 가려지지 않도록) */
+  padding-bottom: env(safe-area-inset-bottom);
 `;
 
 const header = css`
@@ -208,6 +211,8 @@ const emptyStateStyle = css`
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   text-align: center;
   background: #000;
+  /* fixed 상태에서는 margin이 적용되지 않으므로 padding으로 안전영역 확보 */
+  padding-bottom: env(safe-area-inset-bottom);
   overflow: hidden;
 `;
 

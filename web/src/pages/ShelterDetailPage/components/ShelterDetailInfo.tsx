@@ -224,7 +224,7 @@ const title = css`
   text-align: center;
   margin-top: 16px;
   ${theme.typography.detail1};
-  color: ${theme.colors.button.blue};
+  color: ${theme.colors.text.blue};
 `;
 
 const topSection = css`

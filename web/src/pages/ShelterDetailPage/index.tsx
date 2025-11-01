@@ -84,7 +84,20 @@ const ShelterDetailPage = () => {
           onToggleFavorite={handleToggleFavorite}
           // optional: 자식에서 버튼 비활성화 처리하려면 prop 추가 가능
           // isToggling={toggling}
-          onGuideStart={onGuideStart}
+          // hook의 onGuideStart는 {lat,lng}를 받으므로,
+          // 상세 컴포넌트에서 전달하는 ShelterDetail 객체를 좌표로 변환하여 호출하는 wrapper 전달
+          onGuideStart={(targetShelter?: any) => {
+            if (!onGuideStart) return;
+            if (
+              targetShelter &&
+              typeof targetShelter.latitude === 'number' &&
+              typeof targetShelter.longitude === 'number'
+            ) {
+              onGuideStart({ lat: targetShelter.latitude, lng: targetShelter.longitude });
+            } else {
+              onGuideStart(undefined);
+            }
+          }}
           handleImageError={handleImageError}
         />
       )}

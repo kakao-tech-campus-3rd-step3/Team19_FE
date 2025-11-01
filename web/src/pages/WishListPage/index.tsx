@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { getWishList } from '@/api/wishApi';
 import emptyWishImg from '@/assets/images/empty-wish2.jpg';
 import theme from '@/styles/theme';
@@ -14,8 +14,6 @@ const WishListPage = () => {
   const [wishList, setWishList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<any>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [extraBottom, setExtraBottom] = useState<number>(0);
 
   useEffect(() => {
     let mounted = true;
@@ -37,68 +35,20 @@ const WishListPage = () => {
     };
   }, []);
 
-  // containerRef와 스크롤 여부에 따라 safe-area-inset-bottom 값을 측정해서 margin 추가
-  useEffect(() => {
-    let mounted = true;
-    const measure = () => {
-      if (!mounted) return;
-      const el = containerRef.current ?? document.documentElement;
-      const isScrollable = el.scrollHeight > el.clientHeight + 1;
-      if (!isScrollable) {
-        setExtraBottom(0);
-        return;
-      }
-      // 임시 엘리먼트로 CSS env(safe-area-inset-bottom) 측정
-      const tmp = document.createElement('div');
-      tmp.style.cssText =
-        'position:absolute;left:-9999px;top:-9999px;padding-bottom:env(safe-area-inset-bottom);';
-      document.body.appendChild(tmp);
-      const pad = parseFloat(getComputedStyle(tmp).paddingBottom) || 0;
-      document.body.removeChild(tmp);
-      // pad가 0인 경우도 있으므로 최소값 보정 가능 (원하면 0 대신 고정값 추가)
-      setExtraBottom(pad);
-    };
-
-    measure();
-    const onWin = () => {
-      // debounce via RAF
-      requestAnimationFrame(() => measure());
-    };
-    window.addEventListener('resize', onWin);
-    window.addEventListener('orientationchange', onWin);
-    // 데이터 변경(찜 목록)으로 스크롤 상태가 바뀌면 재측정
-    // (wishList 변경 이미 트리거되는 렌더에서 effect가 재실행되므로 추가 구독 불필요)
-
-    return () => {
-      mounted = false;
-      window.removeEventListener('resize', onWin);
-      window.removeEventListener('orientationchange', onWin);
-    };
-  }, [wishList.length]);
-
   const navigate = useNavigate();
 
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);
   };
 
-  if (isLoading)
-    return (
-      <div css={pageContainerStyle} ref={containerRef}>
-        로딩 중...
-      </div>
-    );
+  if (isLoading) return <div css={pageContainerStyle}>로딩 중...</div>;
   // error는 빈 상태 UI로 처리: 아래 렌더에서 error 여부에 따라 메시지 표시
 
   return (
     <>
       {wishList.length > 0 ? (
         // 찜 목록이 있을 때 컨테이너
-        <div
-          css={pageContainerStyle}
-          ref={containerRef}
-          style={extraBottom ? { marginBottom: `${extraBottom}px` } : undefined}
-        >
+        <div css={pageContainerStyle}>
           <div css={header}>
             <FaHeart color="red" size={43} css={heartIcon} />
             <span css={title}>찜 목록</span>
@@ -125,11 +75,7 @@ const WishListPage = () => {
         </div>
       ) : (
         // 찜 목록이 없을 때 컨테이너
-        <div
-          css={emptyStateStyle}
-          ref={containerRef}
-          style={extraBottom ? { marginBottom: `${extraBottom}px` } : undefined}
-        >
+        <div css={emptyStateStyle}>
           <div css={emptyHeader}>
             <FaHeart color="red" size={43} css={heartIcon} />
             <span css={emptyTitle}>찜 목록</span>
@@ -156,11 +102,9 @@ const pageContainerStyle = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(
-    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-  );
+  height: calc(100% - ${theme.spacing.spacing16} - env(safe-area-inset-top));
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
-  margin-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
 `;
 
 const header = css`
@@ -189,6 +133,13 @@ const listBox = css`
   flex-direction: column;
   gap: 12px;
   width: 95%;
+  /* 목록 영역이 남은 높이를 차지하고 내부에서 스크롤 발생 */
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* 스크롤 시 하단 안전영역 확보 (스크롤 없으면 여백 없음) */
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
 `;
 
 const emptyStateStyle = css`
@@ -197,15 +148,12 @@ const emptyStateStyle = css`
   width: 100%;
   flex-direction: column;
   align-items: center;
-  /* height에 safe-area 포함되어 있어도 fixed 요소는 아래 컨텐츠를 가릴 수 있으므로 padding으로 보완 */
   height: calc(
     100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
   );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   text-align: center;
   background: #000;
-  /* 하단 안전영역만큼 내부 여백 확보 (fixed에서 margin 대신 padding 사용) */
-  padding-bottom: env(safe-area-inset-bottom);
   overflow: hidden;
 `;
 

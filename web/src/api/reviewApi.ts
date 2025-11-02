@@ -16,14 +16,13 @@ export async function postReview(
   }: {
     content: string;
     rating: number;
-    photoUrl?: string;
+    // string 또는 null 허용 (없으면 null로 전송)
+    photoUrl?: string | null;
   },
 ) {
-  const res = await apiClient.post(`/api/shelters/${shelterId}/reviews`, {
-    content,
-    rating,
-    photoUrl,
-  });
+  // photoUrl이 없으면 null로 전송
+  const body = { content, rating, photoUrl: photoUrl ?? null };
+  const res = await apiClient.post(`/api/shelters/${shelterId}/reviews`, body);
   return res && (res as any).data ? (res as any).data : res;
 }
 

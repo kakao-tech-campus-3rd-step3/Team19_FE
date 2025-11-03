@@ -349,6 +349,7 @@ const modalTextStyle = css`
   color: #222;
   margin-bottom: 24px;
   text-align: center;
+  white-space: pre-line; /* '\n'을 실제 줄바꿈으로 표시 */
 `;
 
 const modalBtnRow = css`

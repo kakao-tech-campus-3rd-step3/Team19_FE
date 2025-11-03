@@ -102,7 +102,7 @@ export const useEditReview = () => {
 
   // 사진 삭제 버튼 클릭
   const handleRemoveImage = () => {
-    setModalText('사진을 삭제하시겠습니까?');
+    setModalText('사진을\n삭제하시겠습니까?');
     setOnModalConfirm(() => () => {
       setShowImage(false);
       setPhotoUrl('');

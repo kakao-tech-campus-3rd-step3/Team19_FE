@@ -11,7 +11,8 @@ import theme from '@/styles/theme';
 const FindSheltersPage = () => {
   const [hasScroll, setHasScroll] = useState(false);
   const {
-    shelters,
+    shelters, // 전체 목록 (빈 상태 판단용)
+    visibleShelters, // 화면에 실제로 렌더할 항목
     favoriteIds,
     toastMessage,
     isLoading,
@@ -67,7 +68,7 @@ const FindSheltersPage = () => {
       {shelters.length > 0 ? (
         <div css={pageContainerStyle(hasScroll)}>
           <ShelterList
-            shelters={shelters}
+            shelters={visibleShelters}
             favoriteIds={favoriteIds}
             onToggleFavorite={handleToggleWithApi} // 시그니처: (shelterId, isFavorite)
             onLoadMore={handleLoadMore}

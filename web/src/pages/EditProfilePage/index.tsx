@@ -326,56 +326,45 @@ const saveBtn = css`
 
 const modalOverlay = css`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.18);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
 `;
 
 const modalBox = css`
   background: #fff;
-  border-radius: 18px;
-  padding: 24px 32px;
-  box-shadow: 0 2px 12px #2224;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
   display: flex;
+  max-width: 80%;
   flex-direction: column;
   align-items: center;
 `;
 
 const modalText = css`
-  ${theme.typography.edit2};
+  ${theme.typography.modal1};
+  color: #222;
   margin-bottom: 24px;
+  text-align: center;
 `;
 
 const modalBtn = css`
-  padding: 10px 38px;
-  margin-top: 24px;
-  bottom: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #222;
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
   color: #fff;
-  font-size: 1.3rem;
-  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
   cursor: pointer;
+  transition: background 0.18s;
 `;
 
-const modalBtnS = css`
-  padding: 10px 28px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #818181ff;
-  color: #fff;
-  font-size: 1.3rem;
-  font-weight: 500;
-  cursor: pointer;
-`;
+// 보조 버튼도 동일 스타일로 유지 (필요 시 수정)
+const modalBtnS = modalBtn;
 
 const passwordInputWrapper = css`
   width: 100%;

@@ -177,7 +177,7 @@ const listBox = css`
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   /* 스크롤 시 하단 안전영역 확보 (스크롤 없으면 여백 없음) */
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
   box-sizing: border-box;
 `;
 

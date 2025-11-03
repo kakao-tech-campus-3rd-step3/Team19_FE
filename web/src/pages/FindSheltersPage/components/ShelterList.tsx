@@ -91,6 +91,13 @@ const listContainerStyle = css`
   flex-direction: column;
   align-items: stretch; /* 카드 래퍼가 가로 전체(max-width) 채우도록 */
   gap: 8px;
+  /* 목록 영역이 남은 높이를 차지하고 내부에서 스크롤 발생 */
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* 스크롤 시 하단 안전영역 확보 (스크롤 없으면 여백 없음) */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
+  box-sizing: border-box;
 `;
 
 const sentinelStyle = css`

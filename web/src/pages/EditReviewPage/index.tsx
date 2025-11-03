@@ -39,7 +39,7 @@ const EditReviewPage = () => {
         <span css={headerTitle}>리뷰 수정</span>
       </div>
       <div css={shelterName} onClick={() => navigate(`/shelter-detail/${review.shelterId}`)}>
-        {review.name}
+        {review.shelterName}
       </div>
       <div css={starRow}>
         {Array.from({ length: 5 }).map((_, i) => (

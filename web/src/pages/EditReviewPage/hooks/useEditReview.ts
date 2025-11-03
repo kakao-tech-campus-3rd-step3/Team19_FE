@@ -68,10 +68,11 @@ export const useEditReview = () => {
       rating?: number;
       photoUrl?: string;
     }) => {
+      // photoUrl이 undefined/nullable이면 빈 문자열로 보냄
       return await patchReview(params.reviewId, {
         content: params.content,
         rating: params.rating,
-        photoUrl: params.photoUrl,
+        photoUrl: params.photoUrl ?? '',
       });
     },
     onError: (error: any) => {
@@ -94,7 +95,8 @@ export const useEditReview = () => {
       reviewId,
       content,
       rating,
-      photoUrl,
+      // undefined/null 방지: 항상 문자열로 전달
+      photoUrl: photoUrl ?? '',
     });
   };
 

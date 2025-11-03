@@ -66,7 +66,7 @@ const EditReviewPage = () => {
         <div css={imgRow}>
           {showImage && photoUrl && (
             <div css={imgWrapper}>
-              <img src={photoUrl} alt="리뷰" css={reviewImg} />
+              <img src={photoUrl ?? ''} alt="리뷰" css={reviewImg} />
               <IoCloseCircleSharp css={imgRemoveBtn} onClick={handleRemoveImage} />
             </div>
           )}

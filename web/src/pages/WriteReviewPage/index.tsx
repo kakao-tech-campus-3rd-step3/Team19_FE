@@ -163,10 +163,18 @@ const headerTitle = css`
 
 const shelterNameStyle = css`
   ${theme.typography.myr4};
+  /* 한 줄로 자르고 말줄임 표시, 반응형 폰트 크기 적용 */
+  display: block;
+  width: 90%;
+  margin: 8px auto 16px auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   text-align: center;
-  margin-bottom: 16px;
-  margin-top: 8px;
   font-weight: 700;
+  /* 화면 크기에 따라 폰트가 커지도록 clamp의 preferred와 max 값을 조정 */
+  font-size: clamp(1.5rem, 3vw + 1.25rem, 4rem);
 `;
 
 const starRow = css`

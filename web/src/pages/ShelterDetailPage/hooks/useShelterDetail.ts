@@ -14,6 +14,9 @@ export const useShelterDetail = (shelterIdParam?: string | number) => {
 
   const [visibleCount, setVisibleCount] = useState<number>(3);
 
+  // 계산된 평균 별점 상태
+  const [averageRating, setAverageRating] = useState<number>(0);
+
   // 단순한 isFavorite 상태 (실제 값은 별도 API에서 가져오면 대체)
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
@@ -24,6 +27,15 @@ export const useShelterDetail = (shelterIdParam?: string | number) => {
       try {
         const data = await getShelterDetail({ shelterId: id, latitude, longitude });
         setShelter(data);
+        // averageRating 계산: API가 직접 averageRating을 주면 그 값을 사용,
+        // 아니면 totalRating / reviewCount로 계산 (분모 0 방지)
+        const avg =
+          typeof data?.averageRating === 'number'
+            ? data.averageRating
+            : typeof data?.totalRating === 'number' && Number(data?.reviewCount) > 0
+              ? Number(data.totalRating) / Number(data.reviewCount)
+              : 0;
+        setAverageRating(Number.isFinite(avg) ? Math.round(avg * 10) / 10 : 0);
         // 만약 API가 isFavorite이나 favorite 여부를 반환하면 여기서 setIsFavorite(data.isFavorite)
       } catch (err) {
         console.error('[useShelterDetail] getShelterDetail error', err);
@@ -101,7 +113,7 @@ export const useShelterDetail = (shelterIdParam?: string | number) => {
     reviews,
     loadingReviews,
     visibleCount,
-    averageRating: shelter?.averageRating ?? 0,
+    averageRating,
     handleImageError,
     handleMore,
     onGuideStart,

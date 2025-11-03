@@ -226,6 +226,13 @@ const cardTitleRow = css`
 const cardTitle = css`
   ${theme.typography.wish2};
   padding-bottom: 4px;
+  /* 한 줄로 자르고 ... 표시 */
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0; /* flex 항목에서 줄임표가 동작하도록 */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 `;
 
 const cardHeart = css`

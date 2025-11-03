@@ -4,49 +4,19 @@ import { css } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-// TODO: 좋아요 버튼 클릭 시 나오는 토스트 메시지 버그 수정
-const DISPLAY_MS = 2000;
-const EXIT_MS = 300;
+// 표시 시간 및 간격 설정
+const DISPLAY_MS = 3000;
+const EXIT_MS = 600; // 페이드아웃 시간
+const INTER_MESSAGE_GAP_MS = 200; // 연속 메시지 사이 간격
 
 const ToastMessage = ({ message }: { message: string }) => {
-  const [visible, setVisible] = useState(false); // 렌더링 제어
-  const [exiting, setExiting] = useState(false); // 페이드아웃 중 여부
+  const [visible, setVisible] = useState(false);
+  const [exiting, setExiting] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
 
   const queueRef = useRef<string[]>([]);
   const displayTimerRef = useRef<number | null>(null);
   const exitTimerRef = useRef<number | null>(null);
-
-  // portal container
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    // mount: create container and append to body
-    const el = document.createElement('div');
-    containerRef.current = el;
-    document.body.appendChild(el);
-    return () => {
-      // unmount: cleanup timers and container
-      clearTimers();
-      queueRef.current = [];
-      if (containerRef.current && containerRef.current.parentNode) {
-        containerRef.current.parentNode.removeChild(containerRef.current);
-      }
-      containerRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // 새 메시지가 들어오면 큐에 넣고, 현재 표시중이 아니면 재생
-  useEffect(() => {
-    if (message && message.trim() !== '') {
-      queueRef.current.push(message);
-      if (!current && !visible) {
-        playNext();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [message]);
 
   const clearTimers = () => {
     if (displayTimerRef.current !== null) {
@@ -73,23 +43,30 @@ const ToastMessage = ({ message }: { message: string }) => {
     setExiting(false);
     setVisible(true);
 
-    // 표시 시간 후 페이드아웃 시작
     displayTimerRef.current = window.setTimeout(() => {
       setExiting(true);
-
-      // 페이드아웃 끝난 뒤 숨김 처리 및 다음 메시지 재생
       exitTimerRef.current = window.setTimeout(() => {
         setVisible(false);
         setCurrent(null);
-        // 약간의 지연 후 다음 메시지 재생 (애니메이션 안정화)
         setTimeout(() => {
           if (queueRef.current.length > 0) playNext();
-        }, 50);
+        }, INTER_MESSAGE_GAP_MS);
       }, EXIT_MS);
     }, DISPLAY_MS);
   };
 
-  // 언마운트 시 타이머 정리 (container cleanup은 위 useEffect의 return에서 처리)
+  // 새 메시지 큐잉 (중복도 허용 — 모든 메시지를 순차적으로 표시)
+  useEffect(() => {
+    if (message && message.trim() !== '') {
+      queueRef.current.push(message);
+      if (!current && !visible) {
+        playNext();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message]);
+
+  // 언마운트 시 타이머 정리
   useEffect(() => {
     return () => {
       clearTimers();
@@ -97,10 +74,10 @@ const ToastMessage = ({ message }: { message: string }) => {
     };
   }, []);
 
-  if (!visible || !current || !containerRef.current) return null;
+  if (!visible || !current) return null;
 
   const toastElement = <div css={[toastStyle, exiting ? toastExitStyle : null]}>{current}</div>;
-  return createPortal(toastElement, containerRef.current);
+  return createPortal(toastElement, document.body);
 };
 
 export default ToastMessage;
@@ -113,20 +90,20 @@ const toastStyle = css`
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
   width: 60%;
+  max-width: 720px;
   padding: 10px 15px;
   border-radius: 5px;
-  white-space: pre-line; /* 줄바꿈 문자 처리 */
+  white-space: pre-line;
   text-align: center;
   ${theme.typography.text2}
 
-  /* 페이드/이동 애니메이션 적용 (초기 상태) */
   opacity: 1;
   transition:
     opacity ${EXIT_MS}ms ease,
     transform ${EXIT_MS}ms ease;
 
-  z-index: 2147483647; /* 최상단으로 고정 */
-  pointer-events: auto;
+  z-index: 2147483647;
+  pointer-events: none; /* 사용자 입력 비활성화 */
 `;
 
 const toastExitStyle = css`

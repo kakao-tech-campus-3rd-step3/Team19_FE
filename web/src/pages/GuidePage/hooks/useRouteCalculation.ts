@@ -302,9 +302,9 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
                   map: map,
                   clickable: false,
                 });
-                // 도트(점) zIndex는 가장 아래
+                // 도트(점) zIndex는 마커보다 아래에 위치하도록 낮은 값으로 설정
                 try {
-                  if (typeof marker.setZIndex === 'function') marker.setZIndex(100);
+                  if (typeof marker.setZIndex === 'function') marker.setZIndex(1);
                 } catch {}
                 allDots.push(marker);
               } catch (markerErr) {
@@ -344,9 +344,9 @@ export const useRouteCalculation = ({ map, isMapFullyLoaded }: UseRouteCalculati
                   map: map,
                   clickable: false,
                 });
-                // 도트(점) zIndex는 가장 아래
+                // 도트(점) zIndex는 마커보다 아래에 위치하도록 낮은 값으로 설정
                 try {
-                  if (typeof marker.setZIndex === 'function') marker.setZIndex(100);
+                  if (typeof marker.setZIndex === 'function') marker.setZIndex(1);
                 } catch {}
                 allDots.push(marker);
               } catch (markerErr) {

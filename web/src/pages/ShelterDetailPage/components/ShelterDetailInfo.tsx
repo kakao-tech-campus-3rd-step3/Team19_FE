@@ -3,6 +3,8 @@ import { css } from '@emotion/react';
 import { useRef, useLayoutEffect } from 'react';
 import theme from '@/styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { MdAcUnit } from 'react-icons/md';
+import { GiWindTurbine } from 'react-icons/gi';
 import NoImage from '@/assets/images/NoImage.png';
 import { formatOperatingHours } from '@/utils/date';
 import { useNavigate } from 'react-router-dom'; // 추가
@@ -193,8 +195,22 @@ const ShelterDetailInfo = ({
             주말 운영시간: {formatOperatingHours(shelter.operatingHours.weekend)}
           </b>
           <b css={infoBold}>수용 가능 인원: {shelter.capacity}명</b>
-          <b css={infoBold}>에어컨: {shelter.coolingEquipment.acCount ?? 0}대</b>
-          <b css={infoBold}>선풍기: {shelter.coolingEquipment.fanCount ?? 0}대</b>
+          <div css={equipmentGrid}>
+            <div css={equipmentItem} role="group" aria-label="에어컨">
+              <div css={equipmentIcon} aria-hidden>
+                <MdAcUnit size={28} color={theme.colors.text.blue} />
+              </div>
+              <div css={equipmentLabel}>에어컨</div>
+              <div css={equipmentCount}>{shelter.coolingEquipment.acCount ?? 0}대</div>
+            </div>
+            <div css={equipmentItem} role="group" aria-label="선풍기">
+              <div css={equipmentIcon} aria-hidden>
+                <GiWindTurbine size={28} color={theme.colors.text.blue} />
+              </div>
+              <div css={equipmentLabel}>선풍기</div>
+              <div css={equipmentCount}>{shelter.coolingEquipment.fanCount ?? 0}대</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -345,4 +361,39 @@ const infoBold = css`
   ${theme.typography.detail3};
   color: ${theme.colors.text.black};
   font-weight: 700;
+`;
+
+/* 냉방 장비 2열 레이아웃 */
+const equipmentGrid = css`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+`;
+
+const equipmentItem = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+`;
+
+const equipmentIcon = css`
+  font-size: 1.9rem;
+  line-height: 1;
+  margin-bottom: 6px;
+`;
+
+const equipmentLabel = css`
+  ${theme.typography.edit3};
+  color: ${theme.colors.text.black};
+  margin-bottom: 4px;
+`;
+
+const equipmentCount = css`
+  ${theme.typography.edit3};
+  font-weight: 700;
+  color: ${theme.colors.text.black};
 `;

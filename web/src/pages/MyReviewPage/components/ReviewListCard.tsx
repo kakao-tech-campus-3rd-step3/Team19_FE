@@ -272,6 +272,15 @@ const cardTitleRow = css`
 
 const cardTitle = css`
   ${theme.typography.myr2};
+  /* 한 줄로 자르고 말줄임 표시 */
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0; /* flex 컨테이너 내부에서 ellipsis 동작을 위해 필요 */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* 왼쪽 정렬 명시 */
+  text-align: left;
 `;
 
 const cardBottomRow = css`

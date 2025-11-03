@@ -233,6 +233,8 @@ const cardTitle = css`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  /* 왼쪽 정렬 명시 */
+  text-align: left;
 `;
 
 const cardHeart = css`

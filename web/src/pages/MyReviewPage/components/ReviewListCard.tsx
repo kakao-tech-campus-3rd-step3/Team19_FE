@@ -11,6 +11,8 @@ import { deleteReview } from '@/api/reviewApi';
 interface MyReview {
   reviewId: number;
   shelterId: number;
+  // API/훅에 따라 없을 수 있으므로 optional로 추가
+  shelterName?: string;
   name: string;
   userId: number;
   content: string;
@@ -99,7 +101,7 @@ const ReviewListCard = ({
         <FaTrash size={25} />
       </button>
       <div css={cardTitleRow}>
-        <span css={cardTitle}>{item.name}</span>
+        <span css={cardTitle}>{item.shelterName ?? item.name ?? `쉼터 #${item.shelterId}`}</span>
       </div>
       <div css={cardBottomRow}>
         <div css={cardInfo}>

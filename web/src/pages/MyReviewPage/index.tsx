@@ -4,7 +4,7 @@ import { FaRegCommentDots } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import emptyReviewImg from '@/assets/images/empty-review2.jpg';
 import theme from '@/styles/theme';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getMyReviews } from '@/api/reviewApi';
 import ToastMessage from '@/components/ToastMessage';
 import ReviewListCard from './components/ReviewListCard';
@@ -28,6 +28,9 @@ const MyReviewPage = () => {
   const [error, setError] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
+
+  // 마지막으로 제거된 항목 보관(ref) — 복구용
+  const lastRemovedRef = useRef<{ item: MyReview; index: number } | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -58,6 +61,29 @@ const MyReviewPage = () => {
     navigate(`/shelter-detail/${shelterId}`);
   };
 
+  // 부모: 낙관적 제거 (리스트에서 즉시 삭제)
+  const handleRemoveOptimistic = (reviewId: number) => {
+    setReviews((prev) => {
+      const idx = prev.findIndex((r) => r.reviewId === reviewId);
+      if (idx === -1) return prev;
+      const removed = prev[idx];
+      lastRemovedRef.current = { item: removed, index: idx };
+      return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+    });
+  };
+
+  // 부모: 실패 시 복구
+  const handleRestore = () => {
+    const rec = lastRemovedRef.current;
+    if (!rec) return;
+    setReviews((prev) => {
+      const arr = [...prev];
+      arr.splice(rec.index, 0, rec.item);
+      return arr;
+    });
+    lastRemovedRef.current = null;
+  };
+
   if (loading) return <div>로딩 중...</div>;
   // 변경: error 발생해도 별도 에러 화면으로 리턴하지 않고 빈 상태 UI를 렌더하도록 함
 
@@ -77,6 +103,8 @@ const MyReviewPage = () => {
                 item={item}
                 onClick={handleCardClick}
                 onToast={setToastMessage} // ToastMessage 콜백 전달
+                onRemoveOptimistic={handleRemoveOptimistic}
+                onRestore={handleRestore}
               />
             ))}
           </div>

@@ -26,6 +26,8 @@ interface ReviewListCardProps {
   item: MyReview;
   onClick: (shelterId: number) => void;
   onToast: (msg: string) => void; // 부모로 전달할 콜백
+  onRemoveOptimistic?: (reviewId: number) => void;
+  onRestore?: () => void;
 }
 
 // 이미지 url이 유효하지 않을 경우 대체 이미지를 보여주는 함수
@@ -33,21 +35,20 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
+const ReviewListCard = ({
+  item,
+  onClick,
+  onToast,
+  onRemoveOptimistic,
+  onRestore,
+}: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
   const navigate = useNavigate();
 
-  // react-query mutation 사용
-  const { mutate: deleteMutate } = useMutation({
+  // react-query mutation 사용: 전역 성공/실패 메시지는 여기서 처리하지 않고 호출 시 옵션으로 처리
+  const mutation = useMutation({
     mutationFn: (reviewId: number) => deleteReview(reviewId),
-    onSuccess: () => {
-      onToast('리뷰가 삭제되었습니다');
-      // TODO: 리뷰 삭제 후 목록 갱신 필요 (부모에서 refetch 등)
-    },
-    onError: () => {
-      onToast('삭제에 실패했습니다');
-    },
   });
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -58,7 +59,22 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
   const handleDeleteConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(false);
-    deleteMutate(item.reviewId);
+    // 낙관적 제거: 부모에 먼저 제거 요청
+    try {
+      onRemoveOptimistic && onRemoveOptimistic(item.reviewId);
+    } catch (err) {
+      console.warn('onRemoveOptimistic error', err);
+    }
+    // 서버 삭제 호출, 실패 시 복구
+    mutation.mutate(item.reviewId, {
+      onSuccess: () => {
+        onToast('리뷰가 삭제되었습니다');
+      },
+      onError: () => {
+        onRestore && onRestore();
+        onToast('삭제에 실패했습니다');
+      },
+    });
   };
 
   const handleDeleteCancel = (e: React.MouseEvent) => {
@@ -152,7 +168,6 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
           </div>
         </div>
       )}
-      {/* ToastMessage는 부모에서 관리 */}
     </div>
   );
 };

@@ -100,8 +100,8 @@ const pageContainerStyle = (hasScroll: boolean) => css`
   box-sizing: border-box;
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   background: white;
-  /* 스크롤이 있을 때만 하단 안전영역 만큼 마진 확보 */
-  margin-bottom: ${hasScroll ? 'env(safe-area-inset-bottom)' : '0'};
+  /* 스크롤이 있을 때만 하단 안전영역 만큼 패딩 확보 */
+  padding-bottom: ${hasScroll ? 'env(safe-area-inset-bottom)' : '0'};
 `;
 
 const emptyStateStyle = css`

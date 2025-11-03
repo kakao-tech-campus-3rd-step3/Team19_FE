@@ -184,7 +184,11 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
             }}
           >
             <div css={modalBox} onClick={(e) => e.stopPropagation()}>
-              <div css={modalText}>찜 목록에서 삭제하시겠습니까?</div>
+              <div css={modalText}>
+                찜 목록에서
+                <br />
+                삭제하시겠습니까?
+              </div>
               <div css={modalButtons}>
                 <button css={modalBtn} onClick={handleConfirm}>
                   예
@@ -305,51 +309,46 @@ const cardinfostyle = css`
 
 const modalOverlay = css`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
 `;
 
 const modalBox = css`
   background: #fff;
-  border-radius: 12px;
-  padding: 32px 24px;
-  box-shadow: 0 2px 12px #2224;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
   display: flex;
+  max-width: 80%;
   flex-direction: column;
   align-items: center;
 `;
 
 const modalText = css`
-  font-size: 1.2rem;
-  font-weight: 600;
+  ${theme.typography.modal1};
+  color: #222;
   margin-bottom: 24px;
+  text-align: center;
 `;
 
 const modalButtons = css`
   display: flex;
-  gap: 16px;
+  gap: 18px;
 `;
 
 const modalBtn = css`
-  padding: 8px 24px;
-  border-radius: 8px;
-  border: none;
-  background: #d76464;
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
   color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
   cursor: pointer;
-  &:last-of-type {
-    background: #bbb;
-    color: #222;
-  }
+  transition: background 0.18s;
 `;
 
 export default WishListCard;

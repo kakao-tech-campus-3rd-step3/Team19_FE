@@ -4,10 +4,11 @@ import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { formatOperatingHours } from '@/utils/date';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ToastMessage from '@/components/ToastMessage';
 import { useMutation } from '@tanstack/react-query';
 import { addWish, deleteWish } from '@/api/wishApi';
+import { createPortal } from 'react-dom';
 
 interface WishShelter {
   shelterId: number;
@@ -33,6 +34,53 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
   const [isFavorite, setIsFavorite] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const bodyLockRef = useRef(0);
+
+  // 모달 오픈 시 body 스크롤 잠금 (멀티 모달 카운터)
+  useEffect(() => {
+    const modalOpen = showModal;
+    const body = document.body;
+    if (modalOpen) {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      body.dataset.modalOpenCount = String(prev + 1);
+      if (prev === 0) {
+        body.dataset.prevOverflow = body.style.overflow || '';
+        body.dataset.prevScrollY = String(window.scrollY || 0);
+        body.style.overflow = 'hidden';
+      }
+      bodyLockRef.current = Number(body.dataset.modalOpenCount);
+    } else {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      const next = Math.max(0, prev - 1);
+      body.dataset.modalOpenCount = String(next);
+      if (next === 0) {
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+        bodyLockRef.current = 0;
+      } else {
+        bodyLockRef.current = next;
+      }
+    }
+    return () => {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      if (prev <= 1) {
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+      } else {
+        body.dataset.modalOpenCount = String(prev - 1);
+      }
+    };
+  }, [showModal]);
 
   // 찜 삭제 mutation
   const deleteWishMutation = useMutation({
@@ -80,6 +128,13 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     setShowModal(false);
   };
 
+  // 별점: 소수 둘째자리에서 반올림하여 소수 첫째자리까지 표시
+  const displayRating = (() => {
+    const v = Number(item.averageRating) || 0;
+    return (Math.round(v * 10) / 10).toFixed(1);
+  })();
+  const starCount = Math.round(Number(item.averageRating) || 0);
+
   return (
     <div css={card} onClick={() => onClick(item.shelterId)} style={{ cursor: 'pointer' }}>
       <div css={cardTitleRow}>
@@ -101,10 +156,10 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
         />
         <div css={cardInfo}>
           <div css={cardRating}>
-            별점: <span css={ratingNumber}>{item.averageRating}</span>
+            별점: <span css={ratingNumber}>{displayRating}</span>
             <span css={starsWrapper}>
               {Array.from({ length: 5 }, (_, i) => (
-                <span key={i} css={i < Math.round(item.averageRating) ? filledStar : emptyStar}>
+                <span key={i} css={i < starCount ? filledStar : emptyStar}>
                   ★
                 </span>
               ))}
@@ -119,21 +174,30 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
           </div>
         </div>
       </div>
-      {showModal && (
-        <div css={modalOverlay} onClick={(e) => e.stopPropagation()}>
-          <div css={modalBox}>
-            <div css={modalText}>찜 목록에서 삭제하시겠습니까?</div>
-            <div css={modalButtons}>
-              <button css={modalBtn} onClick={handleConfirm}>
-                예
-              </button>
-              <button css={modalBtn} onClick={handleCancel}>
-                아니요
-              </button>
+
+      {showModal &&
+        createPortal(
+          <div
+            css={modalOverlay}
+            onClick={() => {
+              setShowModal(false);
+            }}
+          >
+            <div css={modalBox} onClick={(e) => e.stopPropagation()}>
+              <div css={modalText}>찜 목록에서 삭제하시겠습니까?</div>
+              <div css={modalButtons}>
+                <button css={modalBtn} onClick={handleConfirm}>
+                  예
+                </button>
+                <button css={modalBtn} onClick={handleCancel}>
+                  아니요
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
+
       <ToastMessage message={toastMessage} />
     </div>
   );

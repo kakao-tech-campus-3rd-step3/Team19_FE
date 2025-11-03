@@ -39,7 +39,7 @@ const EditReviewPage = () => {
         <span css={headerTitle}>리뷰 수정</span>
       </div>
       <div css={shelterName} onClick={() => navigate(`/shelter-detail/${review.shelterId}`)}>
-        {review.name}
+        {review.shelterName}
       </div>
       <div css={starRow}>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -141,19 +141,18 @@ const headerTitle = css`
 
 const shelterName = css`
   ${theme.typography.myr4};
-  margin-bottom: 4%;
-  margin-top: 3%;
-  user-select: none; // 텍스트 선택 방지
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  &:focus,
-  &:active,
-  &:focus-visible {
-    outline: none;
-    background: none;
-    color: inherit;
-    box-shadow: none;
-  }
+  /* 한 줄로 자르고 말줄임 표시, 반응형 폰트 크기 적용 */
+  display: block;
+  width: 90%;
+  margin: 8px auto 16px auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-weight: 700;
+  /* 화면 크기에 따라 폰트가 커지도록 clamp의 preferred와 max 값을 조정 */
+  font-size: clamp(1.5rem, 3vw + 1.25rem, 4rem);
 `;
 
 const starRow = css`

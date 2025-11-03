@@ -16,6 +16,11 @@ export type Shelter = {
 
 export const useShelters = () => {
   const [shelters, setShelters] = useState<Shelter[]>([]);
+  // 화면에 실제로 표시할 개수 관리 (초기 4개, 스크롤마다 +3)
+  const INITIAL_VISIBLE = 4;
+  const LOAD_INCREMENT = 3;
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE);
+  const visibleShelters = shelters.slice(0, visibleCount);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isFetchingMore, setIsFetchingMore] = useState<boolean>(false);
@@ -23,7 +28,7 @@ export const useShelters = () => {
   const [hasMoreItems, setHasMoreItems] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
 
-  const [page, setPage] = useState<number>(1);
+  const [, setPage] = useState<number>(1);
   const PAGE_SIZE = 20; // 필요 시 API 페이지 크기에 맞게 변경
 
   const fetchNearby = useCallback(
@@ -43,6 +48,8 @@ export const useShelters = () => {
           setShelters((prev) => [...prev, ...list]);
         } else {
           setShelters(list);
+          // 새로 받아올 때는 표시 개수 초기화
+          setVisibleCount(INITIAL_VISIBLE);
         }
         // 간단한 hasMore 판단: 반환 항목이 페이지 사이즈보다 작으면 끝
         setHasMoreItems(Array.isArray(list) ? list.length >= PAGE_SIZE : false);
@@ -97,29 +104,21 @@ export const useShelters = () => {
   };
 
   const handleLoadMore = async () => {
-    if (isLoading || isFetchingMore || !hasMoreItems) return;
+    // 클라이언트에서 표시 개수만 늘림 (서버 페이징이 아닌 경우)
+    if (isLoading || isFetchingMore) return;
+    if (visibleCount >= shelters.length) return;
     setIsFetchingMore(true);
-    try {
-      // 현재 위치로 다음 페이지 요청
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const nextPage = page + 1;
-          await fetchNearby(pos.coords.latitude, pos.coords.longitude, nextPage, true);
-        },
-        (err) => {
-          console.warn('[useShelters] loadMore geolocation error', err);
-          setIsFetchingMore(false);
-        },
-        { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 },
-      );
-    } catch (e) {
-      console.error('[useShelters] handleLoadMore error', e);
+    // 약간의 딜레이(로딩 UX) 후 더 보여주기
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(shelters.length, prev + LOAD_INCREMENT));
       setIsFetchingMore(false);
-    }
+    }, 300);
   };
 
   return {
+    // 전체 데이터와 화면에 보이는 데이터 둘다 반환
     shelters,
+    visibleShelters,
     favoriteIds,
     isLoading,
     error,

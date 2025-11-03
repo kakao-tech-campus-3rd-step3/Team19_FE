@@ -30,12 +30,14 @@ export const useWriteReview = () => {
       shelterId: number;
       content: string;
       rating: number;
-      photoUrl?: string;
+      photoUrl?: string | null;
     }) => {
+      // photoUrl이 undefined인 경우 빈 문자열로 전달
       return await postReview(payload.shelterId, {
         content: payload.content,
         rating: payload.rating,
-        photoUrl: payload.photoUrl,
+        // 없는 경우 null로 전달
+        photoUrl: payload.photoUrl ?? null,
       });
     },
     onSuccess: (_res) => {
@@ -76,7 +78,8 @@ export const useWriteReview = () => {
       shelterId,
       content,
       rating,
-      photoUrl: photoUrl || undefined,
+      // 없는 경우 null로 전달
+      photoUrl: photoUrl ? photoUrl : null,
     });
   };
 

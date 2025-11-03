@@ -3,14 +3,17 @@ import { css } from '@emotion/react';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { FaTrash } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { deleteReview } from '@/api/reviewApi';
+import { createPortal } from 'react-dom';
 
 interface MyReview {
   reviewId: number;
   shelterId: number;
+  // API/훅에 따라 없을 수 있으므로 optional로 추가
+  shelterName?: string;
   name: string;
   userId: number;
   content: string;
@@ -26,6 +29,8 @@ interface ReviewListCardProps {
   item: MyReview;
   onClick: (shelterId: number) => void;
   onToast: (msg: string) => void; // 부모로 전달할 콜백
+  onRemoveOptimistic?: (reviewId: number) => void;
+  onRestore?: () => void;
 }
 
 // 이미지 url이 유효하지 않을 경우 대체 이미지를 보여주는 함수
@@ -33,21 +38,70 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
+const ReviewListCard = ({
+  item,
+  onClick,
+  onToast,
+  onRemoveOptimistic,
+  onRestore,
+}: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
   const navigate = useNavigate();
+  const bodyLockRef = useRef(0);
 
-  // react-query mutation 사용
-  const { mutate: deleteMutate } = useMutation({
+  // body 스크롤 잠금: 여러 모달 동시 오픈 대비 카운터로 처리
+  useEffect(() => {
+    const modalOpen = showDeleteModal || !!modalImg;
+    const body = document.body;
+    if (modalOpen) {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      body.dataset.modalOpenCount = String(prev + 1);
+      if (prev === 0) {
+        // 첫 모달 오픈 시 overflow 숨김 및 현재 스크롤 위치 보관
+        body.dataset.prevOverflow = body.style.overflow || '';
+        body.dataset.prevScrollY = String(window.scrollY || 0);
+        body.style.overflow = 'hidden';
+      }
+      bodyLockRef.current = Number(body.dataset.modalOpenCount);
+    } else {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      const next = Math.max(0, prev - 1);
+      body.dataset.modalOpenCount = String(next);
+      if (next === 0) {
+        // 마지막 모달 닫힌 경우 복구
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+        bodyLockRef.current = 0;
+      } else {
+        bodyLockRef.current = next;
+      }
+    }
+    return () => {
+      // 컴포넌트 언마운트 시 안전 복구
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      if (prev <= 1) {
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+      } else {
+        body.dataset.modalOpenCount = String(prev - 1);
+      }
+    };
+  }, [showDeleteModal, modalImg]);
+
+  // react-query mutation 사용: 전역 성공/실패 메시지는 여기서 처리하지 않고 호출 시 옵션으로 처리
+  const mutation = useMutation({
     mutationFn: (reviewId: number) => deleteReview(reviewId),
-    onSuccess: () => {
-      onToast('리뷰가 삭제되었습니다');
-      // TODO: 리뷰 삭제 후 목록 갱신 필요 (부모에서 refetch 등)
-    },
-    onError: () => {
-      onToast('삭제에 실패했습니다');
-    },
   });
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -58,7 +112,22 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
   const handleDeleteConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(false);
-    deleteMutate(item.reviewId);
+    // 낙관적 제거: 부모에 먼저 제거 요청
+    try {
+      onRemoveOptimistic && onRemoveOptimistic(item.reviewId);
+    } catch (err) {
+      console.warn('onRemoveOptimistic error', err);
+    }
+    // 서버 삭제 호출, 실패 시 복구
+    mutation.mutate(item.reviewId, {
+      onSuccess: () => {
+        onToast('리뷰가 삭제되었습니다');
+      },
+      onError: () => {
+        onRestore && onRestore();
+        onToast('삭제에 실패했습니다');
+      },
+    });
   };
 
   const handleDeleteCancel = (e: React.MouseEvent) => {
@@ -83,7 +152,7 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
         <FaTrash size={25} />
       </button>
       <div css={cardTitleRow}>
-        <span css={cardTitle}>{item.name}</span>
+        <span css={cardTitle}>{item.shelterName ?? item.name ?? `쉼터 #${item.shelterId}`}</span>
       </div>
       <div css={cardBottomRow}>
         <div css={cardInfo}>
@@ -120,39 +189,64 @@ const ReviewListCard = ({ item, onClick, onToast }: ReviewListCardProps) => {
           수정
         </button>
       </div>
-      {/* 삭제 모달 */}
-      {showDeleteModal && (
-        <div css={modalOverlay} onClick={(e) => e.stopPropagation()}>
-          <div css={modalBox}>
-            <div css={modalText}>리뷰를 삭제하시겠습니까?</div>
-            <div css={modalButtons}>
-              <button css={modalBtn} onClick={handleDeleteConfirm}>
-                예
-              </button>
-              <button css={modalBtn} onClick={handleDeleteCancel}>
-                아니요
+      {/* 삭제 모달 (portal로 body에 렌더) */}
+      {showDeleteModal &&
+        createPortal(
+          <div
+            css={modalOverlay}
+            onClick={() => {
+              // overlay 클릭 시 모달 닫음
+              setShowDeleteModal(false);
+            }}
+          >
+            <div
+              css={modalBox}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <div css={modalText}>리뷰를 삭제하시겠습니까?</div>
+              <div css={modalButtons}>
+                <button css={modalBtn} onClick={handleDeleteConfirm}>
+                  예
+                </button>
+                <button css={modalBtn} onClick={handleDeleteCancel}>
+                  아니요
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* 이미지 확대 모달 (portal) */}
+      {modalImg &&
+        createPortal(
+          <div
+            css={modalOverlay}
+            onClick={() => {
+              setModalImg(null);
+            }}
+          >
+            <div
+              css={modalContent}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <img
+                src={modalImg}
+                alt="리뷰 이미지 확대"
+                css={modalImgStyle}
+                onError={handleImageError}
+              />
+              <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
+                닫기
               </button>
             </div>
-          </div>
-        </div>
-      )}
-      {/* 이미지 확대 모달 */}
-      {modalImg && (
-        <div css={modalOverlay} onClick={() => setModalImg(null)}>
-          <div css={modalContent} onClick={(e) => e.stopPropagation()}>
-            <img
-              src={modalImg}
-              alt="리뷰 이미지 확대"
-              css={modalImgStyle}
-              onError={handleImageError}
-            />
-            <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
-      {/* ToastMessage는 부모에서 관리 */}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };
@@ -178,6 +272,15 @@ const cardTitleRow = css`
 
 const cardTitle = css`
   ${theme.typography.myr2};
+  /* 한 줄로 자르고 말줄임 표시 */
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0; /* flex 컨테이너 내부에서 ellipsis 동작을 위해 필요 */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* 왼쪽 정렬 명시 */
+  text-align: left;
 `;
 
 const cardBottomRow = css`

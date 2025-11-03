@@ -36,7 +36,8 @@ interface ShelterDetailInfoProps {
   averageRating: number;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onGuideStart: () => void;
+  // 상세에서도 targetShelter을 state로 전달하도록 시그니처 통일 (옵셔널)
+  onGuideStart?: (targetShelter?: ShelterDetail) => void;
   handleImageError: (e: React.SyntheticEvent<HTMLImageElement>) => void;
 }
 
@@ -136,14 +137,13 @@ const ShelterDetailInfo = ({
   const handleStartGuide = () => {
     console.log('안내 시작 버튼 클릭됨'); // 디버그
     try {
-      // 컴포넌트 외부에서 처리할 로직이 있으면 호출
-      onGuideStart && onGuideStart();
+      // 부모가 콜백을 받는다면 선택된 쉼터 객체를 전달
+      onGuideStart && onGuideStart(shelter);
     } catch (err) {
       console.warn('onGuideStart 호출 중 오류', err);
     }
-    // 항상 라우팅도 수행하여 FindSheltersPage와 동일 동작 보장
-    // shelterId를 쿼리로 전달 (필요에 따라 state로 변경 가능)
-    navigate(`/guide?shelterId=${shelter.shelterId}`);
+    // ShelterInfoCard와 동일하게 targetShelter를 state로 넘겨 가이드 페이지로 이동
+    navigate('/guide', { state: { targetShelter: shelter } });
   };
 
   return (
@@ -224,7 +224,7 @@ const title = css`
   text-align: center;
   margin-top: 16px;
   ${theme.typography.detail1};
-  color: ${theme.colors.button.blue};
+  color: ${theme.colors.text.blue};
 `;
 
 const topSection = css`

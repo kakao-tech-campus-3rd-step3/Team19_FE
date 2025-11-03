@@ -17,19 +17,25 @@ const MapCache = {
     if (this.sdkReady) return this.sdkReady;
     this.sdkReady = new Promise((resolve) => {
       const start = Date.now();
-      const check = () => {
+      // 즉시 체크
+      if ((window as any).Tmapv3 && (window as any).Tmapv3.Map) {
+        resolve(true);
+        return;
+      }
+      // 빠른 폴링(50ms)로 변경 — 이전의 느린 쓰로틀 제거
+      const intervalMs = 50;
+      const id = setInterval(() => {
         if ((window as any).Tmapv3 && (window as any).Tmapv3.Map) {
+          clearInterval(id);
           resolve(true);
           return;
         }
         if (Date.now() - start > timeoutMs) {
+          clearInterval(id);
           console.warn('Tmap SDK 로드 타임아웃');
           resolve(false);
-          return;
         }
-        setTimeout(check, 300);
-      };
-      check();
+      }, intervalMs);
     });
     return this.sdkReady;
   },

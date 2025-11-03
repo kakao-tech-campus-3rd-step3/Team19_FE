@@ -2,6 +2,7 @@
 import theme from '@/styles/theme';
 import { css } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // TODO: 좋아요 버튼 클릭 시 나오는 토스트 메시지 버그 수정
 const DISPLAY_MS = 2000;
@@ -15,6 +16,26 @@ const ToastMessage = ({ message }: { message: string }) => {
   const queueRef = useRef<string[]>([]);
   const displayTimerRef = useRef<number | null>(null);
   const exitTimerRef = useRef<number | null>(null);
+
+  // portal container
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // mount: create container and append to body
+    const el = document.createElement('div');
+    containerRef.current = el;
+    document.body.appendChild(el);
+    return () => {
+      // unmount: cleanup timers and container
+      clearTimers();
+      queueRef.current = [];
+      if (containerRef.current && containerRef.current.parentNode) {
+        containerRef.current.parentNode.removeChild(containerRef.current);
+      }
+      containerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 새 메시지가 들어오면 큐에 넣고, 현재 표시중이 아니면 재생
   useEffect(() => {
@@ -68,7 +89,7 @@ const ToastMessage = ({ message }: { message: string }) => {
     }, DISPLAY_MS);
   };
 
-  // 언마운트 시 타이머 정리
+  // 언마운트 시 타이머 정리 (container cleanup은 위 useEffect의 return에서 처리)
   useEffect(() => {
     return () => {
       clearTimers();
@@ -76,9 +97,10 @@ const ToastMessage = ({ message }: { message: string }) => {
     };
   }, []);
 
-  if (!visible || !current) return null;
+  if (!visible || !current || !containerRef.current) return null;
 
-  return <div css={[toastStyle, exiting ? toastExitStyle : null]}>{current}</div>;
+  const toastElement = <div css={[toastStyle, exiting ? toastExitStyle : null]}>{current}</div>;
+  return createPortal(toastElement, containerRef.current);
 };
 
 export default ToastMessage;
@@ -102,6 +124,9 @@ const toastStyle = css`
   transition:
     opacity ${EXIT_MS}ms ease,
     transform ${EXIT_MS}ms ease;
+
+  z-index: 2147483647; /* 최상단으로 고정 */
+  pointer-events: auto;
 `;
 
 const toastExitStyle = css`

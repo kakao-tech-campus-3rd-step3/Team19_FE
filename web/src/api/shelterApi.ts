@@ -14,7 +14,37 @@ export async function getNearbyShelters({
     String(longitude),
   )}`;
   const res = await apiClient.get(`/api/shelters/nearby${qs}`);
-  // apiClient가 axios면 res.data, fetch-wrapper면 res일 수 있으므로 둘 다 지원
+  return res && (res as any).data ? (res as any).data : res;
+}
+
+// 바운딩 박스 기반 쉼터/클러스터 조회
+export async function getSheltersByBbox({
+  minLat,
+  minLng,
+  maxLat,
+  maxLng,
+  zoom,
+  page,
+  size,
+}: {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+  zoom: number;
+  page?: number;
+  size?: number;
+}) {
+  const params = new URLSearchParams();
+  params.set('minLat', String(minLat));
+  params.set('minLng', String(minLng));
+  params.set('maxLat', String(maxLat));
+  params.set('maxLng', String(maxLng));
+  params.set('zoom', String(zoom));
+  if (typeof page !== 'undefined') params.set('page', String(page));
+  if (typeof size !== 'undefined') params.set('size', String(size));
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  const res = await apiClient.get(`/api/shelters${qs}`);
   return res && (res as any).data ? (res as any).data : res;
 }
 

@@ -19,6 +19,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import AuthPage from './pages/AuthPage';
 import ScrollToTop from './components/ScrollToTop';
 import MapCache from '@/lib/MapCache';
+import { tryReissueTokensSilently } from './api/client';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {

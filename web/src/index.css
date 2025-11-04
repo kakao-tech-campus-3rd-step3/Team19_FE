@@ -63,3 +63,82 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* --- 폰트 기본값 (Nanum Gothic을 기본으로 사용) --- */
+html,
+body,
+#root {
+  font-family: 'Nanum Gothic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Nanum Gothic 유틸 클래스 */
+.nanum-gothic-regular {
+  font-family: 'Nanum Gothic', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+.nanum-gothic-bold {
+  font-family: 'Nanum Gothic', sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+.nanum-gothic-extrabold {
+  font-family: 'Nanum Gothic', sans-serif;
+  font-weight: 800;
+  font-style: normal;
+}
+
+/* Hahmlet (variable) 유틸 클래스: 필요 weight만 사용하세요 */
+.hahmlet-100 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 100;
+  font-optical-sizing: auto;
+}
+.hahmlet-200 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 200;
+  font-optical-sizing: auto;
+}
+.hahmlet-300 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 300;
+  font-optical-sizing: auto;
+}
+.hahmlet-400 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 400;
+  font-optical-sizing: auto;
+}
+.hahmlet-500 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 500;
+  font-optical-sizing: auto;
+}
+.hahmlet-600 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 600;
+  font-optical-sizing: auto;
+}
+.hahmlet-700 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 700;
+  font-optical-sizing: auto;
+}
+.hahmlet-800 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 800;
+  font-optical-sizing: auto;
+}
+.hahmlet-900 {
+  font-family: 'Hahmlet', serif;
+  font-weight: 900;
+  font-optical-sizing: auto;
+}
+
+/* 예: Hahmlet을 제목에 적용 */
+.hahmlet-heading {
+  font-family: 'Hahmlet', serif;
+  font-weight: 600;
+}

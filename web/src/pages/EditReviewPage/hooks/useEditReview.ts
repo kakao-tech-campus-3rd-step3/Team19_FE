@@ -68,10 +68,11 @@ export const useEditReview = () => {
       rating?: number;
       photoUrl?: string;
     }) => {
+      // photoUrl이 undefined/nullable이면 빈 문자열로 보냄
       return await patchReview(params.reviewId, {
         content: params.content,
         rating: params.rating,
-        photoUrl: params.photoUrl,
+        photoUrl: params.photoUrl ?? '',
       });
     },
     onError: (error: any) => {
@@ -94,13 +95,14 @@ export const useEditReview = () => {
       reviewId,
       content,
       rating,
-      photoUrl,
+      // undefined/null 방지: 항상 문자열로 전달
+      photoUrl: photoUrl ?? '',
     });
   };
 
   // 사진 삭제 버튼 클릭
   const handleRemoveImage = () => {
-    setModalText('사진을 삭제하시겠습니까?');
+    setModalText('사진을\n삭제하시겠습니까?');
     setOnModalConfirm(() => () => {
       setShowImage(false);
       setPhotoUrl('');

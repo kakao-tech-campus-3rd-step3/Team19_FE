@@ -61,7 +61,8 @@ export const useWriteReview = () => {
   // 저장 버튼 클릭
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setModalText('리뷰를 등록하시겠습니까?');
+    // 줄바꿈 포함
+    setModalText('리뷰를\n등록하시겠습니까?');
     setOnModalConfirm(() => handleSaveConfirm);
     setOnModalCancel(() => () => setShowModal(false));
     setShowModal(true);
@@ -103,7 +104,8 @@ export const useWriteReview = () => {
   const handleAddImageClick = (e: React.MouseEvent<HTMLLabelElement>) => {
     if (showImage && photoUrl) {
       e.preventDefault();
-      setToastMessage('사진은 한 장만 첨부할 수 있습니다.');
+      // 줄바꿈 포함
+      setToastMessage('사진은 한 장만\n첨부할 수 있습니다.');
     }
   };
 

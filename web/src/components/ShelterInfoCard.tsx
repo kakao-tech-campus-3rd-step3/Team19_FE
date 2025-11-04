@@ -255,7 +255,7 @@ const infoCardStyle = ({ variant }: { variant: 'home' | 'find' }) => css`
     : css`
         position: relative;
         width: 100%;
-        padding: 8px 12px;
+        padding: 4px 12px 12px 12px;
         box-sizing: border-box;
       `}
 `;

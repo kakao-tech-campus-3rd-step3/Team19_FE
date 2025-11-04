@@ -47,8 +47,8 @@ const raw = {
 
   // MyReview / EditReview
   myr1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },
-  myr2: { fontSize: '1.49rem', fontWeight: 800, lineHeight: '1.70rem' },
-  myr3: { fontSize: '1.20rem', fontWeight: 550, lineHeight: '1.51rem' },
+  myr2: { fontSize: '1.80rem', fontWeight: 700, lineHeight: '2.18rem' },
+  myr3: { fontSize: '1.30rem', fontWeight: 600, lineHeight: '1.61rem' },
   myr4: { fontSize: '2.02rem', fontWeight: 600, lineHeight: '2.23rem' },
   myr5: { fontSize: '1.49rem', fontWeight: 500, lineHeight: '1.80rem' },
 

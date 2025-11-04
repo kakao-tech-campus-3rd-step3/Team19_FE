@@ -149,7 +149,7 @@ const ReviewListCard = ({
     >
       {/* 휴지통 버튼 */}
       <button css={deleteBtn} onClick={handleDeleteClick}>
-        <FaTrash size={25} />
+        <FaTrash size={30} />
       </button>
       <div css={cardTitleRow}>
         <span css={cardTitle}>{item.shelterName ?? item.name ?? `쉼터 #${item.shelterId}`}</span>
@@ -288,6 +288,8 @@ const cardTitle = css`
   text-overflow: ellipsis;
   /* 왼쪽 정렬 명시 */
   text-align: left;
+  margin-top: 4px;
+  margin-bottom: 8px;
 `;
 
 const cardBottomRow = css`
@@ -318,7 +320,7 @@ const cardInfo = css`
 const cardRating = css`
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
 `;
 
 const ratingNumber = css`
@@ -336,7 +338,8 @@ const starsWrapper = css`
 `;
 
 const filledStar = css`
-  color: #f2d321ff;
+  color: #ffd900ff;
+  shadow: 1px 1px 2px #bfa800ff;
   ${theme.typography.myr3};
 `;
 
@@ -351,6 +354,7 @@ const cardContent = css`
   padding-left: 4px;
   text-align: left;
   color: #3c3a3aff;
+  margin-bottom: 8px;
 `;
 
 const deleteBtn = css`
@@ -370,7 +374,7 @@ const deleteBtn = css`
 const editBtnWrapper = css`
   display: flex;
   justify-content: flex-end;
-  padding: 0 16px 8px 16px;
+  padding: 0 8px 8px 16px;
 `;
 
 const editBtn = css`
@@ -395,8 +399,8 @@ const editMetaWrapper = css`
 const editDate = css`
   margin-top: 4px;
   padding-left: 4px;
-  font-size: 1.1rem;
-  color: #888;
+  font-size: 1.3rem;
+  color: #7c7a7aff;
 `;
 
 const modalOverlay = css`

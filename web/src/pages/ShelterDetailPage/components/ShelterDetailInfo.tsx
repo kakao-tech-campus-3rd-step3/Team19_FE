@@ -505,7 +505,7 @@ const hoursDetailRow = css`
 
 /* 운영 상태 색상 */
 const openStatus = css`
-  color: #1da316ff; /* 녹색: 운영중 */
+  color: #000000ff; /* 검은색: 운영중 */
   ${theme.typography.detail3};
   font-weight: 800;
 `;

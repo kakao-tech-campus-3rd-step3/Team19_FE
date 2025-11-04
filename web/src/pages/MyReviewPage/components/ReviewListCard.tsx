@@ -167,7 +167,7 @@ const ReviewListCard = ({
             </span>
           </div>
           <div css={cardContent}>{item.content}</div>
-          <div css={cardDate}>작성일: {new Date(item.createdAt).toLocaleDateString()}</div>
+          {/* 리뷰 이미지 (있을 때만 노출) */}
           {item.photoUrl && item.photoUrl.trim() !== '' && (
             <img
               src={item.photoUrl}
@@ -183,11 +183,14 @@ const ReviewListCard = ({
           )}
         </div>
       </div>
-      {/* 수정 버튼 */}
-      <div css={editBtnWrapper}>
-        <button css={editBtn} onClick={handleEditClick}>
-          수정
-        </button>
+      {/* 작성일 + 수정 버튼 영역 */}
+      <div css={editMetaWrapper} onClick={(e) => e.stopPropagation()}>
+        <div css={editDate}>작성일: {new Date(item.createdAt).toLocaleDateString()}</div>
+        <div css={editBtnWrapper}>
+          <button css={editBtn} onClick={handleEditClick}>
+            수정
+          </button>
+        </div>
       </div>
       {/* 삭제 모달 (portal로 body에 렌더) */}
       {showDeleteModal &&
@@ -350,13 +353,6 @@ const cardContent = css`
   color: #3c3a3aff;
 `;
 
-const cardDate = css`
-  margin-top: 4px;
-  padding-left: 4px;
-  font-size: 1rem;
-  color: #888;
-`;
-
 const deleteBtn = css`
   position: absolute;
   top: 8px;
@@ -385,6 +381,22 @@ const editBtn = css`
   padding: 4px 12px;
   ${theme.typography.myr2};
   cursor: pointer;
+`;
+
+/* 작성일 + 버튼을 가로 정렬하는 wrapper */
+const editMetaWrapper = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px 8px 16px;
+`;
+
+const editDate = css`
+  margin-top: 4px;
+  padding-left: 4px;
+  font-size: 1.1rem;
+  color: #888;
 `;
 
 const modalOverlay = css`

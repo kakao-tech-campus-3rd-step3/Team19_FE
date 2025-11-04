@@ -7,6 +7,8 @@ declare global {
     Tmapv3: any; // 전역 TMAP SDK 객체 선언
     AndroidBridge?: {
       clearCookies: () => void;
+      speakText: (text: string) => void;
+      stopSpeaking: () => void;
     };
   }
 

@@ -15,11 +15,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.webkit.JavascriptInterface
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
     // 나중에 웹뷰를 가리킬 변수를 선언합니다.
     private lateinit var webView: WebView
+    
+    // TTS(Text-to-Speech) 객체
+    private var textToSpeech: TextToSpeech? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,8 +49,18 @@ class MainActivity : AppCompatActivity() {
         // 2-3. HTTPS 혼합 콘텐츠 허용 (필요 시)
         webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-        // 2-4. JavaScript 브릿지 추가 (웹에서 쿠키 삭제를 위해)
+        // 2-4. JavaScript 브릿지 추가 (웹에서 쿠키 삭제 및 TTS를 위해)
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidBridge")
+        
+        // 2-5. TTS(Text-to-Speech) 초기화
+        textToSpeech = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = textToSpeech?.setLanguage(Locale.KOREAN)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    android.util.Log.w("MainActivity", "한국어 TTS가 지원되지 않습니다.")
+                }
+            }
+        }
 
         // 3. 웹뷰가 새 창을 열지 않고 현재 창에서 페이지를 로드하도록 설정합니다.
         webView.webViewClient = WebViewClient()
@@ -334,11 +349,22 @@ class MainActivity : AppCompatActivity() {
         
         dialog.show()
     }
+    
+    // TTS 정리 (액티비티 종료 시)
+    override fun onDestroy() {
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
+        super.onDestroy()
+    }
+    
+    // WebAppInterface에서 TTS 접근을 위한 getter
+    fun getTextToSpeech(): TextToSpeech? = textToSpeech
 }
 
 /**
  * JavaScript에서 호출할 수 있는 네이티브 함수를 제공하는 인터페이스
- * 웹에서 로그아웃 시 WebView의 쿠키를 삭제하기 위해 사용됩니다.
+ * 웹에서 로그아웃 시 WebView의 쿠키를 삭제하고, TTS를 사용하기 위해 사용됩니다.
  */
 class WebAppInterface(private val activity: MainActivity) {
     
@@ -352,6 +378,35 @@ class WebAppInterface(private val activity: MainActivity) {
             val cookieManager = CookieManager.getInstance()
             cookieManager.removeAllCookies(null)
             cookieManager.flush()
+        }
+    }
+    
+    /**
+     * 텍스트를 음성으로 변환하여 읽어줍니다.
+     * JavaScript에서 AndroidBridge.speakText(text)로 호출할 수 있습니다.
+     * @param text 읽어줄 텍스트
+     */
+    @JavascriptInterface
+    fun speakText(text: String) {
+        activity.runOnUiThread {
+            val tts = activity.getTextToSpeech()
+            tts?.let {
+                // 이전 음성 중단
+                it.stop()
+                // 새 음성 재생 (QUEUE_FLUSH: 즉시 재생, 기존 큐 무시)
+                it.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+            }
+        }
+    }
+    
+    /**
+     * 현재 재생 중인 음성을 중단합니다.
+     * JavaScript에서 AndroidBridge.stopSpeaking()로 호출할 수 있습니다.
+     */
+    @JavascriptInterface
+    fun stopSpeaking() {
+        activity.runOnUiThread {
+            activity.getTextToSpeech()?.stop()
         }
     }
 }

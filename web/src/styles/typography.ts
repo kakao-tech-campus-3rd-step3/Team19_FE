@@ -42,8 +42,8 @@ const raw = {
 
   // WishList
   wish1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },
-  wish2: { fontSize: '1.60rem', fontWeight: 800, lineHeight: '1.98rem' },
-  wish3: { fontSize: '1.20rem', fontWeight: 600, lineHeight: '1.51rem' },
+  wish2: { fontSize: '1.80rem', fontWeight: 800, lineHeight: '2.18rem' },
+  wish3: { fontSize: '1.25rem', fontWeight: 600, lineHeight: '1.56rem' },
 
   // MyReview / EditReview
   myr1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },

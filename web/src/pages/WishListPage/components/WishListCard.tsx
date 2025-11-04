@@ -3,7 +3,6 @@ import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
-import { formatOperatingHours } from '@/utils/date';
 import { useState, useEffect, useRef } from 'react';
 import ToastMessage from '@/components/ToastMessage';
 import { useMutation } from '@tanstack/react-query';
@@ -141,9 +140,9 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
         <span css={cardTitle}>{item.name}</span>
         <span onClick={handleHeartClick} style={{ cursor: 'pointer' }}>
           {isFavorite ? (
-            <FaHeart color="red" size={30} css={cardHeart} />
+            <FaHeart color="red" css={cardHeart} />
           ) : (
-            <FaHeart color="#bbb" size={30} css={cardHeart} />
+            <FaHeart color="#bbb" css={cardHeart} />
           )}
         </span>
       </div>
@@ -155,6 +154,7 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
           onError={handleImageError}
         />
         <div css={cardInfo}>
+          <div css={cardinfostyle}>거리: {item.distance}</div>
           <div css={cardRating}>
             별점: <span css={ratingNumber}>{displayRating}</span>
             <span css={starsWrapper}>
@@ -165,13 +165,7 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
               ))}
             </span>
           </div>
-          <div css={cardinfostyle}>
-            거리: {item.distance}
-            <br />
-            운영시간: {formatOperatingHours(item.operatingHours)}
-            <br />
-            주소: {item.address}
-          </div>
+          <div css={cardinfostyle}>주소: {item.address}</div>
         </div>
       </div>
 
@@ -208,9 +202,8 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
 };
 
 const card = css`
-  background: #e0e0e0;
+  background: #dcdcdcbf;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   width: 100%;
   display: flex;
@@ -242,7 +235,12 @@ const cardTitle = css`
 `;
 
 const cardHeart = css`
-  font-size: ${theme.typography.wish1};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 아이콘 크기 조절: 원하면 3rem -> 3.5rem 등으로 변경 */
+  width: 2rem;
+  height: 2rem;
   padding-bottom: 4px;
 `;
 
@@ -273,7 +271,7 @@ const cardInfo = css`
 const cardRating = css`
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
   ${theme.typography.wish3};
   color: ${theme.colors.text.gray500};
 `;

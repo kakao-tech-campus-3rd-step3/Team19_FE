@@ -199,7 +199,7 @@ const titleRow = css`
   align-items: center;
   gap: 8px;
   margin-top: 16px;
-  padding: 4% 5%;
+  padding-bottom: 24px;
 `;
 
 const emoji = css`

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getNearbyShelters } from '@/api/shelterApi';
+import { getWishList } from '@/api/wishApi';
 
 export type Shelter = {
   shelterId: number;
@@ -31,6 +32,25 @@ export const useShelters = () => {
   const [, setPage] = useState<number>(1);
   const PAGE_SIZE = 20; // 필요 시 API 페이지 크기에 맞게 변경
 
+  // 사용자의 찜 목록을 가져와서 favoriteIds에 설정
+  const fetchWishList = useCallback(async () => {
+    try {
+      const wishList = await getWishList();
+      // 응답 형태: {items: [...]} 또는 [...] 또는 {data: [...]}
+      const list = Array.isArray(wishList) ? wishList : (wishList?.items ?? wishList?.data ?? []);
+      const ids = list.map((item: any) => Number(item.shelterId));
+      setFavoriteIds(ids);
+    } catch (err: any) {
+      // 로그인하지 않은 경우(401, 403) 빈 배열로 설정
+      if (err && (err.status === 401 || err.status === 403)) {
+        setFavoriteIds([]);
+      } else {
+        console.error('[useShelters] fetchWishList error', err);
+        setFavoriteIds([]);
+      }
+    }
+  }, []);
+
   const fetchNearby = useCallback(
     async (latitude: number, longitude: number, pageParam = 1, append = false) => {
       setIsLoading(true);
@@ -54,6 +74,9 @@ export const useShelters = () => {
         // 간단한 hasMore 판단: 반환 항목이 페이지 사이즈보다 작으면 끝
         setHasMoreItems(Array.isArray(list) ? list.length >= PAGE_SIZE : false);
         setPage(pageParam);
+
+        // 쉼터 목록을 가져온 후 찜 목록도 가져와서 동기화
+        await fetchWishList();
       } catch (err) {
         console.error('[useShelters] fetchNearby error', err);
         setError(err);
@@ -64,7 +87,7 @@ export const useShelters = () => {
         setIsFetchingMore(false);
       }
     },
-    [],
+    [fetchWishList],
   );
 
   useEffect(() => {

@@ -1,20 +1,26 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ShelterList from './components/ShelterList';
 import ToastMessage from '@/components/ToastMessage';
 import emptyShelterImage from '@/assets/images/empty-shelter2.gif';
 import { useShelters } from './hooks/useShelters';
 import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';
+import { checkLoginStatus } from '@/api/userApi';
+import { useNavigate } from 'react-router-dom';
 
 const FindSheltersPage = () => {
   const [hasScroll, setHasScroll] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const navigate = useNavigate();
   const {
     shelters, // 전체 목록 (빈 상태 판단용)
     visibleShelters, // 화면에 실제로 렌더할 항목
     favoriteIds,
     toastMessage,
+    setToastMessage,
     isLoading,
     error,
     isFetchingMore,
@@ -24,15 +30,34 @@ const FindSheltersPage = () => {
 
   // API 호출(toggleWish) -> 성공 시 훅의 로컬 토글 호출
   const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {
+    // ==== 로그인 검증 추가 ====
+    const isLoggedIn = await checkLoginStatus();
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
     try {
       await toggleWish({ shelterId, isFavorite });
       // 로컬 UI 즉시 반영
       handleToggleFavorite(shelterId);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.status === 403 || err?.status === 401) {
+        setShowLoginModal(true);
+        return;
+      }
       console.error('[FindSheltersPage] toggleWish error', err);
-      // 실패 시 사용자 알림
-      // ToastMessage는 상단에서 toastMessage로 보여주므로 set을 원하면 훅에 setToastMessage 추가 사용
+      // 기타 에러 사용자 알림
+      setToastMessage && setToastMessage('요청이 실패했습니다.');
     }
+  };
+
+  const handleLoginConfirm = () => {
+    setShowLoginModal(false);
+    navigate('/auth');
+  };
+
+  const handleLoginCancel = () => {
+    setShowLoginModal(false);
   };
 
   useEffect(
@@ -85,6 +110,29 @@ const FindSheltersPage = () => {
           <img src={emptyShelterImage} alt="이미지를 불러올 수 없습니다" css={emptyImageStyle} />
         </div>
       )}
+
+      {/* 로그인 필요 모달 */}
+      {showLoginModal &&
+        createPortal(
+          <div css={modalOverlay} onClick={handleLoginCancel}>
+            <div css={modalBox} onClick={(e) => e.stopPropagation()}>
+              <div css={modalText}>
+                로그인이 필요한
+                <br />
+                기능입니다
+              </div>
+              <div css={modalButtons}>
+                <button css={modalBtn} onClick={handleLoginConfirm}>
+                  로그인
+                </button>
+                <button css={modalBtn} onClick={handleLoginCancel}>
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 };
@@ -126,4 +174,48 @@ const emptyImageStyle = css`
 const emptyTextStyle = css`
   ${theme.typography.text1};
   color: ${theme.colors.text.white};
+`;
+
+const modalOverlay = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const modalBox = css`
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  max-width: 80%;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const modalText = css`
+  ${theme.typography.modal1};
+  color: #222;
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+const modalButtons = css`
+  display: flex;
+  gap: 18px;
+`;
+
+const modalBtn = css`
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: background 0.18s;
 `;

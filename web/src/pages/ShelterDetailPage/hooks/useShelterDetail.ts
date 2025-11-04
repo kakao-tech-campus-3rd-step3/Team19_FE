@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getShelterDetail, getShelterReviews } from '@/api/shelterApi';
+import { checkIfShelterIsWished } from '@/api/wishApi';
 
 export const useShelterDetail = (shelterIdParam?: string | number) => {
   const id = Number(shelterIdParam ?? 0);
@@ -87,13 +88,18 @@ export const useShelterDetail = (shelterIdParam?: string | number) => {
       fetchDetail();
     }
 
+    // [추가] 상세 진입 시 해당 쉼터의 찜 여부도 동기화
+    checkIfShelterIsWished(id).then((result) => {
+      if (mounted) setIsFavorite(result);
+    });
+
     // 리뷰는 상세 로드 후 또는 별도로 호출
     fetchReviews();
 
     return () => {
       mounted = false;
     };
-  }, [fetchDetail, fetchReviews]);
+  }, [fetchDetail, fetchReviews, id]);
 
   const handleMore = () => setVisibleCount((v) => v + 3);
 

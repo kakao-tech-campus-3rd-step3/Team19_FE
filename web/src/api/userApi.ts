@@ -87,3 +87,20 @@ export async function patchPassword({
 }
 
 //TODO: 사용자 프로필 사진 수정/사용자 닉네임 수정 -> 필요하면 추가할 것
+
+// 로그인 여부 확인 (비동기)
+export async function checkLoginStatus(): Promise<boolean> {
+  try {
+    await getMyProfile();
+    return true;
+  } catch (err: any) {
+    // 401/403: 명확히 로그아웃 상태
+    if (err && (err.status === 401 || err.status === 403)) {
+      return false;
+    }
+    // 그 외 에러(500 등)도 로그인 상태 확인 불가이므로 false 반환
+    // 로그인 체크는 "확실히 로그인 된 경우만 true"를 반환하는 것이 안전
+    console.warn('[checkLoginStatus] 서버 에러로 로그인 상태 확인 불가:', err);
+    return false;
+  }
+}

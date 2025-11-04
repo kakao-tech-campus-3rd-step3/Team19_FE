@@ -18,8 +18,6 @@ import ErrorPage from './pages/ErrorPage';
 import { ErrorBoundary } from 'react-error-boundary';
 import AuthPage from './pages/AuthPage';
 import ScrollToTop from './components/ScrollToTop';
-import MapCache from '@/lib/MapCache';
-import { tryReissueTokensSilently } from './api/client';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
@@ -36,13 +34,6 @@ function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void
 const App = () => {
   const location = useLocation();
 
-  // 앱 시작 시 선제적으로 토큰 재발급 시도 (7일 내 로그인 유지)
-  useEffect(() => {
-    tryReissueTokensSilently().catch(() => {
-      // 실패해도 조용히 처리 (이미 함수 내부에서 처리됨)
-    });
-  }, []); // 마운트 시 한 번만 실행
-
   // 라우트 변경 시 스크롤 맨 위로 이동
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -50,69 +41,6 @@ const App = () => {
 
   // GuidePage에서는 NavBar를 자체적으로 렌더링하므로 여기서는 제외
   const shouldShowNavBar = location.pathname !== '/guide';
-
-  // 앱 시작 시 Tmap SDK 로드 및 백그라운드 맵 초기화 (한 번만)
-  useEffect(() => {
-    (async () => {
-      try {
-        const sdkOk = await MapCache.ensureSDKReady(20000);
-        if (!sdkOk) return;
-
-        // 사용자 위치 얻기 시도 (타임아웃 3000ms). 실패 시 null 반환
-        const getUserCoords = async (): Promise<{ lat: number; lng: number } | null> => {
-          if (!navigator.geolocation) return null;
-          return new Promise((resolve) => {
-            let resolved = false;
-            const onSuccess = (pos: GeolocationPosition) => {
-              if (resolved) return;
-              resolved = true;
-              resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-            };
-            const onError = () => {
-              if (resolved) return;
-              resolved = true;
-              resolve(null);
-            };
-            navigator.geolocation.getCurrentPosition(onSuccess, onError, { timeout: 3000 });
-            // 안전 타임아웃 (브라우저가 콜백을 안줄 경우 대비)
-            setTimeout(() => {
-              if (resolved) return;
-              resolved = true;
-              resolve(null);
-            }, 3200);
-          });
-        };
-
-        const coords = await getUserCoords();
-        const root = document.getElementById('map-root') ?? MapCache.getPersistentRoot();
-
-        // 생성 시 가능한 경우 사용자의 좌표로 생성, 아니면 서울 폴백
-        const centerLat = coords?.lat ?? 37.5665;
-        const centerLng = coords?.lng ?? 126.978;
-
-        await MapCache.ensureMap(root as HTMLElement, () => {
-          return new (window as any).Tmapv3.Map(root as HTMLElement, {
-            center: new (window as any).Tmapv3.LatLng(centerLat, centerLng),
-            width: '1px',
-            height: '1px',
-            zoom: 13,
-            zoomControl: false,
-            scrollwheel: false,
-          });
-        });
-
-        // 이미 맵이 만들어진 후 동적으로 위치 보정이 필요하면 강제 setCenter
-        try {
-          const map = MapCache.map as any;
-          if (map && coords) {
-            map.setCenter(new (window as any).Tmapv3.LatLng(coords.lat, coords.lng));
-          }
-        } catch {}
-      } catch (err) {
-        console.warn('앱 레벨 맵 초기화 실패:', err);
-      }
-    })();
-  }, []);
 
   return (
     <>

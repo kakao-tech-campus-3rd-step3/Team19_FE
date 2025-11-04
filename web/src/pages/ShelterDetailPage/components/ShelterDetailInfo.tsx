@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { useRef, useLayoutEffect } from 'react';
 import theme from '@/styles/theme';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaUser } from 'react-icons/fa';
 import { MdAcUnit } from 'react-icons/md';
 import { GiWindTurbine } from 'react-icons/gi';
 import NoImage from '@/assets/images/NoImage.png';
@@ -187,15 +187,24 @@ const ShelterDetailInfo = ({
               ))}
             </span>
           </div>
-          <b css={infoBold}>주소: {shelter.address}</b>
+          <b css={infoBold}>- 주소: {shelter.address}</b>
+          <b css={infoBold}>- 운영시간</b>
           <b css={infoBold}>
-            평일 운영시간: {formatOperatingHours(shelter.operatingHours.weekday)}
+            {'\u00A0\u00A0'}평일: {formatOperatingHours(shelter.operatingHours.weekday)}
           </b>
           <b css={infoBold}>
-            주말 운영시간: {formatOperatingHours(shelter.operatingHours.weekend)}
+            {'\u00A0\u00A0'}주말: {formatOperatingHours(shelter.operatingHours.weekend)}
           </b>
-          <b css={infoBold}>수용 가능 인원: {shelter.capacity}명</b>
+          <b css={infoBold}>- 수용인원 및 냉방 설비 정보</b>
+          {/* 수용 인원 + 에어컨 + 선풍기 — 3열 그리드 */}
           <div css={equipmentGrid}>
+            <div css={equipmentItem} role="group" aria-label="수용 인원">
+              <div css={equipmentIcon} aria-hidden>
+                <FaUser size={28} color={theme.colors.text.blue} />
+              </div>
+              <div css={equipmentLabel}>수용 인원</div>
+              <div css={equipmentCount}>{shelter.capacity ?? 0}명</div>
+            </div>
             <div css={equipmentItem} role="group" aria-label="에어컨">
               <div css={equipmentIcon} aria-hidden>
                 <MdAcUnit size={28} color={theme.colors.text.blue} />
@@ -366,10 +375,11 @@ const infoBold = css`
 /* 냉방 장비 2열 레이아웃 */
 const equipmentGrid = css`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   width: 100%;
   margin-top: 8px;
+  align-items: start;
 `;
 
 const equipmentItem = css`

@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import android.webkit.JavascriptInterface
 import android.speech.tts.TextToSpeech
 import java.util.Locale
+import android.webkit.ValueCallback
 
 class MainActivity : AppCompatActivity() {
 
@@ -91,13 +92,21 @@ class MainActivity : AppCompatActivity() {
         // 뒤로 가기 버튼 콜백을 생성합니다.
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // 웹뷰가 뒤로 갈 페이지가 있다면, 웹페이지의 뒤로 가기를 실행합니다.
-                if (webView.canGoBack()) {
-                    webView.goBack()
-                } else {
-                    // 메인(루트) 상태에서는 종료 확인 다이얼로그를 보여주고,
-                    // 다이얼로그가 떠 있는 상태에서 한 번 더 뒤로가기를 누르면 종료합니다.
-                    showExitConfirmOrExit()
+                // 현재 경로가 메인페이지(`/`)인지 확인
+                webView.evaluateJavascript("window.location.pathname") { pathname ->
+                    val currentPath = pathname?.replace("\"", "") ?: ""
+                    
+                    // 메인페이지(`/`)이거나 히스토리가 없으면 종료 확인 다이얼로그 표시
+                    if (currentPath == "/" || !webView.canGoBack()) {
+                        runOnUiThread {
+                            showExitConfirmOrExit()
+                        }
+                    } else {
+                        // 다른 페이지에서는 WebView 뒤로가기
+                        runOnUiThread {
+                            webView.goBack()
+                        }
+                    }
                 }
             }
         }

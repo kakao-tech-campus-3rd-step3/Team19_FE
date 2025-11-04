@@ -105,6 +105,68 @@ export function clearStoredTokens() {
   }
 }
 
+/**
+ * WebView의 쿠키를 삭제합니다 (Android 앱에서만 동작)
+ * WebView JS 브릿지를 통해 네이티브 쿠키 관리자를 호출합니다.
+ */
+export function clearWebViewCookies() {
+  if (typeof window === 'undefined') return;
+  try {
+    if (window.AndroidBridge?.clearCookies) {
+      window.AndroidBridge.clearCookies();
+    }
+  } catch {
+    // 브릿지가 없거나 실패해도 조용히 처리
+  }
+}
+
+/**
+ * 앱 시작 시 선제적으로 토큰 재발급 시도
+ * refreshToken이 있거나 쿠키가 있으면 재발급을 시도하고, 실패해도 조용히 처리합니다.
+ * @returns 성공 여부 (boolean)
+ */
+export async function tryReissueTokensSilently(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  
+  const { refreshToken } = getStoredTokens();
+  
+  // refreshToken이 없고 쿠키도 없을 가능성이 높으면 시도하지 않음
+  // 하지만 쿠키는 확인할 수 없으므로, refreshToken이 없어도 쿠키 기반으로 시도
+  try {
+    const reissueHeaders = new Headers();
+    if (refreshToken) {
+      reissueHeaders.set('Authorization-Refresh', `Bearer ${refreshToken}`);
+    }
+    
+    const reissueRes = await fetch(`${BASE}/api/users/reissue`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: reissueHeaders,
+    });
+    
+    if (reissueRes.ok) {
+      // 재발급 성공 시 토큰 저장
+      try {
+        const txt = await reissueRes.text();
+        const json = txt ? JSON.parse(txt) : null;
+        if (json && (json.accessToken || json.refreshToken)) {
+          setStoredTokens({
+            accessToken: json.accessToken ?? null,
+            refreshToken: json.refreshToken ?? null,
+          });
+        }
+      } catch {
+        // 파싱 실패는 무시
+      }
+      return true;
+    }
+  } catch {
+    // 네트워크 에러 등은 조용히 무시
+  }
+  
+  return false;
+}
+
 async function fetchWithReissue(input: RequestInfo | URL, init: RequestInit = {}, retry = true) {
   try {
     // Authorization 헤더 주입: accessToken 보유 시

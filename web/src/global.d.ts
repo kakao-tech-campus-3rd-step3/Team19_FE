@@ -5,6 +5,11 @@ declare global {
   interface Window {
     kakao: any; // 전역 kakao 객체 선언
     Tmapv3: any; // 전역 TMAP SDK 객체 선언
+    AndroidBridge?: {
+      clearCookies: () => void;
+      speakText: (text: string) => void;
+      stopSpeaking: () => void;
+    };
   }
 
   // kakao 네임스페이스 타입 선언 (간단 버전)

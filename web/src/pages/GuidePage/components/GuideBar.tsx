@@ -11,16 +11,51 @@ export interface GuideBarProps {
 }
 
 export const GuideBar = ({ message, hasArrived, onArrivalConfirm, ttsEnabled }: GuideBarProps) => {
-  // Web Speech API로 안내 메시지 읽어주기
+  // 음성 안내 메시지 읽어주기 (Android 환경에서는 네이티브 TTS 우선 사용)
   useEffect(() => {
     if (!message || !ttsEnabled) return;
-    // 음성 합성 객체 생성
-    const utter = new window.SpeechSynthesisUtterance(message);
-    utter.lang = 'ko-KR'; // 한국어
-    window.speechSynthesis.cancel(); // 이전 음성 중단
-    window.speechSynthesis.speak(utter);
+
+    // Android 환경 감지 (AndroidBridge가 있으면 Android WebView)
+    const isAndroidWebView =
+      typeof window !== 'undefined' &&
+      window.AndroidBridge &&
+      typeof window.AndroidBridge.speakText === 'function';
+
+    // Android 네이티브 TTS 사용 가능 여부 확인
+    const isAndroidTTSAvailable = isAndroidWebView && window.AndroidBridge;
+
+    let cleanup: (() => void) | undefined;
+
+    if (isAndroidTTSAvailable && window.AndroidBridge) {
+      // Android 환경에서는 네이티브 TTS 우선 사용 (Web Speech API는 Android 13에서 불안정)
+      window.AndroidBridge.speakText(message);
+      cleanup = () => window.AndroidBridge?.stopSpeaking();
+    } else {
+      // 데스크톱 브라우저 등에서는 Web Speech API 사용
+      const isWebSpeechAvailable =
+        typeof window !== 'undefined' &&
+        'speechSynthesis' in window &&
+        'SpeechSynthesisUtterance' in window;
+
+      if (isWebSpeechAvailable) {
+        try {
+          // 생성자 체크를 더 엄격하게 (실제로 생성 가능한지 확인)
+          if (typeof window.SpeechSynthesisUtterance === 'function') {
+            const utter = new window.SpeechSynthesisUtterance(message);
+            utter.lang = 'ko-KR'; // 한국어
+            window.speechSynthesis.cancel(); // 이전 음성 중단
+            window.speechSynthesis.speak(utter);
+            cleanup = () => window.speechSynthesis.cancel();
+          }
+        } catch (error) {
+          // Web Speech API 실패 시 조용히 실패 (에러 로그만)
+          console.warn('Web Speech API 사용 실패:', error);
+        }
+      }
+    }
+
     // 언마운트 시 음성 중단
-    return () => window.speechSynthesis.cancel();
+    return cleanup;
   }, [message, ttsEnabled]);
 
   return (

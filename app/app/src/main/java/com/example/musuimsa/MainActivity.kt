@@ -9,15 +9,22 @@ import android.webkit.WebSettings
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.view.KeyEvent
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import android.webkit.JavascriptInterface
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
     // 나중에 웹뷰를 가리킬 변수를 선언합니다.
     private lateinit var webView: WebView
+    
+    // TTS(Text-to-Speech) 객체
+    private var textToSpeech: TextToSpeech? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +48,19 @@ class MainActivity : AppCompatActivity() {
         
         // 2-3. HTTPS 혼합 콘텐츠 허용 (필요 시)
         webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+        // 2-4. JavaScript 브릿지 추가 (웹에서 쿠키 삭제 및 TTS를 위해)
+        webView.addJavascriptInterface(WebAppInterface(this), "AndroidBridge")
+        
+        // 2-5. TTS(Text-to-Speech) 초기화
+        textToSpeech = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = textToSpeech?.setLanguage(Locale.KOREAN)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    android.util.Log.w("MainActivity", "한국어 TTS가 지원되지 않습니다.")
+                }
+            }
+        }
 
         // 3. 웹뷰가 새 창을 열지 않고 현재 창에서 페이지를 로드하도록 설정합니다.
         webView.webViewClient = WebViewClient()
@@ -75,15 +95,83 @@ class MainActivity : AppCompatActivity() {
                 if (webView.canGoBack()) {
                     webView.goBack()
                 } else {
-                    // 더 이상 뒤로 갈 페이지가 없으면, 앱을 종료합니다.
-                    // 이 콜백을 비활성화하고 기본 동작(앱 종료)을 실행하도록 합니다.
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
+                    // 메인(루트) 상태에서는 종료 확인 다이얼로그를 보여주고,
+                    // 다이얼로그가 떠 있는 상태에서 한 번 더 뒤로가기를 누르면 종료합니다.
+                    showExitConfirmOrExit()
                 }
             }
         }
         // 이 액티비티의 생명주기에 맞춰 콜백을 등록합니다.
         onBackPressedDispatcher.addCallback(this, callback)
+    }
+
+    private var exitDialog: androidx.appcompat.app.AlertDialog? = null
+
+    private fun showExitConfirmOrExit() {
+        // 다이얼로그가 이미 떠 있다면, 뒤로가기를 두 번째로 누른 것으로 간주하고 종료합니다.
+        if (exitDialog?.isShowing == true) {
+            exitApp()
+            return
+        }
+
+        // 큰 글씨 메시지 뷰 구성
+        val dialogView = layoutInflater.inflate(android.R.layout.simple_list_item_1, null)
+        val textView = dialogView.findViewById<android.widget.TextView>(android.R.id.text1)
+        textView.textSize = 32f
+        textView.text = "정말 종료하시겠어요?\n한 번 더 뒤로가기를 누르면 종료됩니다."
+
+        // 큰 아이콘 타이틀 구성
+        val titleView = android.widget.TextView(this).apply {
+            text = "⚠️"
+            textSize = 32f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+            setPadding(32, 32, 32, 16)
+        }
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setCustomTitle(titleView)
+            .setView(dialogView)
+            .setPositiveButton("종료") { _, _ ->
+                exitApp()
+            }
+            .setNegativeButton("취소") { d, _ -> d.dismiss() }
+            .create()
+
+        // 다이얼로그 표시 중 뒤로가기를 다시 누르면 완전 종료
+        dialog.setOnKeyListener { d, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                d.dismiss()
+                exitApp()
+                true
+            } else {
+                false
+            }
+        }
+
+        dialog.setOnShowListener {
+            val positive = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            val negative = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)
+
+            positive.textSize = 30f
+            negative.textSize = 30f
+            positive.isAllCaps = false
+            negative.isAllCaps = false
+            positive.setPadding(40, 24, 40, 24)
+            negative.setPadding(40, 24, 40, 24)
+
+            val density = resources.displayMetrics.density
+            val heightPx = (56 * density).toInt()
+            positive.layoutParams = positive.layoutParams.apply { height = heightPx }
+            negative.layoutParams = negative.layoutParams.apply { height = heightPx }
+        }
+
+        exitDialog = dialog
+        dialog.show()
+    }
+
+    private fun exitApp() {
+        finishAffinity() // 태스크의 모든 액티비티 종료 및 태스크 제거
     }
     
     // 위치 권한이 없으면 사용자에게 권한 요청
@@ -260,5 +348,65 @@ class MainActivity : AppCompatActivity() {
         }
         
         dialog.show()
+    }
+    
+    // TTS 정리 (액티비티 종료 시)
+    override fun onDestroy() {
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
+        super.onDestroy()
+    }
+    
+    // WebAppInterface에서 TTS 접근을 위한 getter
+    fun getTextToSpeech(): TextToSpeech? = textToSpeech
+}
+
+/**
+ * JavaScript에서 호출할 수 있는 네이티브 함수를 제공하는 인터페이스
+ * 웹에서 로그아웃 시 WebView의 쿠키를 삭제하고, TTS를 사용하기 위해 사용됩니다.
+ */
+class WebAppInterface(private val activity: MainActivity) {
+    
+    /**
+     * WebView의 모든 쿠키를 삭제합니다.
+     * JavaScript에서 AndroidBridge.clearCookies()로 호출할 수 있습니다.
+     */
+    @JavascriptInterface
+    fun clearCookies() {
+        activity.runOnUiThread {
+            val cookieManager = CookieManager.getInstance()
+            cookieManager.removeAllCookies(null)
+            cookieManager.flush()
+        }
+    }
+    
+    /**
+     * 텍스트를 음성으로 변환하여 읽어줍니다.
+     * JavaScript에서 AndroidBridge.speakText(text)로 호출할 수 있습니다.
+     * @param text 읽어줄 텍스트
+     */
+    @JavascriptInterface
+    fun speakText(text: String) {
+        activity.runOnUiThread {
+            val tts = activity.getTextToSpeech()
+            tts?.let {
+                // 이전 음성 중단
+                it.stop()
+                // 새 음성 재생 (QUEUE_FLUSH: 즉시 재생, 기존 큐 무시)
+                it.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+            }
+        }
+    }
+    
+    /**
+     * 현재 재생 중인 음성을 중단합니다.
+     * JavaScript에서 AndroidBridge.stopSpeaking()로 호출할 수 있습니다.
+     */
+    @JavascriptInterface
+    fun stopSpeaking() {
+        activity.runOnUiThread {
+            activity.getTextToSpeech()?.stop()
+        }
     }
 }

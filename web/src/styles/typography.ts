@@ -27,7 +27,7 @@ const raw = {
   // ShelterDetailPage
   detail1: { fontSize: '2.39rem', fontWeight: 800, lineHeight: '2.80rem' },
   detail2: { fontSize: '1.90rem', fontWeight: 800, lineHeight: '1.98rem' },
-  detail3: { fontSize: '1.50rem', fontWeight: 700, lineHeight: '1.80rem' },
+  detail3: { fontSize: '1.55rem', fontWeight: 700, lineHeight: '1.80rem' },
 
   // Review section
   review1: { fontSize: '1.86rem', fontWeight: 800, lineHeight: '2.80rem' },
@@ -55,7 +55,7 @@ const raw = {
   // EditProfile
   edit1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },
   edit2: { fontSize: '1.49rem', fontWeight: 600, lineHeight: '1.70rem' },
-  edit3: { fontSize: '1.28rem', fontWeight: 500, lineHeight: '1.54rem' },
+  edit3: { fontSize: '1.20rem', fontWeight: 500, lineHeight: '1.54rem' },
   edit4: { fontSize: '1.60rem', fontWeight: 700, lineHeight: '1.81rem' },
 
   // Button

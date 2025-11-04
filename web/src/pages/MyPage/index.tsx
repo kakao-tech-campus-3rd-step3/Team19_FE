@@ -98,12 +98,13 @@ const container = css`
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 `;
 
 const mypageTitle = css`
   ${theme.typography.my1};
   margin-top: 16px;
-  padding: 4% 5%;
+  padding-bottom: 24px;
   text-align: center;
   text-shadow: 2px 2px 6px #bbb;
 `;
@@ -146,7 +147,7 @@ const menuBox = css`
   gap: 18px;
   align-items: center;
   padding-top: 5%;
-  padding-bottom: 18px + env(safe-area-inset-bottom);
+  padding-bottom: 5%;
 `;
 
 const menuBtn = css`
@@ -164,7 +165,10 @@ const menuBtn = css`
 
 const logoutBtn = css`
   width: 90%;
-  margin: auto auto 5% auto;
+  margin-top: auto;
+  margin-bottom: calc(env(safe-area-inset-bottom) + 4px);
+  margin-left: auto;
+  margin-right: auto;
   background: #111;
   color: #fff;
   border: none;

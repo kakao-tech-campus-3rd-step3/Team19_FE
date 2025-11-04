@@ -44,7 +44,6 @@ const MapCache = {
     // SDK 준비 보장 (앱에서 느릴 수 있으니 await)
     const sdkOk = await this.ensureSDKReady();
     if (!sdkOk) {
-      // SDK가 준비되지 않으면 createFn 호출하지 않고 null 반환
       console.warn('ensureMap: Tmap SDK가 준비되지 않았음');
       return null;
     }
@@ -80,10 +79,26 @@ const MapCache = {
             typeof (this.map as any).setCenter === 'function' &&
             typeof (this.map as any).getCenter === 'function'
           ) {
-            // 강제 redraw 트릭
             const c = (this.map as any).getCenter();
             (this.map as any).setCenter(c);
           }
+          // 추가: 재부착 직후 SDK가 내부적으로 렌더를 못하는 케이스를 대비한 지연 재시도
+          setTimeout(() => {
+            try {
+              if (this.map && typeof (this.map as any).updateSize === 'function') {
+                (this.map as any).updateSize();
+              } else if (this.map && typeof (this.map as any).refresh === 'function') {
+                (this.map as any).refresh();
+              } else if (
+                this.map &&
+                typeof (this.map as any).setCenter === 'function' &&
+                typeof (this.map as any).getCenter === 'function'
+              ) {
+                const c = (this.map as any).getCenter();
+                (this.map as any).setCenter(c);
+              }
+            } catch {}
+          }, 60);
         } catch {}
       } catch {}
       return this.map;
@@ -256,6 +271,12 @@ const MapCache = {
   getPersistentRoot(): HTMLElement {
     if (this._persistentRoot) return this._persistentRoot;
     try {
+      // 우선 앱에서 정의한 전역 고정 루트가 있으면 사용 (#map-root)
+      const appRoot = document.getElementById('map-root');
+      if (appRoot) {
+        this._persistentRoot = appRoot;
+        return this._persistentRoot;
+      }
       const id = 'tmap-persistent-root';
       let el = document.getElementById(id) as HTMLElement | null;
       if (!el) {

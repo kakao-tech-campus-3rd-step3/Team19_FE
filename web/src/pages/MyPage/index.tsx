@@ -146,7 +146,7 @@ const menuBox = css`
   gap: 18px;
   align-items: center;
   padding-top: 5%;
-  padding-bottom: 18px;
+  padding-bottom: 18px + env(safe-area-inset-bottom);
 `;
 
 const menuBtn = css`

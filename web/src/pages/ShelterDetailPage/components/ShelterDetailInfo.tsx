@@ -22,8 +22,9 @@ interface ShelterDetail {
   capacity: number;
   isOutdoors: boolean;
   coolingEquipment: {
-    fanCount: number;
-    acCount: number;
+    // API에서 null/undefined로 올 수 있으므로 optional + nullable 허용
+    fanCount?: number | null;
+    acCount?: number | null;
   };
   totalRating: number;
   reviewCount: number;
@@ -192,8 +193,8 @@ const ShelterDetailInfo = ({
             주말 운영시간: {formatOperatingHours(shelter.operatingHours.weekend)}
           </b>
           <b css={infoBold}>수용 가능 인원: {shelter.capacity}명</b>
-          <b css={infoBold}>에어컨: {shelter.coolingEquipment.acCount}대</b>
-          <b css={infoBold}>선풍기: {shelter.coolingEquipment.fanCount}대</b>
+          <b css={infoBold}>에어컨: {shelter.coolingEquipment.acCount ?? 0}대</b>
+          <b css={infoBold}>선풍기: {shelter.coolingEquipment.fanCount ?? 0}대</b>
         </div>
       </div>
 

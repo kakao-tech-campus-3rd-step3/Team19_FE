@@ -98,7 +98,6 @@ const container = css`
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 `;
 
 const mypageTitle = css`
@@ -115,8 +114,8 @@ const profileBox = css`
 `;
 
 const profileImg = css`
-  width: 180px;
-  height: 180px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid #eee;
@@ -166,7 +165,7 @@ const menuBtn = css`
 const logoutBtn = css`
   width: 90%;
   margin-top: auto;
-  margin-bottom: calc(env(safe-area-inset-bottom) + 4px);
+  margin-bottom: calc(env(safe-area-inset-bottom) + 16px);
   margin-left: auto;
   margin-right: auto;
   background: #111;

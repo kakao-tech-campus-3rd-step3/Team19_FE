@@ -1,4 +1,4 @@
-import { apiClient, setStoredTokens, clearStoredTokens } from './client';
+import { apiClient, setStoredTokens, clearStoredTokens, clearWebViewCookies } from './client';
 
 export interface UserProfile {
   userId: number;
@@ -43,7 +43,10 @@ export async function login({ email, password }: { email: string; password: stri
 // 로그아웃
 export async function logout() {
   const res = await apiClient.post('/api/users/logout');
+  // localStorage 토큰 삭제
   clearStoredTokens();
+  // WebView 쿠키 삭제 (Android 앱에서만 동작)
+  clearWebViewCookies();
   return res;
 }
 

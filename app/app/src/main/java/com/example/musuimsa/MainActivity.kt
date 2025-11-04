@@ -14,6 +14,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import android.webkit.JavascriptInterface
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,6 +43,9 @@ class MainActivity : AppCompatActivity() {
         
         // 2-3. HTTPS 혼합 콘텐츠 허용 (필요 시)
         webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+        // 2-4. JavaScript 브릿지 추가 (웹에서 쿠키 삭제를 위해)
+        webView.addJavascriptInterface(WebAppInterface(this), "AndroidBridge")
 
         // 3. 웹뷰가 새 창을 열지 않고 현재 창에서 페이지를 로드하도록 설정합니다.
         webView.webViewClient = WebViewClient()
@@ -329,5 +333,25 @@ class MainActivity : AppCompatActivity() {
         }
         
         dialog.show()
+    }
+}
+
+/**
+ * JavaScript에서 호출할 수 있는 네이티브 함수를 제공하는 인터페이스
+ * 웹에서 로그아웃 시 WebView의 쿠키를 삭제하기 위해 사용됩니다.
+ */
+class WebAppInterface(private val activity: MainActivity) {
+    
+    /**
+     * WebView의 모든 쿠키를 삭제합니다.
+     * JavaScript에서 AndroidBridge.clearCookies()로 호출할 수 있습니다.
+     */
+    @JavascriptInterface
+    fun clearCookies() {
+        activity.runOnUiThread {
+            val cookieManager = CookieManager.getInstance()
+            cookieManager.removeAllCookies(null)
+            cookieManager.flush()
+        }
     }
 }

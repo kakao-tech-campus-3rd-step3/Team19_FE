@@ -23,6 +23,7 @@ const FindSheltersPage = () => {
     isFetchingMore,
     handleLoadMore,
     handleToggleFavorite,
+    setToastMessage,
   } = useShelters();
 
   // 알림으로 유입된 경우 안내 메시지 표시 및 1회 처리
@@ -31,7 +32,8 @@ const FindSheltersPage = () => {
       const raw = sessionStorage.getItem('notifData');
       if (raw) {
         sessionStorage.removeItem('notifData');
-        setToastMessage && setToastMessage('날씨가 많이 덥습니다! 근처 무더위 쉼터를 안내해 드릴게요.');
+        setToastMessage &&
+          setToastMessage('날씨가 많이 덥습니다! 근처 무더위 쉼터를 안내해 드릴게요.');
       }
     } catch {}
   }, []);

@@ -201,6 +201,7 @@ const form = css`
   flex-direction: column;
   gap: 10px;
   padding: 16px;
+  padding-bottom: env(safe-area-inset-bottom);
 `;
 
 const label = css`

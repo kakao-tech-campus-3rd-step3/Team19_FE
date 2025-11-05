@@ -3,7 +3,6 @@ import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ShelterList from './components/ShelterList';
-import ToastMessage from '@/components/ToastMessage';
 import emptyShelterImage from '@/assets/images/empty-shelter2.gif';
 import { useShelters } from './hooks/useShelters';
 import { toggleWish } from '@/api/wishApi';
@@ -19,8 +18,6 @@ const FindSheltersPage = () => {
     shelters, // 전체 목록 (빈 상태 판단용)
     visibleShelters, // 화면에 실제로 렌더할 항목
     favoriteIds,
-    toastMessage,
-    setToastMessage,
     isLoading,
     error,
     isFetchingMore,
@@ -58,7 +55,6 @@ const FindSheltersPage = () => {
       }
       console.error('[FindSheltersPage] toggleWish error', err);
       // 기타 에러 사용자 알림
-      setToastMessage && setToastMessage('요청이 실패했습니다.');
     }
   };
 
@@ -110,7 +106,6 @@ const FindSheltersPage = () => {
             onLoadMore={handleLoadMore}
             isFetchingMore={isFetchingMore}
           />
-          {toastMessage && <ToastMessage message={toastMessage} />}
         </div>
       ) : (
         <div css={emptyStateStyle}>

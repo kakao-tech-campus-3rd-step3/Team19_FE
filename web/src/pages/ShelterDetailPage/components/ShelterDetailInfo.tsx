@@ -1,10 +1,12 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useRef, useLayoutEffect } from 'react';
+import { useRef, useLayoutEffect, useState } from 'react';
 import theme from '@/styles/theme';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaUser } from 'react-icons/fa';
+import { MdAcUnit, MdLocationOn, MdAccessTime, MdExpandMore, MdExpandLess } from 'react-icons/md';
+import { GiWindTurbine } from 'react-icons/gi';
 import NoImage from '@/assets/images/NoImage.png';
-import { formatOperatingHours } from '@/utils/date';
+import { formatOperatingHours, checkIfOpenNow } from '@/utils/date';
 import { useNavigate } from 'react-router-dom'; // 추가
 
 // ShelterDetailPage에서 내려주는 데이터 타입
@@ -22,8 +24,9 @@ interface ShelterDetail {
   capacity: number;
   isOutdoors: boolean;
   coolingEquipment: {
-    fanCount: number;
-    acCount: number;
+    // API에서 null/undefined로 올 수 있으므로 optional + nullable 허용
+    fanCount?: number | null;
+    acCount?: number | null;
   };
   totalRating: number;
   reviewCount: number;
@@ -49,6 +52,7 @@ const ShelterDetailInfo = ({
   onGuideStart,
   handleImageError,
 }: ShelterDetailInfoProps) => {
+  const [hoursOpen, setHoursOpen] = useState(false); // 운영시간 펼침 상태 (디폴트: 닫힘)
   const navigate = useNavigate(); // 추가
 
   // 제목 DOM 레퍼런스 (한 줄로 맞추기용)
@@ -184,16 +188,79 @@ const ShelterDetailInfo = ({
               ))}
             </span>
           </div>
-          <b css={infoBold}>주소: {shelter.address}</b>
-          <b css={infoBold}>
-            평일 운영시간: {formatOperatingHours(shelter.operatingHours.weekday)}
-          </b>
-          <b css={infoBold}>
-            주말 운영시간: {formatOperatingHours(shelter.operatingHours.weekend)}
-          </b>
-          <b css={infoBold}>수용 가능 인원: {shelter.capacity}명</b>
-          <b css={infoBold}>에어컨: {shelter.coolingEquipment.acCount}대</b>
-          <b css={infoBold}>선풍기: {shelter.coolingEquipment.fanCount}대</b>
+          <div css={metaRow}>
+            <MdLocationOn size={25} color={theme.colors.text.gray500} css={metaIcon} aria-hidden />
+            <b css={infoBold}>{shelter.address}</b>
+          </div>
+          <div css={metaRow}>
+            <MdAccessTime size={25} color={theme.colors.text.gray500} css={metaIcon} aria-hidden />
+            <button
+              type="button"
+              css={hoursToggleBtn}
+              aria-expanded={hoursOpen}
+              onClick={(e) => {
+                e.stopPropagation();
+                setHoursOpen((v) => !v);
+              }}
+            >
+              {/* 운영중/운영종료 표시 */}
+              {(() => {
+                const now = new Date();
+                const day = now.getDay(); // 0=Sun,6=Sat
+                const isWeekend = day === 0 || day === 6;
+                const target = isWeekend
+                  ? shelter.operatingHours.weekend
+                  : shelter.operatingHours.weekday;
+                return checkIfOpenNow(target) ? (
+                  <span css={[infoBold, openStatus]} aria-live="polite">
+                    운영중
+                  </span>
+                ) : (
+                  <span css={[infoBold, closedStatus]} aria-live="polite">
+                    운영종료
+                  </span>
+                );
+              })()}
+              <span css={toggleIcon} aria-hidden>
+                {hoursOpen ? <MdExpandLess size={20} /> : <MdExpandMore size={20} />}
+              </span>
+            </button>
+          </div>
+          {/* 상세 운영시간: 기본 닫힘(디폴트). 펼침 시 평일/주말 표시 */}
+          {hoursOpen && (
+            <div css={hoursDetail}>
+              <div css={[infoBold, hoursDetailRow]}>
+                평일: {formatOperatingHours(shelter.operatingHours.weekday)}
+              </div>
+              <div css={[infoBold, hoursDetailRow]}>
+                주말: {formatOperatingHours(shelter.operatingHours.weekend)}
+              </div>
+            </div>
+          )}
+          {/* 수용 인원 + 에어컨 + 선풍기 — 3열 그리드 */}
+          <div css={equipmentGrid}>
+            <div css={equipmentItem} role="group" aria-label="수용 인원">
+              <div css={equipmentIcon} aria-hidden>
+                <FaUser size={28} color={theme.colors.text.blue} />
+              </div>
+              <div css={equipmentLabel}>수용 인원</div>
+              <div css={equipmentCount}>{shelter.capacity ?? 0}명</div>
+            </div>
+            <div css={equipmentItem} role="group" aria-label="에어컨">
+              <div css={equipmentIcon} aria-hidden>
+                <MdAcUnit size={28} color={theme.colors.text.blue} />
+              </div>
+              <div css={equipmentLabel}>에어컨</div>
+              <div css={equipmentCount}>{shelter.coolingEquipment.acCount ?? 0}대</div>
+            </div>
+            <div css={equipmentItem} role="group" aria-label="선풍기">
+              <div css={equipmentIcon} aria-hidden>
+                <GiWindTurbine size={28} color={theme.colors.text.blue} />
+              </div>
+              <div css={equipmentLabel}>선풍기</div>
+              <div css={equipmentCount}>{shelter.coolingEquipment.fanCount ?? 0}대</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -343,5 +410,108 @@ const emptyStar = css`
 const infoBold = css`
   ${theme.typography.detail3};
   color: ${theme.colors.text.black};
+  font-weight: 700;
+`;
+
+/* 냉방 장비 2열 레이아웃 */
+const equipmentGrid = css`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: column; /* 세로(열) 우선 배치: 위→아래로 채우고 다음 열로 이동 */
+  grid-auto-rows: minmax(0, auto);
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  align-items: start;
+`;
+
+const equipmentItem = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+`;
+
+const equipmentIcon = css`
+  font-size: 1.9rem;
+  line-height: 1;
+  margin-bottom: 6px;
+`;
+
+const equipmentLabel = css`
+  ${theme.typography.edit3};
+  color: ${theme.colors.text.black};
+  margin-bottom: 4px;
+`;
+
+const equipmentCount = css`
+  ${theme.typography.edit3};
+  font-weight: 700;
+  color: ${theme.colors.text.black};
+`;
+
+/* meta (아이콘 + 텍스트) */
+const metaRow = css`
+  /* 아이콘(고정 너비) + 텍스트(시작 위치 정렬)를 그리드로 고정하여
+     모든 meta 항목의 텍스트 시작점이 동일하도록 맞춤 */
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 8px;
+`;
+
+const metaIcon = css`
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  margin: 0;
+`;
+
+/* 운영시간 토글 버튼 및 상세 영역 */
+const hoursToggleBtn = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 0; /* 텍스트 시작 점을 아이콘과 정렬하기 위해 여백 제거 */
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+`;
+
+const toggleIcon = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: ${theme.colors.text.gray500};
+`;
+
+const hoursDetail = css`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+`;
+
+/* 추가: 메타 아이콘 칸(28px) + gap(8px) 만큼 왼쪽 여백을 줌 */
+const hoursDetailRow = css`
+  padding-left: 36px;
+`;
+
+/* 운영 상태 색상 */
+const openStatus = css`
+  color: #000000ff; /* 검은색: 운영중 */
+  ${theme.typography.detail3};
+  font-weight: 800;
+`;
+
+const closedStatus = css`
+  color: #6b7280; /* 회색: 운영종료 */
+  ${theme.typography.detail3};
   font-weight: 700;
 `;

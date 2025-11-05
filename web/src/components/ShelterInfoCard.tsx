@@ -3,6 +3,7 @@ import { css } from '@emotion/react';
 import { useRef, useLayoutEffect } from 'react';
 import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { MdAccessTime, MdWbSunny } from 'react-icons/md';
 import NoImage from '@/assets/images/NoImage.png';
 import { useNavigate } from 'react-router-dom';
 import { formatOperatingHours, checkIfOpenNow } from '@/utils/date';
@@ -46,22 +47,18 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     event.currentTarget.src = NoImage; // 이미지 로드 실패 시 NoImage로 대체
   };
 
-  // isOpened 대신 isActuallyOpen을 계산하여 사용
+  // 운영시간 포맷 및 현재 운영 여부 계산 (홈/찾기 모두에서 필요)
   let formattedOperatingHours = '정보 없음';
   let isActuallyOpen = false; // 기본값은 운영 종료(false)
-
-  if (variant === 'home') {
+  {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0: 일요일, 6: 토요일
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
     const currentOperatingHours = isWeekend
-      ? shelter.operatingHours.weekend
-      : shelter.operatingHours.weekday;
+      ? shelter.operatingHours?.weekend
+      : shelter.operatingHours?.weekday;
 
-    // 표시될 운영 시간 포맷팅
-    formattedOperatingHours = formatOperatingHours(currentOperatingHours); // 유틸리티 함수 사용
-    // 현재 실제 운영 여부 계산
+    formattedOperatingHours = formatOperatingHours(currentOperatingHours || '');
     isActuallyOpen = checkIfOpenNow(currentOperatingHours);
   }
 
@@ -166,17 +163,35 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     <div css={infoCardStyle({ variant })}>
       {variant === 'home' && (
         <div css={statusWrapper}>
-          <span css={[statusTag, isActuallyOpen ? operatingOnTag : operatingOffTag]}>
-            {isActuallyOpen ? '운영중' : '운영 종료'}
+          <span css={[statusBadge, isActuallyOpen ? statusOpen : statusClosed]}>
+            <MdAccessTime size={25} />
+            <span css={badgeText}>{isActuallyOpen ? '운영중' : '운영 종료'}</span>
           </span>
           {shelter.isOutdoors && (
-            <span css={[statusTag, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}>야외</span>
+            <span css={[statusBadge, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}>
+              <MdWbSunny size={25} />
+              <span css={badgeText}>야외</span>
+            </span>
           )}
         </div>
       )}
-      <p ref={nameRef} css={shelterName({ variant })} onClick={handleNavigateToDetail}>
-        {shelter.name}
-      </p>
+
+      {/* 이름 + (find일 때만) 운영 상태 배지 */}
+      <div css={nameRow({ variant })}>
+        <p ref={nameRef} css={shelterName({ variant })} onClick={handleNavigateToDetail}>
+          {shelter.name}
+        </p>
+        {variant === 'find' && (
+          <span
+            css={[statusBadge, isActuallyOpen ? statusOpen : statusClosed]}
+            title={isActuallyOpen ? '운영중' : '운영종료'}
+            aria-label={isActuallyOpen ? '운영중' : '운영종료'}
+          >
+            <MdAccessTime size={25} />
+            <span css={badgeText}>{isActuallyOpen ? '운영중' : '운영종료'}</span>
+          </span>
+        )}
+      </div>
 
       <div css={cardTop} onClick={handleNavigateToDetail}>
         <img
@@ -269,8 +284,10 @@ const cardTop = css`
 `;
 
 const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
-  width: 100%;
-  text-align: center;
+  /* 부모 flex 안에서 줄어들 수 있도록 설정 (ellipsis 동작 위해 min-width:0) */
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: ${variant === 'home' ? 'center' : 'left'};
   margin-top: 8px;
   display: block;
   overflow: hidden;
@@ -278,7 +295,7 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
   text-overflow: ellipsis;
   transition: none;
 
-  /* variant에 따라 달라지는 스타일 */
+  /* variant에 따라 폰트 스타일 유지 */
   ${variant === 'home'
     ? css`
         margin-bottom: 8px;
@@ -289,6 +306,8 @@ const shelterName = ({ variant }: { variant: 'home' | 'find' }) => css`
         margin-bottom: 8px;
         ${theme.typography.cardf1};
         color: ${theme.colors.text.blue};
+        text-align: left;
+        padding-left: 4px;
       `}
 `;
 
@@ -422,27 +441,46 @@ const statusWrapper = css`
   margin-bottom: 0px;
 `;
 
-const statusTag = css`
-  padding: 4px 8px;
-  border-radius: 16px;
-  color: white;
-  white-space: nowrap;
-
-  ${theme.typography.cardh4}
-`;
-
-const operatingOnTag = css`
-  background-color: ${theme.colors.button.greenOn};
-`;
-
-const operatingOffTag = css`
-  background-color: ${theme.colors.button.greenOff};
-`;
-
 const outdoorsOnTag = css`
   background-color: ${theme.colors.button.redOn};
 `;
 
 const outdoorsOffTag = css`
   background-color: ${theme.colors.button.redOff};
+`;
+
+/* 이름과 배지 행 */
+const nameRow = ({ variant }: { variant: 'home' | 'find' }) => css`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  ${variant === 'home' ? 'justify-content: center;' : 'justify-content: flex-start;'}
+`;
+
+/* 배지 공통 스타일 (find/home 동일하게 보이도록 패딩/폰트 조정) */
+const statusBadge = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px; /* find 쪽과 동일한 여백 */
+  border-radius: 12px;
+  font-size: 1.2rem;
+  line-height: 1;
+  white-space: nowrap;
+  flex: 0 0 auto;
+`;
+
+const statusOpen = css`
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+`;
+
+const statusClosed = css`
+  background: rgba(107, 114, 128, 0.06);
+  color: #6b7280;
+`;
+
+const badgeText = css`
+  font-weight: 700;
 `;

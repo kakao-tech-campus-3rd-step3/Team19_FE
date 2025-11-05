@@ -3,9 +3,7 @@ import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
-import { formatOperatingHours } from '@/utils/date';
 import { useState, useEffect, useRef } from 'react';
-import ToastMessage from '@/components/ToastMessage';
 import { useMutation } from '@tanstack/react-query';
 import { addWish, deleteWish } from '@/api/wishApi';
 import { createPortal } from 'react-dom';
@@ -22,21 +20,40 @@ interface WishShelter {
 
 interface WishListCardProps {
   item: WishShelter;
-  onClick: (shelterId: number) => void;
-  refetchWishList: () => void;
+  onClick?: (shelterId: number) => void;
+  // 부모 콜백 — ReviewListCard와 동일한 패턴으로 처리
+  onStartRemoving?: (shelterId: number) => void;
+  onFinalizeRemove?: (shelterId: number) => void;
+  onCancelRemoving?: (shelterId: number) => void;
+  // 기존 refetch는 폴백으로 유지(선택)
+  refetchWishList?: () => void;
 }
 
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => {
+// 애니메이션 시간(ms)
+const ANIM_MS = 1200; // wrapper collapse / siblings 이동 시간 (기존)
+const CARD_MS = 1200; // 카드 우측 슬라이드 전용 시간 — 이 값을 늘리면 슬라이드가 더 느려짐
+
+const WishListCard = ({
+  item,
+  onClick,
+  onStartRemoving,
+  onFinalizeRemove,
+  onCancelRemoving,
+  refetchWishList,
+}: WishListCardProps) => {
   const [isFavorite, setIsFavorite] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const [isRemoving, setIsRemoving] = useState(false); // 삭제 애니메이션 플래그 (ReviewListCard와 동일)
+  // 애니메이션 중 부모에서 들어오는 prop 변경으로 인한 깜박임 방지용 스냅샷
+  const snapshotRef = useRef<WishShelter | null>(null);
   const bodyLockRef = useRef(0);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const removeTimeoutRef = useRef<number | null>(null);
 
-  // 모달 오픈 시 body 스크롤 잠금 (멀티 모달 카운터)
   useEffect(() => {
     const modalOpen = showModal;
     const body = document.body;
@@ -82,45 +99,119 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     };
   }, [showModal]);
 
-  // 찜 삭제 mutation
+  // 삭제 뮤테이션: 성공 시에도 즉시 부모 리패치하지 않음(애니메이션 후 한 번만 refetch)
   const deleteWishMutation = useMutation({
     mutationFn: () => deleteWish({ shelterId: item.shelterId }),
-    onSuccess: () => {
-      setIsFavorite(false);
-      setToastMessage('찜 목록에서\n삭제되었습니다');
-      refetchWishList();
-    },
-    onError: () => {
-      setToastMessage('삭제에 실패했습니다');
-    },
   });
 
-  // 찜 추가 mutation
   const addWishMutation = useMutation({
     mutationFn: () => addWish({ shelterId: item.shelterId }),
     onSuccess: () => {
       setIsFavorite(true);
-      setToastMessage('찜 목록에\n추가되었습니다');
-      refetchWishList();
+      if (typeof refetchWishList === 'function') refetchWishList();
     },
     onError: () => {
-      setToastMessage('추가에 실패했습니다');
+      if (typeof refetchWishList === 'function') refetchWishList();
     },
   });
 
   const handleHeartClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isFavorite) {
-      setShowModal(true);
-    } else {
-      addWishMutation.mutate();
-    }
+    if (isFavorite) setShowModal(true);
+    else addWishMutation.mutate();
   };
 
+  // 삭제 확인: ReviewListCard와 동일한 흐름으로 (wrapper collapse -> siblings translate by height -> translateY(0))
   const handleConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteWishMutation.mutate();
     setShowModal(false);
+    // 애니메이션 동안 외부 리패치/props 변경을 무시하기 위해 현재 item 스냅샷 저장
+    snapshotRef.current = item;
+    setIsRemoving(true);
+
+    const wrapperEl = wrapperRef.current;
+    // if no wrapper (unexpected), still call mutation
+    if (!wrapperEl) {
+      deleteWishMutation.mutate();
+      return;
+    }
+
+    // 카드 우측 슬라이드 (ANIM_MS에 맞춰 동일 동작)
+    const cardEl = wrapperEl.firstElementChild as HTMLElement | null;
+    if (cardEl) {
+      cardEl.style.transition = `transform ${CARD_MS}ms cubic-bezier(0.22,0.9,0.25,1), opacity ${CARD_MS}ms cubic-bezier(0.22,0.9,0.25,1)`;
+      cardEl.style.transform = 'translateX(100%)';
+      cardEl.style.opacity = '0';
+    }
+
+    // 간단한 siblings 처리: ReviewListCard와 동일하게 아래 형제들을 먼저 height만큼 아래로 옮겨놓음
+    const affectedSiblings: HTMLElement[] = [];
+    const height = wrapperEl.scrollHeight;
+
+    // wrapper collapse 준비
+    wrapperEl.style.transition = `max-height ${ANIM_MS}ms ease, margin ${ANIM_MS}ms ease, padding ${ANIM_MS}ms ease`;
+    wrapperEl.style.overflow = 'hidden';
+    wrapperEl.style.maxHeight = `${height}px`;
+
+    let next = wrapperEl.nextElementSibling as HTMLElement | null;
+    while (next) {
+      affectedSiblings.push(next);
+      next.style.transition = `transform ${ANIM_MS}ms ease`;
+      next.style.transform = `translateY(${height}px)`;
+      next = next.nextElementSibling as HTMLElement | null;
+    }
+
+    // 강제 리플로우 후 collapse
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    wrapperEl.offsetHeight;
+    wrapperEl.style.maxHeight = '0px';
+    wrapperEl.style.marginBottom = '0px';
+    wrapperEl.style.paddingTop = '0px';
+    wrapperEl.style.paddingBottom = '0px';
+
+    // siblings를 0으로 이동시켜 위로 올라오게 함
+    requestAnimationFrame(() => {
+      for (const s of affectedSiblings) {
+        s.style.transform = 'translateY(0)';
+      }
+    });
+
+    // 부모에게 제거 시작 알림 (선택) — 함수인지 확인 후 호출
+    if (typeof onStartRemoving === 'function') {
+      onStartRemoving(item.shelterId);
+    }
+
+    // 서버 요청 병렬 전송 — 에러 시에는 부모에게 복구 알림
+    deleteWishMutation.mutate(undefined, {
+      onError: (_err: any) => {
+        // 부모 복구 콜백 우선 호출 (함수인지 확인)
+        if (typeof onCancelRemoving === 'function') {
+          onCancelRemoving(item.shelterId);
+        }
+        // 폴백: refetch가 제공되면 호출
+        if (refetchWishList) refetchWishList();
+        setIsRemoving(false);
+        snapshotRef.current = null;
+      },
+    });
+
+    // cleanup after full anim (CARD_MS 혹은 ANIM_MS 중 큰 값)
+    if (removeTimeoutRef.current) window.clearTimeout(removeTimeoutRef.current);
+    removeTimeoutRef.current = window.setTimeout(
+      () => {
+        // 애니메이션 종료 시 부모에게 최종 제거 알림(부모가 리스트에서 제거)
+        if (typeof onFinalizeRemove === 'function') {
+          onFinalizeRemove(item.shelterId);
+        } else if (refetchWishList) {
+          refetchWishList(); // 폴백
+        }
+
+        // 스냅샷 제거 및 애니메이션 상태 해제
+        setIsRemoving(false);
+        snapshotRef.current = null;
+      },
+      Math.max(ANIM_MS, CARD_MS),
+    );
   };
 
   const handleCancel = (e: React.MouseEvent) => {
@@ -128,97 +219,125 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     setShowModal(false);
   };
 
-  // 별점: 소수 둘째자리에서 반올림하여 소수 첫째자리까지 표시
+  useEffect(() => {
+    return () => {
+      if (removeTimeoutRef.current) window.clearTimeout(removeTimeoutRef.current);
+    };
+  }, []);
+
+  // 애니메이션 중에는 snapshot을 사용하여 부모 refetch/props 변경을 무시
+  const displayed = isRemoving && snapshotRef.current ? snapshotRef.current : item;
+
   const displayRating = (() => {
-    const v = Number(item.averageRating) || 0;
+    const v = Number(displayed.averageRating) || 0;
     return (Math.round(v * 10) / 10).toFixed(1);
   })();
-  const starCount = Math.round(Number(item.averageRating) || 0);
+  const starCount = Math.round(Number(displayed.averageRating) || 0);
 
   return (
-    <div css={card} onClick={() => onClick(item.shelterId)} style={{ cursor: 'pointer' }}>
-      <div css={cardTitleRow}>
-        <span css={cardTitle}>{item.name}</span>
-        <span onClick={handleHeartClick} style={{ cursor: 'pointer' }}>
-          {isFavorite ? (
-            <FaHeart color="red" size={30} css={cardHeart} />
-          ) : (
-            <FaHeart color="#bbb" size={30} css={cardHeart} />
-          )}
-        </span>
-      </div>
-      <div css={cardBottomRow}>
-        <img
-          src={item.photoUrl && item.photoUrl.trim() !== '' ? item.photoUrl : NoImage}
-          alt="찜 이미지"
-          css={cardImg}
-          onError={handleImageError}
-        />
-        <div css={cardInfo}>
-          <div css={cardRating}>
-            별점: <span css={ratingNumber}>{displayRating}</span>
-            <span css={starsWrapper}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <span key={i} css={i < starCount ? filledStar : emptyStar}>
-                  ★
-                </span>
-              ))}
-            </span>
-          </div>
-          <div css={cardinfostyle}>
-            거리: {item.distance}
-            <br />
-            운영시간: {formatOperatingHours(item.operatingHours)}
-            <br />
-            주소: {item.address}
+    <div
+      ref={wrapperRef}
+      css={itemWrapper}
+      onClick={() => onClick && onClick(item.shelterId)}
+      role="button"
+      tabIndex={0}
+    >
+      <div css={[card, isRemoving && removingStyle]}>
+        <div css={cardTitleRow}>
+          <span css={cardTitle}>{displayed.name}</span>
+          <span onClick={handleHeartClick} style={{ cursor: 'pointer' }}>
+            {isFavorite ? (
+              <FaHeart color="red" css={cardHeart} />
+            ) : (
+              <FaHeart color="#bbb" css={cardHeart} />
+            )}
+          </span>
+        </div>
+
+        <div css={cardBottomRow}>
+          <img
+            src={
+              displayed.photoUrl && displayed.photoUrl.trim() !== '' ? displayed.photoUrl : NoImage
+            }
+            alt="찜 이미지"
+            css={cardImg}
+            onError={handleImageError}
+          />
+          <div css={cardInfo}>
+            <div css={cardinfostyle}>거리: {displayed.distance}</div>
+            <div css={cardRating}>
+              별점: <span css={ratingNumber}>{displayRating}</span>
+              <span css={starsWrapper}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span key={i} css={i < starCount ? filledStar : emptyStar}>
+                    ★
+                  </span>
+                ))}
+              </span>
+            </div>
+            <div css={cardinfostyle}>주소: {displayed.address}</div>
           </div>
         </div>
+
+        {showModal &&
+          createPortal(
+            <div
+              css={modalOverlay}
+              onClick={() => {
+                setShowModal(false);
+              }}
+            >
+              <div css={modalBox} onClick={(e) => e.stopPropagation()}>
+                <div css={modalText}>
+                  찜 목록에서
+                  <br />
+                  삭제하시겠습니까?
+                </div>
+                <div css={modalButtons}>
+                  <button css={modalBtn} onClick={handleConfirm}>
+                    예
+                  </button>
+                  <button css={modalBtn} onClick={handleCancel}>
+                    아니요
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
       </div>
-
-      {showModal &&
-        createPortal(
-          <div
-            css={modalOverlay}
-            onClick={() => {
-              setShowModal(false);
-            }}
-          >
-            <div css={modalBox} onClick={(e) => e.stopPropagation()}>
-              <div css={modalText}>
-                찜 목록에서
-                <br />
-                삭제하시겠습니까?
-              </div>
-              <div css={modalButtons}>
-                <button css={modalBtn} onClick={handleConfirm}>
-                  예
-                </button>
-                <button css={modalBtn} onClick={handleCancel}>
-                  아니요
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
-
-      <ToastMessage message={toastMessage} />
     </div>
   );
 };
 
+const removingStyle = css`
+  transform: translateX(100%);
+  opacity: 0;
+  transition:
+    transform ${CARD_MS}ms cubic-bezier(0.22, 0.9, 0.25, 1),
+    opacity ${CARD_MS}ms cubic-bezier(0.22, 0.9, 0.25, 1);
+`;
+
+// 스타일 보강: will-change 추가로 깜박임 완화
+const itemWrapper = css`
+  overflow: hidden;
+  margin-bottom: 12px;
+  will-change: max-height;
+`;
+
 const card = css`
-  background: #e0e0e0;
+  background: #dcdcdcbf;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   width: 100%;
   display: flex;
   flex-direction: column;
   padding: 12px 0;
-  -webkit-tap-highlight-color: transparent; // 모바일 클릭 반응 제거
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform, opacity;
 `;
 
+/* 이하 스타일은 기존과 동일 */
 const cardTitleRow = css`
   display: flex;
   align-items: center;
@@ -226,26 +345,25 @@ const cardTitleRow = css`
   gap: 8px;
   padding: 0 16px 8px 16px;
 `;
-
 const cardTitle = css`
   ${theme.typography.wish2};
   padding-bottom: 4px;
-  /* 한 줄로 자르고 ... 표시 */
   display: block;
   flex: 1 1 auto;
-  min-width: 0; /* flex 항목에서 줄임표가 동작하도록 */
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  /* 왼쪽 정렬 명시 */
   text-align: left;
 `;
-
 const cardHeart = css`
-  font-size: ${theme.typography.wish1};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
   padding-bottom: 4px;
 `;
-
 const cardBottomRow = css`
   display: flex;
   flex-direction: row;
@@ -253,15 +371,13 @@ const cardBottomRow = css`
   gap: 12px;
   padding: 0 16px;
 `;
-
 const cardImg = css`
   width: 30%;
-  height: 30%;
+  height: 120px; /* 고정 높이로 레이아웃 안정화 */
   object-fit: cover;
   border-radius: 8px;
   background: #fafafa;
 `;
-
 const cardInfo = css`
   flex: 1;
   display: flex;
@@ -269,20 +385,17 @@ const cardInfo = css`
   align-items: flex-start;
   justify-content: flex-start;
 `;
-
 const cardRating = css`
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
   ${theme.typography.wish3};
   color: ${theme.colors.text.gray500};
 `;
-
 const ratingNumber = css`
   ${theme.typography.wish3};
   color: ${theme.colors.text.red};
 `;
-
 const starsWrapper = css`
   display: inline-flex;
   align-items: center;
@@ -290,23 +403,19 @@ const starsWrapper = css`
   ${theme.typography.wish3};
   color: ${theme.colors.text.gray500};
 `;
-
 const filledStar = css`
   color: #ffd700;
   ${theme.typography.wish3};
 `;
-
 const emptyStar = css`
   color: #bbb;
   ${theme.typography.wish3};
 `;
-
 const cardinfostyle = css`
   text-align: left;
   ${theme.typography.wish3};
   color: ${theme.colors.text.gray500};
 `;
-
 const modalOverlay = css`
   position: fixed;
   inset: 0;
@@ -316,7 +425,6 @@ const modalOverlay = css`
   align-items: center;
   justify-content: center;
 `;
-
 const modalBox = css`
   background: #fff;
   border-radius: 16px;
@@ -327,19 +435,16 @@ const modalBox = css`
   flex-direction: column;
   align-items: center;
 `;
-
 const modalText = css`
   ${theme.typography.modal1};
   color: #222;
   margin-bottom: 24px;
   text-align: center;
 `;
-
 const modalButtons = css`
   display: flex;
   gap: 18px;
 `;
-
 const modalBtn = css`
   ${theme.typography.modal2};
   background: ${theme.colors.button.black};

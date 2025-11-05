@@ -31,17 +31,12 @@ const ShelterDetailPage = () => {
     reviewsError,
   } = useShelterDetail(id);
 
-  const [toast, setToast] = useState<{ open: boolean; message: string }>({
+  const [toast] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
   });
   const [toggling, setToggling] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  const showToast = (message: string) => {
-    setToast({ open: true, message });
-    setTimeout(() => setToast({ open: false, message: '' }), 1500);
-  };
 
   // wishApi를 활용한 찜 버튼 클릭 핸들러
   const handleToggleFavorite = async () => {
@@ -64,14 +59,12 @@ const ShelterDetailPage = () => {
       if (result?.success) {
         setIsFavorite(!isFavorite);
       }
-      showToast(result?.message ?? '처리되었습니다.');
     } catch (err: any) {
       if (err?.status === 403 || err?.status === 401) {
         setShowLoginModal(true);
         return;
       }
       console.error('[ShelterDetailPage] toggleWish error:', err);
-      showToast(err?.message ?? '서버와 연결할 수 없습니다.');
     } finally {
       setToggling(false);
     }

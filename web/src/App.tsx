@@ -38,13 +38,6 @@ const App = () => {
   // 앱 시작/로그인 시 FCM 토큰 및 위치 등록
   usePushNotification();
 
-  // 앱 시작 시 선제적으로 토큰 재발급 시도 (7일 내 로그인 유지)
-  useEffect(() => {
-    tryReissueTokensSilently().catch(() => {
-      // 실패해도 조용히 처리 (이미 함수 내부에서 처리됨)
-    });
-  }, []); // 마운트 시 한 번만 실행
-
   // 라우트 변경 시 스크롤 맨 위로 이동
   useEffect(() => {
     window.scrollTo({ top: 0 });

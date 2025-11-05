@@ -168,7 +168,7 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
             <span css={badgeText}>{isActuallyOpen ? '운영중' : '운영 종료'}</span>
           </span>
           {shelter.isOutdoors && (
-            <span css={[statusBadge, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}>
+            <span css={[statusBadge, outdoorsOnTag]}>
               <MdWbSunny size={25} />
               <span css={badgeText}>야외</span>
             </span>

@@ -176,10 +176,42 @@ const MapView = ({ onMapReady }: Props) => {
     try {
       const tmapEvent = (window as any).Tmapv3?.event;
       if (tmapEvent && typeof tmapEvent.addListener === 'function') {
+        // 기본: dragend, zoomend
         const onDragEnd = tmapEvent.addListener(map, 'dragend', () => scheduleFetch(map));
         const onZoomEnd = tmapEvent.addListener(map, 'zoomend', () => scheduleFetch(map));
         mapListenersRef.current.push(onDragEnd, onZoomEnd);
+        // 추가 폴백 이벤트들 (SDK마다 이벤트명이 다를 수 있어 여러 이벤트를 시도)
+        try {
+          const onMoveEnd = tmapEvent.addListener(map, 'moveend', () => scheduleFetch(map));
+          const onCenterChanged = tmapEvent.addListener(map, 'center_changed', () =>
+            scheduleFetch(map),
+          );
+          const onBoundsChanged = tmapEvent.addListener(map, 'bounds_changed', () =>
+            scheduleFetch(map),
+          );
+          mapListenersRef.current.push(onMoveEnd, onCenterChanged, onBoundsChanged);
+        } catch {}
       }
+      // DOM-level 폴백: SDK 이벤트가 없거나 동작하지 않을 경우 map div의 mouseup/touchend로 보완
+      try {
+        const container: HTMLElement | null = map.getDiv ? map.getDiv() : mapRef.current;
+        if (container) {
+          const onEnd = () => {
+            try {
+              scheduleFetch(map);
+            } catch {}
+          };
+          container.addEventListener('mouseup', onEnd, { passive: true });
+          container.addEventListener('touchend', onEnd, { passive: true });
+          // 저장된 핸들러 제거용으로 저장
+          mapListenersRef.current.push({
+            remove: () => container.removeEventListener('mouseup', onEnd),
+          });
+          mapListenersRef.current.push({
+            remove: () => container.removeEventListener('touchend', onEnd),
+          });
+        }
+      } catch {}
     } catch (e) {
       // ignore - poll fallback remains
     }
@@ -190,10 +222,25 @@ const MapView = ({ onMapReady }: Props) => {
       if (tmapEvent && typeof tmapEvent.removeListener === 'function') {
         mapListenersRef.current.forEach((ln) => {
           try {
-            tmapEvent.removeListener(ln);
+            // SDK 리스너 객체면 removeListener로 제거
+            if (typeof ln === 'object' && ln && typeof ln.remove === 'function') {
+              try {
+                ln.remove();
+              } catch {}
+            } else {
+              tmapEvent.removeListener(ln);
+            }
           } catch {}
         });
       }
+      // DOM 폴백으로 들어온 항목(remove 함수 포함)도 실행
+      try {
+        mapListenersRef.current.forEach((ln) => {
+          try {
+            if (typeof ln === 'object' && ln && typeof ln.remove === 'function') ln.remove();
+          } catch {}
+        });
+      } catch {}
       mapListenersRef.current = [];
     } catch {}
   };
@@ -614,11 +661,17 @@ const MapView = ({ onMapReady }: Props) => {
                 container.addEventListener('click', domDismiss, { passive: true });
                 container.addEventListener('touchend', domDismiss, { passive: true });
                 container.addEventListener('mousedown', domDismiss, { passive: true });
+                // drag 폴백: 마우스 업/터치 엔드 시 fetch 예약 (짧은 디바운스로 중복 방지)
+                const onEnd = () => scheduleFetch(mapInstance);
+                container.addEventListener('mouseup', onEnd, { passive: true });
+                container.addEventListener('touchend', onEnd, { passive: true });
                 return () => {
                   try {
                     container.removeEventListener('click', domDismiss);
                     container.removeEventListener('touchend', domDismiss);
                     container.removeEventListener('mousedown', domDismiss);
+                    container.removeEventListener('mouseup', onEnd);
+                    container.removeEventListener('touchend', onEnd);
                   } catch {}
                 };
               }

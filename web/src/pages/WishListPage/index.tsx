@@ -41,43 +41,43 @@ const WishListPage = () => {
     navigate(`/shelter-detail/${shelterId}`);
   };
 
-  if (isLoading) return <div css={pageContainerStyle}>로딩 중...</div>;
-  // error는 빈 상태 UI로 처리: 아래 렌더에서 error 여부에 따라 메시지 표시
+  if (isLoading) return <div css={pageContainerStyle(false)}>로딩 중...</div>;
+
+  const isEmpty = wishList.length === 0;
 
   return (
     <>
-      {wishList.length > 0 ? (
-        // 찜 목록이 있을 때 컨테이너
-        <div css={pageContainerStyle}>
-          <div css={header}>
-            <FaHeart color="red" size={43} css={heartIcon} />
-            <span css={title}>찜 목록</span>
-          </div>
-          <div css={listBox}>
-            {wishList.map((item: any) => (
-              <WishListCard
-                key={item.shelterId}
-                item={item}
-                onClick={handleCardClick}
-                refetchWishList={() =>
-                  getWishList()
-                    .then((d: any) => {
-                      const items = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
-                      setWishList(items);
-                    })
-                    .catch(() => {
-                      /* optional: set error state if needed */
-                    })
-                }
-              />
-            ))}
-          </div>
+      <div css={pageContainerStyle(isEmpty)}>
+        <div css={header}>
+          <FaHeart color={isEmpty ? '#fff' : 'red'} size={43} css={heartIcon} />
+          <span css={isEmpty ? emptyTitle : title}>찜 목록</span>
         </div>
-      ) : (
-        // 찜 목록이 없을 때 컨테이너
-        <div css={emptyStateStyle}>
+
+        {/* 목록: 비어있을 때 fade-out */}
+        <div css={[listBox, isEmpty && listHidden]}>
+          {wishList.map((item: any) => (
+            <WishListCard
+              key={item.shelterId}
+              item={item}
+              onClick={handleCardClick}
+              refetchWishList={() =>
+                getWishList()
+                  .then((d: any) => {
+                    const items = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
+                    setWishList(items);
+                  })
+                  .catch(() => {
+                    /* optional */
+                  })
+              }
+            />
+          ))}
+        </div>
+
+        {/* 빈 상태: 목록 위에 겹쳐서 존재, isEmpty시 fade-in */}
+        <div css={[emptyStateStyle, !isEmpty && emptyHidden]}>
           <div css={emptyHeader}>
-            <FaHeart color="red" size={43} css={heartIcon} />
+            <FaHeart color="#ff0000ff" size={43} css={heartIcon} />
             <span css={emptyTitle}>찜 목록</span>
           </div>
           <div css={emptyBox}>
@@ -87,7 +87,7 @@ const WishListPage = () => {
             <img src={emptyWishImg} alt="찜 없음" css={emptyImg} />
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 };
@@ -95,10 +95,11 @@ const WishListPage = () => {
 export default WishListPage;
 
 // 스타일
-const pageContainerStyle = css`
+const pageContainerStyle = (isEmpty: boolean) => css`
   position: relative;
   margin: 0 auto;
-  background: #fff;
+  background: ${isEmpty ? '#000' : '#fff'};
+  transition: background-color 360ms ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -131,7 +132,6 @@ const title = css`
 const listBox = css`
   display: flex;
   flex-direction: column;
-  gap: 12px;
   width: 95%;
   /* 목록 영역이 남은 높이를 차지하고 내부에서 스크롤 발생 */
   flex: 1 1 auto;
@@ -140,21 +140,29 @@ const listBox = css`
   /* 스크롤 시 하단 안전영역 확보 (스크롤 없으면 여백 없음) */
   padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
   box-sizing: border-box;
+  transition:
+    opacity 360ms ease,
+    transform 360ms ease;
+  opacity: 1;
 `;
 
 const emptyStateStyle = css`
-  position: fixed;
+  position: absolute;
+  inset: 0;
   display: flex;
   width: 100%;
   flex-direction: column;
   align-items: center;
-  height: calc(
-    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-  );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
+  height: 100vh;
+  box-sizing: border-box;
   text-align: center;
   background: #000;
-  overflow: hidden;
+  transition:
+    opacity 360ms ease,
+    transform 360ms ease;
+  opacity: 1;
+  pointer-events: auto;
 `;
 
 const emptyHeader = css`
@@ -195,4 +203,16 @@ const emptyText = css`
   color: #fff;
   text-shadow: 2px 2px 6px #222;
   white-space: pre-line; /* '\n'을 줄바꿈으로 렌더 */
+`;
+
+const listHidden = css`
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+`;
+
+const emptyHidden = css`
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
 `;

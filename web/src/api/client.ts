@@ -127,9 +127,9 @@ export function clearWebViewCookies() {
  */
 export async function tryReissueTokensSilently(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
-  
+
   const { refreshToken } = getStoredTokens();
-  
+
   // refreshToken이 없고 쿠키도 없을 가능성이 높으면 시도하지 않음
   // 하지만 쿠키는 확인할 수 없으므로, refreshToken이 없어도 쿠키 기반으로 시도
   try {
@@ -137,13 +137,13 @@ export async function tryReissueTokensSilently(): Promise<boolean> {
     if (refreshToken) {
       reissueHeaders.set('Authorization-Refresh', `Bearer ${refreshToken}`);
     }
-    
+
     const reissueRes = await fetch(`${BASE}/api/users/reissue`, {
       method: 'POST',
       credentials: 'include',
       headers: reissueHeaders,
     });
-    
+
     if (reissueRes.ok) {
       // 재발급 성공 시 토큰 저장
       try {
@@ -163,7 +163,7 @@ export async function tryReissueTokensSilently(): Promise<boolean> {
   } catch {
     // 네트워크 에러 등은 조용히 무시
   }
-  
+
   return false;
 }
 
@@ -220,7 +220,10 @@ async function fetchWithReissue(input: RequestInfo | URL, init: RequestInit = {}
 }
 
 export const apiClient = {
-  get: (url: string) => fetchWithReissue(`${BASE}${url}`, { credentials: 'include' }),
+  get: (
+    url: string,
+    _p0?: { params: { latitude: string; longitude: string } } | { params?: undefined },
+  ) => fetchWithReissue(`${BASE}${url}`, { credentials: 'include' }),
   post: (url: string, body?: any, options?: { headers?: Record<string, string> }) =>
     fetchWithReissue(`${BASE}${url}`, {
       method: 'POST',

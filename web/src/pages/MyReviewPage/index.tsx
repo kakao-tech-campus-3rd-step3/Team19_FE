@@ -32,6 +32,9 @@ const MyReviewPage = () => {
   // 마지막으로 제거된 항목 보관(ref) — 복구용
   const lastRemovedRef = useRef<{ item: MyReview; index: number } | null>(null);
 
+  // 삭제 애니메이션 중인 아이디 집합 (부모가 관리)
+  const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -44,9 +47,8 @@ const MyReviewPage = () => {
       .catch((e) => {
         if (!mounted) return;
         console.error('[MyReviewPage] getMyReviews error', e);
-        // API 실패 시에도 빈 상태 UI를 보여주고, 토스트로 에러를 알림
         setError(e);
-        setReviews([]); // 명시적으로 빈배열로 처리
+        setReviews([]); // 빈 상태
       })
       .finally(() => {
         if (!mounted) return;
@@ -61,13 +63,33 @@ const MyReviewPage = () => {
     navigate(`/shelter-detail/${shelterId}`);
   };
 
-  // 부모: 낙관적 제거 (리스트에서 즉시 삭제)
-  const handleRemoveOptimistic = (reviewId: number) => {
+  // 부모: 애니메이션 시작 플래그 설정
+  const handleStartRemoving = (reviewId: number) => {
+    setDeletingIds((prev) => new Set(prev).add(reviewId));
+  };
+
+  // 부모: 애니메이션 취소(서버에서 실패 등)
+  const handleCancelRemoving = (reviewId: number) => {
+    setDeletingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(reviewId);
+      return next;
+    });
+  };
+
+  // 부모: 애니메이션 종료 후 실제로 리스트에서 제거
+  const handleFinalizeRemove = (reviewId: number) => {
     setReviews((prev) => {
       const idx = prev.findIndex((r) => r.reviewId === reviewId);
       if (idx === -1) return prev;
       const removed = prev[idx];
       lastRemovedRef.current = { item: removed, index: idx };
+      // 삭제 확정 -> deletingIds에서도 제거
+      setDeletingIds((prevIds) => {
+        const next = new Set(prevIds);
+        next.delete(reviewId);
+        return next;
+      });
       return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
     });
   };
@@ -85,33 +107,36 @@ const MyReviewPage = () => {
   };
 
   if (loading) return <div>로딩 중...</div>;
-  // 변경: error 발생해도 별도 에러 화면으로 리턴하지 않고 빈 상태 UI를 렌더하도록 함
+
+  const isEmpty = reviews.length === 0;
 
   return (
     <>
-      {reviews.length > 0 ? (
-        // 내가 쓴 리뷰가 있을 때 컨테이너
-        <div css={pageContainerStyle}>
-          <div css={header}>
-            <FaRegCommentDots color="#222" size={43} css={reviewIcon} />
-            <span css={title}>내가 쓴 리뷰</span>
-          </div>
-          <div css={listBox}>
-            {reviews.map((item) => (
-              <ReviewListCard
-                key={item.reviewId}
-                item={item}
-                onClick={handleCardClick}
-                onToast={setToastMessage} // ToastMessage 콜백 전달
-                onRemoveOptimistic={handleRemoveOptimistic}
-                onRestore={handleRestore}
-              />
-            ))}
-          </div>
+      <div css={pageContainerStyle(isEmpty)}>
+        <div css={header}>
+          <FaRegCommentDots color={isEmpty ? '#fff' : '#222'} size={43} css={reviewIcon} />
+          <span css={isEmpty ? emptyTitle : title}>내가 쓴 리뷰</span>
         </div>
-      ) : (
-        // 내가 쓴 리뷰가 없을 때 컨테이너 (API 실패도 여기로 표시)
-        <div css={emptyStateStyle}>
+
+        {/* 리뷰 목록: 비어있을 때는 서서히 사라짐 */}
+        <div css={[listBox, isEmpty && listHidden]}>
+          {reviews.map((item) => (
+            <ReviewListCard
+              key={item.reviewId}
+              item={item}
+              onClick={handleCardClick}
+              onToast={setToastMessage}
+              onStartRemoving={handleStartRemoving}
+              onFinalizeRemove={handleFinalizeRemove}
+              onCancelRemoving={handleCancelRemoving}
+              onRestore={handleRestore}
+              isDeleting={deletingIds.has(item.reviewId)}
+            />
+          ))}
+        </div>
+
+        {/* 빈 상태: 목록 위에 겹쳐서 존재, isEmpty시 fade-in */}
+        <div css={[emptyStateStyle, !isEmpty && emptyHidden]}>
           <div css={emptyHeader}>
             <FaRegCommentDots color="#fff" size={43} css={reviewIcon} />
             <span css={emptyTitle}>내가 쓴 리뷰</span>
@@ -123,8 +148,8 @@ const MyReviewPage = () => {
             <img src={emptyReviewImg} alt="리뷰 없음" css={emptyImg} />
           </div>
         </div>
-      )}
-      {/*페이지 단 ToastMessage */}
+      </div>
+
       <ToastMessage message={toastMessage} />
     </>
   );
@@ -133,10 +158,11 @@ const MyReviewPage = () => {
 export default MyReviewPage;
 
 // 스타일
-const pageContainerStyle = css`
+const pageContainerStyle = (isEmpty: boolean) => css`
   position: relative;
   margin: 0 auto;
-  background: #fff;
+  background: ${isEmpty ? '#000' : '#fff'};
+  transition: background-color 360ms ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -170,7 +196,6 @@ const title = css`
 const listBox = css`
   display: flex;
   flex-direction: column;
-  gap: 12px;
   width: 95%;
   /* 목록 영역이 남은 높이를 차지하고 내부에서 스크롤 발생 */
   flex: 1 1 auto;
@@ -179,21 +204,41 @@ const listBox = css`
   /* 스크롤 시 하단 안전영역 확보 (스크롤 없으면 여백 없음) */
   padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
   box-sizing: border-box;
+  transition:
+    opacity 360ms ease,
+    transform 360ms ease;
+  opacity: 1;
+`;
+
+const listHidden = css`
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
 `;
 
 const emptyStateStyle = css`
-  position: fixed;
+  position: absolute;
+  inset: 0;
   display: flex;
   width: 100%;
   flex-direction: column;
   align-items: center;
-  height: calc(
-    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
-  );
   padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   text-align: center;
   background: #000;
-  overflow: hidden;
+  height: 100vh;
+  box-sizing: border-box;
+  transition:
+    opacity 360ms ease,
+    transform 360ms ease;
+  opacity: 1;
+  pointer-events: auto;
+`;
+
+const emptyHidden = css`
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
 `;
 
 const emptyHeader = css`
@@ -233,5 +278,5 @@ const emptyText = css`
   font-weight: 700;
   color: #fff;
   text-shadow: 2px 2px 6px #222;
-  white-space: pre-line; /*'\n'을 줄바꿈으로 렌더 */
+  white-space: pre-line;
 `;

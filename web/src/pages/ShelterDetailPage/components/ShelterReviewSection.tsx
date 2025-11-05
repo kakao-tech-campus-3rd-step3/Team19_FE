@@ -4,6 +4,7 @@ import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NoProfile from '@/assets/images/NoProfile.png';
+import { createPortal } from 'react-dom';
 
 // Review 타입 정의
 interface Review {
@@ -52,6 +53,7 @@ const ShelterReviewSection = ({
 
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
   const navigate = useNavigate();
+  const bodyLockRef = useRef(0);
 
   // 프로필 이미지 에러 핸들링용 state
   const [profileImgErrorMap, setProfileImgErrorMap] = useState<{ [reviewId: number]: boolean }>({});
@@ -75,6 +77,52 @@ const ShelterReviewSection = ({
       reviews.forEach((r) => checkLineClamp(r.reviewId));
     }, 0);
   }, [reviews]);
+
+  // modal(open) 시 바디 스크롤 잠금 (ReviewListCard와 동일 동작)
+  useEffect(() => {
+    const modalOpen = !!modalImg;
+    const body = document.body;
+    if (modalOpen) {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      body.dataset.modalOpenCount = String(prev + 1);
+      if (prev === 0) {
+        body.dataset.prevOverflow = body.style.overflow || '';
+        body.dataset.prevScrollY = String(window.scrollY || 0);
+        body.style.overflow = 'hidden';
+      }
+      bodyLockRef.current = Number(body.dataset.modalOpenCount);
+    } else {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      const next = Math.max(0, prev - 1);
+      body.dataset.modalOpenCount = String(next);
+      if (next === 0) {
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+        bodyLockRef.current = 0;
+      } else {
+        bodyLockRef.current = next;
+      }
+    }
+    return () => {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      if (prev <= 1) {
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+      } else {
+        body.dataset.modalOpenCount = String(prev - 1);
+      }
+    };
+  }, [modalImg]);
 
   return (
     <section css={reviewSectionStyle}>
@@ -182,22 +230,24 @@ const ShelterReviewSection = ({
         </div>
       )}
 
-      {/* 이미지 확대 모달 */}
-      {modalImg && (
-        <div css={modalOverlay}>
-          <div css={modalContent}>
-            <img
-              src={modalImg}
-              alt="리뷰 이미지 확대"
-              css={modalImgStyle}
-              onError={handleImageError}
-            />
-            <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 이미지 확대 모달 (createPortal, ReviewListCard와 동일 동작) */}
+      {modalImg &&
+        createPortal(
+          <div css={modalOverlay} onClick={() => setModalImg(null)}>
+            <div css={modalContent} onClick={(e) => e.stopPropagation()}>
+              <img
+                src={modalImg}
+                alt="리뷰 이미지 확대"
+                css={modalImgStyle}
+                onError={handleImageError}
+              />
+              <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
+                닫기
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </section>
   );
 };

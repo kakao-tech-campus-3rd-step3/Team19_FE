@@ -27,7 +27,7 @@ const raw = {
   // ShelterDetailPage
   detail1: { fontSize: '2.39rem', fontWeight: 800, lineHeight: '2.80rem' },
   detail2: { fontSize: '1.90rem', fontWeight: 800, lineHeight: '1.98rem' },
-  detail3: { fontSize: '1.50rem', fontWeight: 700, lineHeight: '1.80rem' },
+  detail3: { fontSize: '1.55rem', fontWeight: 700, lineHeight: '1.80rem' },
 
   // Review section
   review1: { fontSize: '1.86rem', fontWeight: 800, lineHeight: '2.80rem' },
@@ -42,21 +42,21 @@ const raw = {
 
   // WishList
   wish1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },
-  wish2: { fontSize: '1.60rem', fontWeight: 800, lineHeight: '1.98rem' },
-  wish3: { fontSize: '1.20rem', fontWeight: 600, lineHeight: '1.51rem' },
+  wish2: { fontSize: '1.80rem', fontWeight: 800, lineHeight: '2.18rem' },
+  wish3: { fontSize: '1.25rem', fontWeight: 600, lineHeight: '1.56rem' },
 
   // MyReview / EditReview
   myr1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },
-  myr2: { fontSize: '1.49rem', fontWeight: 800, lineHeight: '1.70rem' },
-  myr3: { fontSize: '1.20rem', fontWeight: 550, lineHeight: '1.51rem' },
+  myr2: { fontSize: '1.80rem', fontWeight: 700, lineHeight: '2.18rem' },
+  myr3: { fontSize: '1.30rem', fontWeight: 600, lineHeight: '1.61rem' },
   myr4: { fontSize: '2.02rem', fontWeight: 600, lineHeight: '2.23rem' },
   myr5: { fontSize: '1.49rem', fontWeight: 500, lineHeight: '1.80rem' },
 
   // EditProfile
   edit1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },
   edit2: { fontSize: '1.49rem', fontWeight: 600, lineHeight: '1.70rem' },
-  edit3: { fontSize: '1.28rem', fontWeight: 500, lineHeight: '1.54rem' },
-  edit4: { fontSize: '1.60rem', fontWeight: 700, lineHeight: '1.81rem' },
+  edit3: { fontSize: '1.30rem', fontWeight: 500, lineHeight: '1.64rem' },
+  edit4: { fontSize: '2.00rem', fontWeight: 700, lineHeight: '2.21rem' },
 
   // Button
   button1: { fontSize: '1.80rem', fontWeight: 700, lineHeight: '1.87rem' },

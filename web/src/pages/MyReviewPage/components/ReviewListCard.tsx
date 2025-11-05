@@ -12,7 +12,6 @@ import { createPortal } from 'react-dom';
 interface MyReview {
   reviewId: number;
   shelterId: number;
-  // API/훅에 따라 없을 수 있으므로 optional로 추가
   shelterName?: string;
   name: string;
   userId: number;
@@ -24,33 +23,41 @@ interface MyReview {
   updatedAt: string;
 }
 
-// 부모로 전달할 콜백 추가
 interface ReviewListCardProps {
   item: MyReview;
   onClick: (shelterId: number) => void;
-  onToast: (msg: string) => void; // 부모로 전달할 콜백
-  onRemoveOptimistic?: (reviewId: number) => void;
+  onToast: (msg: string) => void;
+  onStartRemoving?: (reviewId: number) => void;
+  onFinalizeRemove?: (reviewId: number) => void;
+  onCancelRemoving?: (reviewId: number) => void;
   onRestore?: () => void;
+  isDeleting?: boolean;
 }
 
-// 이미지 url이 유효하지 않을 경우 대체 이미지를 보여주는 함수
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
+// 애니메이션 시간(밀리초) — 모듈 상단에서 고정
+const ANIM_MS = 1200;
+
 const ReviewListCard = ({
   item,
   onClick,
-  onToast,
-  onRemoveOptimistic,
+  onStartRemoving,
+  onFinalizeRemove,
+  onCancelRemoving,
   onRestore,
+  isDeleting = false,
 }: ReviewListCardProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
+  const [modalImg, setModalImg] = useState<string | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const bodyLockRef = useRef(0);
+  const removeTimeoutRef = useRef<number | null>(null);
 
-  // body 스크롤 잠금: 여러 모달 동시 오픈 대비 카운터로 처리
   useEffect(() => {
     const modalOpen = showDeleteModal || !!modalImg;
     const body = document.body;
@@ -58,7 +65,6 @@ const ReviewListCard = ({
       const prev = Number(body.dataset.modalOpenCount ?? 0);
       body.dataset.modalOpenCount = String(prev + 1);
       if (prev === 0) {
-        // 첫 모달 오픈 시 overflow 숨김 및 현재 스크롤 위치 보관
         body.dataset.prevOverflow = body.style.overflow || '';
         body.dataset.prevScrollY = String(window.scrollY || 0);
         body.style.overflow = 'hidden';
@@ -69,7 +75,6 @@ const ReviewListCard = ({
       const next = Math.max(0, prev - 1);
       body.dataset.modalOpenCount = String(next);
       if (next === 0) {
-        // 마지막 모달 닫힌 경우 복구
         const prevOverflow = body.dataset.prevOverflow ?? '';
         const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
         body.style.overflow = prevOverflow;
@@ -83,7 +88,6 @@ const ReviewListCard = ({
       }
     }
     return () => {
-      // 컴포넌트 언마운트 시 안전 복구
       const prev = Number(body.dataset.modalOpenCount ?? 0);
       if (prev <= 1) {
         const prevOverflow = body.dataset.prevOverflow ?? '';
@@ -99,7 +103,6 @@ const ReviewListCard = ({
     };
   }, [showDeleteModal, modalImg]);
 
-  // react-query mutation 사용: 전역 성공/실패 메시지는 여기서 처리하지 않고 호출 시 옵션으로 처리
   const mutation = useMutation({
     mutationFn: (reviewId: number) => deleteReview(reviewId),
   });
@@ -112,148 +115,210 @@ const ReviewListCard = ({
   const handleDeleteConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(false);
-    // 낙관적 제거: 부모에 먼저 제거 요청
+
     try {
-      onRemoveOptimistic && onRemoveOptimistic(item.reviewId);
+      onStartRemoving && onStartRemoving(item.reviewId);
     } catch (err) {
-      console.warn('onRemoveOptimistic error', err);
+      console.warn('onStartRemoving error', err);
     }
-    // 서버 삭제 호출, 실패 시 복구
+    setIsRemoving(true);
+
+    const wrapperEl = wrapperRef.current;
+    const affectedSiblings: HTMLElement[] = [];
+
+    if (wrapperEl) {
+      const height = wrapperEl.scrollHeight;
+
+      // wrapper collapse 준비
+      wrapperEl.style.transition = `max-height ${ANIM_MS}ms ease, margin ${ANIM_MS}ms ease, padding ${ANIM_MS}ms ease`;
+      wrapperEl.style.overflow = 'hidden';
+      wrapperEl.style.maxHeight = `${height}px`;
+
+      // 아래 형제들을 먼저 아래로 옮겨두고(시각적 준비) 이후 0으로 옮겨 자연스럽게 올라오게 함
+      let next = wrapperEl.nextElementSibling as HTMLElement | null;
+      while (next) {
+        affectedSiblings.push(next);
+        next.style.transition = `transform ${ANIM_MS}ms ease`;
+        next.style.transform = `translateY(${height}px)`;
+        next = next.nextElementSibling as HTMLElement | null;
+      }
+
+      // 강제 리플로우 후 collapse
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      wrapperEl.offsetHeight;
+      wrapperEl.style.maxHeight = '0px';
+      wrapperEl.style.marginBottom = '0px';
+      wrapperEl.style.paddingTop = '0px';
+      wrapperEl.style.paddingBottom = '0px';
+
+      // siblings를 0으로 이동시켜 위로 올라오게 함
+      requestAnimationFrame(() => {
+        for (const s of affectedSiblings) {
+          s.style.transform = 'translateY(0)';
+        }
+      });
+    }
+
+    // 서버 요청 병렬: 권한 오류면 복구, 네트워크 에러는 사용자 안내
     mutation.mutate(item.reviewId, {
-      onSuccess: () => {
-        onToast('리뷰가 삭제되었습니다');
-      },
-      onError: () => {
-        onRestore && onRestore();
-        onToast('삭제에 실패했습니다');
+      onSuccess: () => {},
+      onError: (error: any) => {
+        const status = error?.response?.status ?? error?.status;
+        if (status === 401 || status === 403) {
+          onCancelRemoving && onCancelRemoving(item.reviewId);
+          setIsRemoving(false);
+          onRestore && onRestore();
+        } else {
+          console.warn('deleteReview error', error);
+        }
       },
     });
+
+    if (removeTimeoutRef.current) {
+      window.clearTimeout(removeTimeoutRef.current);
+    }
+    removeTimeoutRef.current = window.setTimeout(() => {
+      onFinalizeRemove && onFinalizeRemove(item.reviewId);
+
+      if (wrapperEl) {
+        wrapperEl.style.overflow = '';
+        wrapperEl.style.maxHeight = '';
+        wrapperEl.style.transition = '';
+        wrapperEl.style.marginBottom = '';
+        wrapperEl.style.paddingTop = '';
+        wrapperEl.style.paddingBottom = '';
+      }
+      for (const s of affectedSiblings) {
+        s.style.transition = '';
+        s.style.transform = '';
+      }
+    }, ANIM_MS);
   };
+
+  useEffect(() => {
+    return () => {
+      if (removeTimeoutRef.current) {
+        window.clearTimeout(removeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleDeleteCancel = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteModal(false);
   };
 
-  // 수정 버튼 클릭 시 리뷰 수정 페이지로 이동
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/edit-review/${item.reviewId}`);
   };
 
   return (
-    <div
-      css={card}
-      onClick={() => onClick(item.shelterId)}
-      style={{ cursor: 'pointer', position: 'relative' }}
-    >
-      {/* 휴지통 버튼 */}
-      <button css={deleteBtn} onClick={handleDeleteClick}>
-        <FaTrash size={25} />
-      </button>
-      <div css={cardTitleRow}>
-        <span css={cardTitle}>{item.shelterName ?? item.name ?? `쉼터 #${item.shelterId}`}</span>
-      </div>
-      <div css={cardBottomRow}>
-        <div css={cardInfo}>
-          <div css={cardRating}>
-            <span css={ratingNumber}>{item.rating}</span>
-            <span css={starsWrapper}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <span key={i} css={i < item.rating ? filledStar : emptyStar}>
-                  ★
-                </span>
-              ))}
-            </span>
-          </div>
-          <div css={cardContent}>{item.content}</div>
-          <div css={cardDate}>작성일: {new Date(item.createdAt).toLocaleDateString()}</div>
-          {item.photoUrl && item.photoUrl.trim() !== '' && (
-            <img
-              src={item.photoUrl}
-              alt="리뷰 이미지"
-              css={cardImg}
-              onError={handleImageError}
-              onClick={(e) => {
-                e.stopPropagation();
-                setModalImg(item.photoUrl);
-              }}
-              style={{ cursor: 'pointer' }}
-            />
-          )}
-        </div>
-      </div>
-      {/* 수정 버튼 */}
-      <div css={editBtnWrapper}>
-        <button css={editBtn} onClick={handleEditClick}>
-          수정
+    <div ref={wrapperRef} css={[itemWrapper]}>
+      <div
+        css={[card, (isRemoving || isDeleting) && removingStyle]}
+        onClick={() => onClick(item.shelterId)}
+        style={{ cursor: 'pointer', position: 'relative' }}
+      >
+        <button css={deleteBtn} onClick={handleDeleteClick}>
+          <FaTrash size={30} />
         </button>
-      </div>
-      {/* 삭제 모달 (portal로 body에 렌더) */}
-      {showDeleteModal &&
-        createPortal(
-          <div
-            css={modalOverlay}
-            onClick={() => {
-              // overlay 클릭 시 모달 닫음
-              setShowDeleteModal(false);
-            }}
-          >
-            <div
-              css={modalBox}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              <div css={modalText}>
-                리뷰를
-                <br />
-                삭제하시겠습니까?
-              </div>
-              <div css={modalButtons}>
-                <button css={modalBtn} onClick={handleDeleteConfirm}>
-                  예
-                </button>
-                <button css={modalBtn} onClick={handleDeleteCancel}>
-                  아니요
-                </button>
-              </div>
+        <div css={cardTitleRow}>
+          <span css={cardTitle}>{item.shelterName ?? item.name ?? `쉼터 #${item.shelterId}`}</span>
+        </div>
+        <div css={cardBottomRow}>
+          <div css={cardInfo}>
+            <div css={cardRating}>
+              <span css={ratingNumber}>{item.rating}</span>
+              <span css={starsWrapper}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span key={i} css={i < item.rating ? filledStar : emptyStar}>
+                    ★
+                  </span>
+                ))}
+              </span>
             </div>
-          </div>,
-          document.body,
-        )}
-
-      {/* 이미지 확대 모달 (portal) */}
-      {modalImg &&
-        createPortal(
-          <div
-            css={modalOverlay}
-            onClick={() => {
-              setModalImg(null);
-            }}
-          >
-            <div
-              css={modalContent}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
+            <div css={cardContent}>{item.content}</div>
+            {item.photoUrl && item.photoUrl.trim() !== '' && (
               <img
-                src={modalImg}
-                alt="리뷰 이미지 확대"
-                css={modalImgStyle}
+                src={item.photoUrl}
+                alt="리뷰 이미지"
+                css={cardImg}
                 onError={handleImageError}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setModalImg(item.photoUrl);
+                }}
+                style={{ cursor: 'pointer' }}
               />
-              <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
-                닫기
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )}
+            )}
+          </div>
+        </div>
+        <div css={editMetaWrapper} onClick={(e) => e.stopPropagation()}>
+          <div css={editDate}>작성일: {new Date(item.createdAt).toLocaleDateString()}</div>
+          <div css={editBtnWrapper}>
+            <button css={editBtn} onClick={handleEditClick}>
+              수정
+            </button>
+          </div>
+        </div>
+
+        {showDeleteModal &&
+          createPortal(
+            <div css={modalOverlay} onClick={() => setShowDeleteModal(false)}>
+              <div css={modalBox} onClick={(e) => e.stopPropagation()}>
+                <div css={modalText}>
+                  리뷰를
+                  <br />
+                  삭제하시겠습니까?
+                </div>
+                <div css={modalButtons}>
+                  <button css={modalBtn} onClick={handleDeleteConfirm}>
+                    예
+                  </button>
+                  <button css={modalBtn} onClick={handleDeleteCancel}>
+                    아니요
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
+
+        {modalImg &&
+          createPortal(
+            <div css={modalOverlay} onClick={() => setModalImg(null)}>
+              <div css={modalContent} onClick={(e) => e.stopPropagation()}>
+                <img
+                  src={modalImg}
+                  alt="리뷰 이미지 확대"
+                  css={modalImgStyle}
+                  onError={handleImageError}
+                />
+                <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
+                  닫기
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )}
+      </div>
     </div>
   );
 };
+
+const removingStyle = css`
+  transform: translateX(100%);
+  opacity: 0;
+  transition:
+    transform ${ANIM_MS}ms ease-in-out,
+    opacity ${ANIM_MS}ms ease-in-out;
+`;
+
+const itemWrapper = css`
+  overflow: hidden;
+  margin-bottom: 12px;
+`;
 
 const card = css`
   background: #e0e0e0;
@@ -270,21 +335,28 @@ const card = css`
 const cardTitleRow = css`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 0 16px 8px 16px;
 `;
 
 const cardTitle = css`
   ${theme.typography.myr2};
-  /* 한 줄로 자르고 말줄임 표시 */
+  /* 한 줄로 표시하고 넘치면 ellipsis 처리 */
   display: block;
-  flex: 1 1 auto;
-  min-width: 0; /* flex 컨테이너 내부에서 ellipsis 동작을 위해 필요 */
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  /* 왼쪽 정렬 명시 */
+
+  /* 플렉스 레이아웃에서 잘 동작하도록 */
+  flex: 1 1 auto;
+  min-width: 0;
+
+  /* 휴지통 버튼(absolute)과 겹치지 않도록 우측 여유 확보 */
+  padding-right: 48px;
+
   text-align: left;
+  margin-top: 4px;
+  margin-bottom: 8px;
 `;
 
 const cardBottomRow = css`
@@ -315,7 +387,7 @@ const cardInfo = css`
 const cardRating = css`
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
 `;
 
 const ratingNumber = css`
@@ -333,7 +405,8 @@ const starsWrapper = css`
 `;
 
 const filledStar = css`
-  color: #f2d321ff;
+  color: #ffd900ff;
+  shadow: 1px 1px 2px #bfa800ff;
   ${theme.typography.myr3};
 `;
 
@@ -348,13 +421,7 @@ const cardContent = css`
   padding-left: 4px;
   text-align: left;
   color: #3c3a3aff;
-`;
-
-const cardDate = css`
-  margin-top: 4px;
-  padding-left: 4px;
-  font-size: 1rem;
-  color: #888;
+  margin-bottom: 8px;
 `;
 
 const deleteBtn = css`
@@ -374,7 +441,7 @@ const deleteBtn = css`
 const editBtnWrapper = css`
   display: flex;
   justify-content: flex-end;
-  padding: 0 16px 8px 16px;
+  padding: 0 8px 8px 16px;
 `;
 
 const editBtn = css`
@@ -382,9 +449,32 @@ const editBtn = css`
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 4px 12px;
+  padding: 8px 12px;
   ${theme.typography.myr2};
+  font-size: 1.6rem;
   cursor: pointer;
+
+  /* 텍스트가 세로로 쪼개지는 현상 방지 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1;
+`;
+
+const editMetaWrapper = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px 8px 16px;
+`;
+
+const editDate = css`
+  margin-top: 4px;
+  padding-left: 4px;
+  font-size: 1.2rem;
+  color: #7c7a7aff;
 `;
 
 const modalOverlay = css`
@@ -431,7 +521,6 @@ const modalBtn = css`
   transition: background 0.18s;
 `;
 
-// (ShelterDetailPage와 통일)
 const modalContent = css`
   background: #fff;
   border-radius: 12px;

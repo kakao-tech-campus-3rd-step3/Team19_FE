@@ -199,7 +199,7 @@ const titleRow = css`
   align-items: center;
   gap: 8px;
   margin-top: 16px;
-  padding: 4% 5%;
+  padding-bottom: 24px;
 `;
 
 const emoji = css`
@@ -358,6 +358,7 @@ const modalBtn = css`
   color: #fff;
   border: none;
   border-radius: 8px;
+  margin-bottom: 16px;
   padding: 10px 28px;
   cursor: pointer;
   transition: background 0.18s;

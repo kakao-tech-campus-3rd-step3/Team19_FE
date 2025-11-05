@@ -369,6 +369,10 @@ class MainActivity : AppCompatActivity() {
     
     // WebAppInterface에서 TTS 접근을 위한 getter
     fun getTextToSpeech(): TextToSpeech? = textToSpeech
+
+    // 저장된 FCM 토큰을 반환 (웹에서 JS 브릿지를 통해 조회)
+    fun getStoredFcmToken(): String? =
+        MyFirebaseMessagingService.getStoredFcmToken(this)
 }
 
 /**
@@ -417,5 +421,14 @@ class WebAppInterface(private val activity: MainActivity) {
         activity.runOnUiThread {
             activity.getTextToSpeech()?.stop()
         }
+    }
+
+    /**
+     * 저장된 FCM 디바이스 토큰을 반환합니다.
+     * JavaScript에서 AndroidBridge.getDeviceToken()으로 호출할 수 있습니다.
+     */
+    @JavascriptInterface
+    fun getDeviceToken(): String? {
+        return activity.getStoredFcmToken()
     }
 }

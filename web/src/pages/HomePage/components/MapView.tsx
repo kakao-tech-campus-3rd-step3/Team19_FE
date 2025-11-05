@@ -304,14 +304,17 @@ const MapView = ({ onMapReady }: Props) => {
 
     const createOverlayElement = (count: number, color: string) => {
       // size scaling: 기본을 크게 하고, 카운트에 따라 부드럽게 확대 (단위: diameter)
-      const base = 140; // 최소 지름
-      const maxSize = 550; // 최대 지름
+      const base = 300; // 최소 지름
+      const maxSize = 800; // 최대 지름
       // sqrt 기반으로 부드럽게 증가 + count 비례 보정
       const size = Math.min(
         maxSize,
-        Math.max(base, Math.round(base + Math.sqrt(count + 1) * 12 + count / 4)),
+        Math.max(base, Math.round(base + Math.sqrt(count + 1) * 24 + count / 2)),
       );
       const fontSize = Math.round(Math.min(72, size * 1.42));
+      // debug: count -> size 확인
+      // eslint-disable-next-line no-console
+      console.debug('[cluster] count -> size', { count, size, fontSize });
       const el = document.createElement('div');
       el.className = 'cluster-overlay';
       el.style.width = `${size}px`;

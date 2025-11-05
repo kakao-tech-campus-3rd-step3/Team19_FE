@@ -442,9 +442,17 @@ const editBtn = css`
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 4px 12px;
+  padding: 8px 12px;
   ${theme.typography.myr2};
+  font-size: 1.6rem;
   cursor: pointer;
+
+  /* 텍스트가 세로로 쪼개지는 현상 방지 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1;
 `;
 
 const editMetaWrapper = css`
@@ -458,7 +466,7 @@ const editMetaWrapper = css`
 const editDate = css`
   margin-top: 4px;
   padding-left: 4px;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: #7c7a7aff;
 `;
 

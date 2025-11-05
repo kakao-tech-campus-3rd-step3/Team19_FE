@@ -484,39 +484,3 @@ const statusClosed = css`
 const badgeText = css`
   font-weight: 700;
 `;
-
-/* 이름과 배지 행 */
-const nameRow = ({ variant }: { variant: 'home' | 'find' }) => css`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  ${variant === 'home' ? 'justify-content: center;' : 'justify-content: flex-start;'}
-`;
-
-/* find 목록에서 표시되는 작은 배지 */
-const statusBadge = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 1.2rem;
-  line-height: 1;
-  white-space: nowrap; /* 한 줄로 유지 */
-  flex: 0 0 auto; /* 부모에서 크기 고정(줄바꿈 방지) */
-`;
-
-const statusOpen = css`
-  background: rgba(16, 185, 129, 0.08);
-  color: #10b981;
-`;
-
-const statusClosed = css`
-  background: rgba(107, 114, 128, 0.06);
-  color: #6b7280;
-`;
-
-const badgeText = css`
-  font-weight: 700;
-`;

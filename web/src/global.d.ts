@@ -9,6 +9,7 @@ declare global {
       clearCookies: () => void;
       speakText: (text: string) => void;
       stopSpeaking: () => void;
+      getDeviceToken?: () => string | null;
     };
   }
 

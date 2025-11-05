@@ -182,14 +182,26 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
           {shelter.name}
         </p>
         {variant === 'find' && (
-          <span
-            css={[statusBadge, isActuallyOpen ? statusOpen : statusClosed]}
-            title={isActuallyOpen ? '운영중' : '운영종료'}
-            aria-label={isActuallyOpen ? '운영중' : '운영종료'}
-          >
-            <MdAccessTime size={25} />
-            <span css={badgeText}>{isActuallyOpen ? '운영중' : '운영종료'}</span>
-          </span>
+          <>
+            <span
+              css={[statusBadge, isActuallyOpen ? statusOpen : statusClosed]}
+              title={isActuallyOpen ? '운영중' : '운영종료'}
+              aria-label={isActuallyOpen ? '운영중' : '운영종료'}
+            >
+              <MdAccessTime size={25} />
+              <span css={badgeText}>{isActuallyOpen ? '운영중' : '운영종료'}</span>
+            </span>
+            {shelter.isOutdoors && (
+              <span
+                css={[statusBadge, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}
+                title="야외"
+                aria-label="야외"
+              >
+                <MdWbSunny size={25} />
+                <span css={badgeText}>야외</span>
+              </span>
+            )}
+          </>
         )}
       </div>
 
@@ -441,12 +453,15 @@ const statusWrapper = css`
   margin-bottom: 0px;
 `;
 
+// 야외 배지: 운영중/운영종료 배지와 동일한 패턴(아이콘/패딩/폰트)으로 보이도록 조정
 const outdoorsOnTag = css`
-  background-color: ${theme.colors.button.redOn};
+  background: rgba(239, 68, 68, 0.08); /* 연한 빨강 배경 */
+  color: ${theme.colors.button.red}; /* 붉은 텍스트/아이콘 */
 `;
 
 const outdoorsOffTag = css`
-  background-color: ${theme.colors.button.redOff};
+  background: rgba(107, 114, 128, 0.06);
+  color: #6b7280;
 `;
 
 /* 이름과 배지 행 */

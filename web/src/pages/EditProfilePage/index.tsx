@@ -358,6 +358,7 @@ const modalBtn = css`
   color: #fff;
   border: none;
   border-radius: 8px;
+  margin-bottom: 16px;
   padding: 10px 28px;
   cursor: pointer;
   transition: background 0.18s;

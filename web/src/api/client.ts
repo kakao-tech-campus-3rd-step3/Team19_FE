@@ -228,8 +228,10 @@ export const apiClient = {
   post: (url: string, body?: any, options?: { headers?: Record<string, string> }) => {
     const headers = { ...(options?.headers || {}) };
     if (typeof FormData !== 'undefined' && body instanceof FormData) {
-      // FormData 전송 시 브라우저가 boundary를 포함한 Content-Type을 자동으로 설정하도록
-      // Content-Type을 명시적으로 설정하지 않습니다.
+      // 안전: FormData 전송 시 Content-Type 헤더가 있으면 제거하여
+      // 브라우저가 boundary를 포함한 Content-Type을 자동으로 설정하도록 함
+      delete (headers as Record<string, any>)['Content-Type'];
+      delete (headers as Record<string, any>)['content-type'];
       return fetchWithReissue(`${BASE}${url}`, {
         method: 'POST',
         credentials: 'include',
@@ -247,6 +249,8 @@ export const apiClient = {
   patch: (url: string, body?: any, options?: { headers?: Record<string, string> }) => {
     const headers = { ...(options?.headers || {}) };
     if (typeof FormData !== 'undefined' && body instanceof FormData) {
+      delete (headers as Record<string, any>)['Content-Type'];
+      delete (headers as Record<string, any>)['content-type'];
       return fetchWithReissue(`${BASE}${url}`, {
         method: 'PATCH',
         credentials: 'include',

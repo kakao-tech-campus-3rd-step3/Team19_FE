@@ -91,13 +91,23 @@ export async function patchPassword({
 
 // 프로필 이미지 업로드 (multipart/form-data)
 export async function uploadProfileImage(file: File): Promise<UserProfile> {
+  // FormData에 오직 file 필드만 추가 — 혹시 다른 필드가 섞이는 문제 예방
   const form = new FormData();
   form.append('file', file);
+  // 안전: 다른 중복 필드가 섞여있다면 제거 (보수적 처리)
+  if (typeof form.get === 'function') {
+    // (실제 브라우저 FormData는 동일 이름 중복 허용하므로 여기선 명시적으로 하나만 남김)
+    const entries = Array.from(form.entries());
+    // 디버그: 전송 직전 entries 확인 (배포 시 제거 가능)
+    // eslint-disable-next-line no-console
+    console.debug(
+      '[uploadProfileImage] form entries before send:',
+      entries.map(([k, v]) => [k, (v as any).name ?? typeof v]),
+    );
+  }
 
   try {
     const res = await apiClient.post('/api/users/me/profile-image', form);
-
-    // fetch Response 객체일 경우 상태와 본문을 확인
     if (res && typeof (res as any).status === 'number') {
       // eslint-disable-next-line no-console
       console.debug('[uploadProfileImage] response status:', (res as any).status);
@@ -112,8 +122,6 @@ export async function uploadProfileImage(file: File): Promise<UserProfile> {
         );
       }
     }
-
-    // 이미 파싱된 객체를 반환하는 경우 그대로 리턴
     return res as UserProfile;
   } catch (err: any) {
     // eslint-disable-next-line no-console

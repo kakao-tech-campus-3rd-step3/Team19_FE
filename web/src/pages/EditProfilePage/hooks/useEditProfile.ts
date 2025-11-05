@@ -5,12 +5,16 @@ import NoProfile from '@/assets/images/NoProfile.png';
 // 타입 전용 import로 변경
 import type { UserProfile } from '@/api/userApi';
 import { patchProfile, patchPassword, getMyProfile } from '@/api/userApi';
+import { uploadProfileImage } from '@/api/userApi';
 
 export const useEditProfile = () => {
   // 기본 프로필 이미지는 NoProfile로 초기화
   const [profileImageUrl, setProfileImageUrl] = useState<string>(
     typeof NoProfile === 'string' ? NoProfile : '',
   );
+  // 선택된 실제 파일 (업로드용)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const [showProfileModal, setShowProfileModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imgError, setImgError] = useState(false);
@@ -60,6 +64,11 @@ export const useEditProfile = () => {
     mutationFn: (vars) => patchPassword(vars),
   });
 
+  // 프로필 이미지 업로드 뮤테이션
+  const uploadMutation = useMutation<UserProfile, Error, File>({
+    mutationFn: (file) => uploadProfileImage(file),
+  });
+
   // 프로필 편집 버튼 클릭
   const handleEditProfileImg = () => setShowProfileModal(true);
 
@@ -73,15 +82,17 @@ export const useEditProfile = () => {
   const handleSetDefaultProfile = () => {
     setShowProfileModal(false);
     setImgError(false);
+    setSelectedFile(null);
     setProfileImageUrl(typeof NoProfile === 'string' ? NoProfile : '');
   };
 
-  // 파일 선택 시 프로필 이미지 변경
+  // 파일 선택 시 프로필 이미지 변경 (preview + 파일 저장)
   const handleProfileImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
       setProfileImageUrl(url);
+      setSelectedFile(file);
       setImgError(false);
     }
   };
@@ -108,7 +119,40 @@ export const useEditProfile = () => {
       return;
     }
 
-    // 닉네임/프로필 이미지 수정
+    // 이미지 파일이 선택되어 있으면 먼저 업로드
+    if (selectedFile) {
+      uploadMutation.mutate(selectedFile, {
+        onSuccess: (res) => {
+          const newImageUrl = res.profileImageUrl ?? '';
+          setProfileImageUrl(newImageUrl);
+          const nicknamePayload =
+            nicknameInput && nicknameInput !== (user?.nickname ?? '')
+              ? { nickname: nicknameInput }
+              : undefined;
+          if (nicknamePayload) {
+            profileMutation.mutate(nicknamePayload, {
+              onSuccess: () => setShowModal(true),
+              onError: (error: any) => {
+                // eslint-disable-next-line no-console
+                console.error('patchProfile error:', error);
+                alert(error?.message || '서버와 연결할 수 없습니다.');
+              },
+            });
+          } else {
+            setShowModal(true);
+          }
+        },
+        onError: (error: any) => {
+          // 디버그 로깅 추가
+          // eslint-disable-next-line no-console
+          console.error('uploadProfileImage failed:', error);
+          alert(error?.message || '프로필 이미지 업로드에 실패했습니다.');
+        },
+      });
+      return;
+    }
+
+    // 닉네임/프로필 이미지(링크) 수정 — 기존 로직 (파일 업로드가 없을 때)
     profileMutation.mutate(
       {
         nickname:
@@ -138,6 +182,8 @@ export const useEditProfile = () => {
     user, // 실제 API 데이터 (없으면 undefined)
     profileImageUrl,
     setProfileImageUrl,
+    selectedFile,
+    setSelectedFile,
     oldPassword,
     setOldPassword,
     newPassword,

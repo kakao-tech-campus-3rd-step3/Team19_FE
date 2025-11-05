@@ -89,6 +89,39 @@ export async function patchPassword({
   return apiClient.patch('/api/users/me/password', { currentPassword, newPassword });
 }
 
+// 프로필 이미지 업로드 (multipart/form-data)
+export async function uploadProfileImage(file: File): Promise<UserProfile> {
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const res = await apiClient.post('/api/users/me/profile-image', form);
+
+    // fetch Response 객체일 경우 상태와 본문을 확인
+    if (res && typeof (res as any).status === 'number') {
+      // eslint-disable-next-line no-console
+      console.debug('[uploadProfileImage] response status:', (res as any).status);
+      const text = await (res as any).text();
+      // eslint-disable-next-line no-console
+      console.debug('[uploadProfileImage] response text:', text);
+      try {
+        return JSON.parse(text) as UserProfile;
+      } catch {
+        throw new Error(
+          `uploadProfileImage: invalid json response (status ${(res as any).status})`,
+        );
+      }
+    }
+
+    // 이미 파싱된 객체를 반환하는 경우 그대로 리턴
+    return res as UserProfile;
+  } catch (err: any) {
+    // eslint-disable-next-line no-console
+    console.error('[uploadProfileImage] unexpected error:', err);
+    throw err;
+  }
+}
+
 //TODO: 사용자 프로필 사진 수정/사용자 닉네임 수정 -> 필요하면 추가할 것
 
 // 로그인 여부 확인 (비동기)

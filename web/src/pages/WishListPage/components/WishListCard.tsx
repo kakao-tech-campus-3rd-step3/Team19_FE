@@ -28,9 +28,9 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-// 애니메이션 시간(ms) — ReviewListCard와 동일하게 통일
-const ANIM_MS = 1200;
-// 카드 우측 슬라이드는 ReviewListCard와 동일한 ANIM_MS로 처리
+// 애니메이션 시간(ms)
+const ANIM_MS = 1200; // wrapper collapse / siblings 이동 시간 (기존)
+const CARD_MS = 1200; // 카드 우측 슬라이드 전용 시간 — 이 값을 늘리면 슬라이드가 더 느려짐
 
 const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => {
   const [isFavorite, setIsFavorite] = useState(true);
@@ -132,7 +132,7 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     // 카드 우측 슬라이드 (ANIM_MS에 맞춰 동일 동작)
     const cardEl = wrapperEl.firstElementChild as HTMLElement | null;
     if (cardEl) {
-      cardEl.style.transition = `transform ${ANIM_MS}ms ease-in-out, opacity ${ANIM_MS}ms ease-in-out`;
+      cardEl.style.transition = `transform ${CARD_MS}ms cubic-bezier(0.22,0.9,0.25,1), opacity ${CARD_MS}ms cubic-bezier(0.22,0.9,0.25,1)`;
       cardEl.style.transform = 'translateX(100%)';
       cardEl.style.opacity = '0';
     }
@@ -176,30 +176,33 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
       },
     });
 
-    // cleanup after full anim (ANIM_MS)
+    // cleanup after full anim (CARD_MS 혹은 ANIM_MS 중 큰 값)
     if (removeTimeoutRef.current) window.clearTimeout(removeTimeoutRef.current);
-    removeTimeoutRef.current = window.setTimeout(() => {
-      // 목록 갱신 및 스타일 정리
-      refetchWishList();
-      if (wrapperEl) {
-        wrapperEl.style.overflow = '';
-        wrapperEl.style.maxHeight = '';
-        wrapperEl.style.transition = '';
-        wrapperEl.style.marginBottom = '';
-        wrapperEl.style.paddingTop = '';
-        wrapperEl.style.paddingBottom = '';
-      }
-      for (const s of affectedSiblings) {
-        s.style.transition = '';
-        s.style.transform = '';
-      }
-      if (cardEl) {
-        cardEl.style.transition = '';
-        cardEl.style.transform = '';
-        cardEl.style.opacity = '';
-      }
-      setIsRemoving(false);
-    }, ANIM_MS);
+    removeTimeoutRef.current = window.setTimeout(
+      () => {
+        // 목록 갱신 및 스타일 정리
+        refetchWishList();
+        if (wrapperEl) {
+          wrapperEl.style.overflow = '';
+          wrapperEl.style.maxHeight = '';
+          wrapperEl.style.transition = '';
+          wrapperEl.style.marginBottom = '';
+          wrapperEl.style.paddingTop = '';
+          wrapperEl.style.paddingBottom = '';
+        }
+        for (const s of affectedSiblings) {
+          s.style.transition = '';
+          s.style.transform = '';
+        }
+        if (cardEl) {
+          cardEl.style.transition = '';
+          cardEl.style.transform = '';
+          cardEl.style.opacity = '';
+        }
+        setIsRemoving(false);
+      },
+      Math.max(ANIM_MS, CARD_MS),
+    );
   };
 
   const handleCancel = (e: React.MouseEvent) => {
@@ -298,8 +301,8 @@ const removingStyle = css`
   transform: translateX(100%);
   opacity: 0;
   transition:
-    transform ${ANIM_MS}ms ease-in-out,
-    opacity ${ANIM_MS}ms ease-in-out;
+    transform ${CARD_MS}ms cubic-bezier(0.22, 0.9, 0.25, 1),
+    opacity ${CARD_MS}ms cubic-bezier(0.22, 0.9, 0.25, 1);
 `;
 
 // 스타일 보강: will-change 추가로 깜박임 완화

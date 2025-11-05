@@ -28,10 +28,9 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   event.currentTarget.src = NoImage;
 };
 
-// 애니메이션 시간(ms) — 아래 카드(형제) 올라오는 속도 늘림
-const ANIM_MS = 2000; // siblings(위치 보정) 전체 시간 (기존 1500 -> 2000ms)
-// 카드 우측 슬라이드 시간 설정
-const CARD_MS = 1200;
+// 애니메이션 시간(ms) — ReviewListCard와 동일하게 통일
+const ANIM_MS = 1200;
+// 카드 우측 슬라이드는 ReviewListCard와 동일한 ANIM_MS로 처리
 
 const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => {
   const [isFavorite, setIsFavorite] = useState(true);
@@ -117,103 +116,90 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     else addWishMutation.mutate();
   };
 
-  // 삭제 확인: ReviewListCard와 동일한 흐름으로 변경
+  // 삭제 확인: ReviewListCard와 동일한 흐름으로 (wrapper collapse -> siblings translate by height -> translateY(0))
   const handleConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowModal(false);
     setIsRemoving(true);
 
     const wrapperEl = wrapperRef.current;
+    // if no wrapper (unexpected), still call mutation
     if (!wrapperEl) {
       deleteWishMutation.mutate();
       return;
     }
 
-    // 1) 카드 우측 슬라이드
+    // 카드 우측 슬라이드 (ANIM_MS에 맞춰 동일 동작)
     const cardEl = wrapperEl.firstElementChild as HTMLElement | null;
     if (cardEl) {
-      cardEl.style.transition = `transform ${CARD_MS}ms cubic-bezier(0.22,0.9,0.25,1), opacity ${CARD_MS}ms cubic-bezier(0.22,0.9,0.25,1)`;
+      cardEl.style.transition = `transform ${ANIM_MS}ms ease-in-out, opacity ${ANIM_MS}ms ease-in-out`;
       cardEl.style.transform = 'translateX(100%)';
       cardEl.style.opacity = '0';
-      cardEl.style.willChange = 'transform, opacity';
     }
 
-    // 2) measure siblings before collapsing
-    const parent = wrapperEl.parentElement;
-    const siblings = parent
-      ? (Array.from(parent.children).filter((c) => c !== wrapperEl) as HTMLElement[])
-      : [];
-    const beforeRects = siblings.map((s) => s.getBoundingClientRect());
-
-    // 3) collapse wrapper (visual)
+    // 간단한 siblings 처리: ReviewListCard와 동일하게 아래 형제들을 먼저 height만큼 아래로 옮겨놓음
+    const affectedSiblings: HTMLElement[] = [];
     const height = wrapperEl.scrollHeight;
+
+    // wrapper collapse 준비
     wrapperEl.style.transition = `max-height ${ANIM_MS}ms ease, margin ${ANIM_MS}ms ease, padding ${ANIM_MS}ms ease`;
     wrapperEl.style.overflow = 'hidden';
     wrapperEl.style.maxHeight = `${height}px`;
-    // force reflow then collapse
+
+    let next = wrapperEl.nextElementSibling as HTMLElement | null;
+    while (next) {
+      affectedSiblings.push(next);
+      next.style.transition = `transform ${ANIM_MS}ms ease`;
+      next.style.transform = `translateY(${height}px)`;
+      next = next.nextElementSibling as HTMLElement | null;
+    }
+
+    // 강제 리플로우 후 collapse
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     wrapperEl.offsetHeight;
     wrapperEl.style.maxHeight = '0px';
     wrapperEl.style.marginBottom = '0px';
     wrapperEl.style.paddingTop = '0px';
     wrapperEl.style.paddingBottom = '0px';
-    wrapperEl.style.willChange = 'max-height';
 
-    // 4) measure after and apply inverse transform, then animate to 0 (FLIP)
+    // siblings를 0으로 이동시켜 위로 올라오게 함
     requestAnimationFrame(() => {
-      const afterRects = siblings.map((s) => s.getBoundingClientRect());
-      siblings.forEach((s, i) => {
-        const dy = beforeRects[i].top - afterRects[i].top;
-        if (!dy) return;
-        s.style.transition = 'none';
-        s.style.transform = `translateY(${dy}px)`;
-      });
-      // force reflow
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      siblings[0]?.offsetHeight;
-      // animate siblings to final position
-      siblings.forEach((s) => {
-        s.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.2,0.8,0.2,1)`;
+      for (const s of affectedSiblings) {
         s.style.transform = 'translateY(0)';
-      });
+      }
     });
 
-    // 5) 서버 요청 병렬 전송
+    // 서버 요청 병렬 전송 (ReviewListCard와 동일 흐름)
     deleteWishMutation.mutate(undefined, {
       onError: () => {
         refetchWishList();
       },
     });
 
-    // 6) cleanup after full anim
+    // cleanup after full anim (ANIM_MS)
     if (removeTimeoutRef.current) window.clearTimeout(removeTimeoutRef.current);
-    removeTimeoutRef.current = window.setTimeout(
-      () => {
-        refetchWishList();
-        // cleanup inline styles
-        if (wrapperEl) {
-          wrapperEl.style.overflow = '';
-          wrapperEl.style.maxHeight = '';
-          wrapperEl.style.transition = '';
-          wrapperEl.style.marginBottom = '';
-          wrapperEl.style.paddingTop = '';
-          wrapperEl.style.paddingBottom = '';
-          wrapperEl.style.willChange = '';
-        }
-        siblings.forEach((s) => {
-          s.style.transition = '';
-          s.style.transform = '';
-        });
-        if (cardEl) {
-          cardEl.style.transition = '';
-          cardEl.style.transform = '';
-          cardEl.style.opacity = '';
-          cardEl.style.willChange = '';
-        }
-        setIsRemoving(false);
-      },
-      Math.max(ANIM_MS, CARD_MS) + 60,
-    );
+    removeTimeoutRef.current = window.setTimeout(() => {
+      // 목록 갱신 및 스타일 정리
+      refetchWishList();
+      if (wrapperEl) {
+        wrapperEl.style.overflow = '';
+        wrapperEl.style.maxHeight = '';
+        wrapperEl.style.transition = '';
+        wrapperEl.style.marginBottom = '';
+        wrapperEl.style.paddingTop = '';
+        wrapperEl.style.paddingBottom = '';
+      }
+      for (const s of affectedSiblings) {
+        s.style.transition = '';
+        s.style.transform = '';
+      }
+      if (cardEl) {
+        cardEl.style.transition = '';
+        cardEl.style.transform = '';
+        cardEl.style.opacity = '';
+      }
+      setIsRemoving(false);
+    }, ANIM_MS);
   };
 
   const handleCancel = (e: React.MouseEvent) => {
@@ -312,8 +298,8 @@ const removingStyle = css`
   transform: translateX(100%);
   opacity: 0;
   transition:
-    transform ${CARD_MS}ms cubic-bezier(0.22, 0.9, 0.25, 1),
-    opacity ${CARD_MS}ms cubic-bezier(0.22, 0.9, 0.25, 1);
+    transform ${ANIM_MS}ms ease-in-out,
+    opacity ${ANIM_MS}ms ease-in-out;
 `;
 
 // 스타일 보강: will-change 추가로 깜박임 완화

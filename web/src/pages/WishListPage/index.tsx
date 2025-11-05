@@ -41,9 +41,31 @@ const WishListPage = () => {
     navigate(`/shelter-detail/${shelterId}`);
   };
 
+  // local list for optimistic UI removal — 초기화는 빈 배열, 서버에서 로드되면 동기화
+  const [list, setList] = useState<any[]>([]);
+
+  // 서버에서 받은 wishList와 로컬 list를 동기화
+  useEffect(() => {
+    setList(wishList);
+  }, [wishList]);
+
+  const handleStartRemoving = (_id: number) => {
+    // (선택) UI 상태 표시용 — _id로 unused 변수 경고 제거
+  };
+
+  const handleFinalizeRemove = (id: number) => {
+    // 부모가 실제로 항목 제거 — 이렇게 하면 앱에서 깜박임 없음
+    setList((s) => s.filter((it) => it.shelterId !== id));
+    // 또는 서버 권장 방식: refetchWishList();
+  };
+
+  const handleCancelRemoving = (_id: number) => {
+    // 제거 취소 시 필요 처리
+  };
+
   if (isLoading) return <div css={pageContainerStyle(false)}>로딩 중...</div>;
 
-  const isEmpty = wishList.length === 0;
+  const isEmpty = list.length === 0;
 
   return (
     <>
@@ -55,7 +77,7 @@ const WishListPage = () => {
 
         {/* 목록: 비어있을 때 fade-out */}
         <div css={[listBox, isEmpty && listHidden]}>
-          {wishList.map((item: any) => (
+          {list.map((item: any) => (
             <WishListCard
               key={item.shelterId}
               item={item}
@@ -70,6 +92,9 @@ const WishListPage = () => {
                     /* optional */
                   })
               }
+              onStartRemoving={handleStartRemoving}
+              onFinalizeRemove={handleFinalizeRemove}
+              onCancelRemoving={handleCancelRemoving}
             />
           ))}
         </div>

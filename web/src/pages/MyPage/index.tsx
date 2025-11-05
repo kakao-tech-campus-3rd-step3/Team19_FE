@@ -45,7 +45,21 @@ const MyPage = () => {
 
   if (!user) return <div css={container}>사용자 정보가 없습니다.</div>;
 
-  const profileImgUrl = !user.profileImageUrl || imgError ? NoProfile : user.profileImageUrl;
+  // profileImageUrl이 절대 URL이 아니면 https://를 붙이거나, 서버에서 절대 경로를 반환하도록 합의하세요.
+  const normalizeProfileUrl = (u: string | null | undefined) => {
+    if (!u) return '';
+    // 이미 http/https로 시작하면 그대로 사용
+    if (/^https?:\/\//i.test(u)) return u;
+    // 서버가 '/uploads/...' 같은 상대경로를 준다면 BASE나 CDN을 붙이기
+    // 예: import.meta.env.VITE_CDN_BASE || window.location.origin
+    const CDN = import.meta.env.VITE_CDN_BASE || '';
+    if (CDN) return CDN.replace(/\/$/, '') + (u.startsWith('/') ? u : '/' + u);
+    // 기본 안전 처리: https://를 붙여 절대 URL로 만듦 (도메인만 내려오는 경우)
+    return 'https://' + u;
+  };
+
+  const profileImgUrl =
+    !user.profileImageUrl || imgError ? NoProfile : normalizeProfileUrl(user.profileImageUrl);
 
   const iconStyle = css`
     font-size: ${theme.typography.my3.fontSize};

@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { useRef, useLayoutEffect } from 'react';
 import theme from '../styles/theme';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { MdAccessTime } from 'react-icons/md';
+import { MdAccessTime, MdWbSunny } from 'react-icons/md';
 import NoImage from '@/assets/images/NoImage.png';
 import { useNavigate } from 'react-router-dom';
 import { formatOperatingHours, checkIfOpenNow } from '@/utils/date';
@@ -163,11 +163,15 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     <div css={infoCardStyle({ variant })}>
       {variant === 'home' && (
         <div css={statusWrapper}>
-          <span css={[statusTag, isActuallyOpen ? operatingOnTag : operatingOffTag]}>
-            {isActuallyOpen ? '운영중' : '운영 종료'}
+          <span css={[statusBadge, isActuallyOpen ? statusOpen : statusClosed]}>
+            <MdAccessTime size={25} />
+            <span css={badgeText}>{isActuallyOpen ? '운영중' : '운영 종료'}</span>
           </span>
           {shelter.isOutdoors && (
-            <span css={[statusTag, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}>야외</span>
+            <span css={[statusBadge, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}>
+              <MdWbSunny size={25} />
+              <span css={badgeText}>야외</span>
+            </span>
           )}
         </div>
       )}
@@ -437,23 +441,6 @@ const statusWrapper = css`
   margin-bottom: 0px;
 `;
 
-const statusTag = css`
-  padding: 4px 8px;
-  border-radius: 16px;
-  color: white;
-  white-space: nowrap;
-
-  ${theme.typography.cardh4}
-`;
-
-const operatingOnTag = css`
-  background-color: ${theme.colors.button.greenOn};
-`;
-
-const operatingOffTag = css`
-  background-color: ${theme.colors.button.greenOff};
-`;
-
 const outdoorsOnTag = css`
   background-color: ${theme.colors.button.redOn};
 `;
@@ -471,17 +458,17 @@ const nameRow = ({ variant }: { variant: 'home' | 'find' }) => css`
   ${variant === 'home' ? 'justify-content: center;' : 'justify-content: flex-start;'}
 `;
 
-/* find 목록에서 표시되는 작은 배지 */
+/* 배지 공통 스타일 (find/home 동일하게 보이도록 패딩/폰트 조정) */
 const statusBadge = css`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: 8px;
+  padding: 6px 10px; /* find 쪽과 동일한 여백 */
   border-radius: 12px;
   font-size: 1.2rem;
   line-height: 1;
-  white-space: nowrap; /* 한 줄로 유지 */
-  flex: 0 0 auto; /* 부모에서 크기 고정(줄바꿈 방지) */
+  white-space: nowrap;
+  flex: 0 0 auto;
 `;
 
 const statusOpen = css`

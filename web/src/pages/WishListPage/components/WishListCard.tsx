@@ -21,7 +21,12 @@ interface WishShelter {
 interface WishListCardProps {
   item: WishShelter;
   onClick?: (shelterId: number) => void;
-  refetchWishList: () => void;
+  // 부모 콜백 — ReviewListCard와 동일한 패턴으로 처리
+  onStartRemoving?: (shelterId: number) => void;
+  onFinalizeRemove?: (shelterId: number) => void;
+  onCancelRemoving?: (shelterId: number) => void;
+  // 기존 refetch는 폴백으로 유지(선택)
+  refetchWishList?: () => void;
 }
 
 const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -32,14 +37,22 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
 const ANIM_MS = 1200; // wrapper collapse / siblings 이동 시간 (기존)
 const CARD_MS = 1200; // 카드 우측 슬라이드 전용 시간 — 이 값을 늘리면 슬라이드가 더 느려짐
 
-const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => {
+const WishListCard = ({
+  item,
+  onClick,
+  onStartRemoving,
+  onFinalizeRemove,
+  onCancelRemoving,
+  refetchWishList,
+}: WishListCardProps) => {
   const [isFavorite, setIsFavorite] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false); // 삭제 애니메이션 플래그 (ReviewListCard와 동일)
+  // 애니메이션 중 부모에서 들어오는 prop 변경으로 인한 깜박임 방지용 스냅샷
+  const snapshotRef = useRef<WishShelter | null>(null);
   const bodyLockRef = useRef(0);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const removeTimeoutRef = useRef<number | null>(null);
-  const siblingStartTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const modalOpen = showModal;
@@ -86,27 +99,19 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     };
   }, [showModal]);
 
+  // 삭제 뮤테이션: 성공 시에도 즉시 부모 리패치하지 않음(애니메이션 후 한 번만 refetch)
   const deleteWishMutation = useMutation({
     mutationFn: () => deleteWish({ shelterId: item.shelterId }),
-    onSuccess: () => {
-      setIsFavorite(false);
-      // 서버 반영은 refetch로 처리
-      refetchWishList();
-    },
-    onError: () => {
-      // 실패 시도: refetch로 강제 동기화
-      refetchWishList();
-    },
   });
 
   const addWishMutation = useMutation({
     mutationFn: () => addWish({ shelterId: item.shelterId }),
     onSuccess: () => {
       setIsFavorite(true);
-      refetchWishList();
+      if (typeof refetchWishList === 'function') refetchWishList();
     },
     onError: () => {
-      refetchWishList();
+      if (typeof refetchWishList === 'function') refetchWishList();
     },
   });
 
@@ -120,6 +125,8 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
   const handleConfirm = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowModal(false);
+    // 애니메이션 동안 외부 리패치/props 변경을 무시하기 위해 현재 item 스냅샷 저장
+    snapshotRef.current = item;
     setIsRemoving(true);
 
     const wrapperEl = wrapperRef.current;
@@ -169,10 +176,22 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
       }
     });
 
-    // 서버 요청 병렬 전송 (ReviewListCard와 동일 흐름)
+    // 부모에게 제거 시작 알림 (선택) — 함수인지 확인 후 호출
+    if (typeof onStartRemoving === 'function') {
+      onStartRemoving(item.shelterId);
+    }
+
+    // 서버 요청 병렬 전송 — 에러 시에는 부모에게 복구 알림
     deleteWishMutation.mutate(undefined, {
-      onError: () => {
-        refetchWishList();
+      onError: (_err: any) => {
+        // 부모 복구 콜백 우선 호출 (함수인지 확인)
+        if (typeof onCancelRemoving === 'function') {
+          onCancelRemoving(item.shelterId);
+        }
+        // 폴백: refetch가 제공되면 호출
+        if (refetchWishList) refetchWishList();
+        setIsRemoving(false);
+        snapshotRef.current = null;
       },
     });
 
@@ -180,26 +199,16 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     if (removeTimeoutRef.current) window.clearTimeout(removeTimeoutRef.current);
     removeTimeoutRef.current = window.setTimeout(
       () => {
-        // 목록 갱신 및 스타일 정리
-        refetchWishList();
-        if (wrapperEl) {
-          wrapperEl.style.overflow = '';
-          wrapperEl.style.maxHeight = '';
-          wrapperEl.style.transition = '';
-          wrapperEl.style.marginBottom = '';
-          wrapperEl.style.paddingTop = '';
-          wrapperEl.style.paddingBottom = '';
+        // 애니메이션 종료 시 부모에게 최종 제거 알림(부모가 리스트에서 제거)
+        if (typeof onFinalizeRemove === 'function') {
+          onFinalizeRemove(item.shelterId);
+        } else if (refetchWishList) {
+          refetchWishList(); // 폴백
         }
-        for (const s of affectedSiblings) {
-          s.style.transition = '';
-          s.style.transform = '';
-        }
-        if (cardEl) {
-          cardEl.style.transition = '';
-          cardEl.style.transform = '';
-          cardEl.style.opacity = '';
-        }
+
+        // 스냅샷 제거 및 애니메이션 상태 해제
         setIsRemoving(false);
+        snapshotRef.current = null;
       },
       Math.max(ANIM_MS, CARD_MS),
     );
@@ -213,15 +222,17 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
   useEffect(() => {
     return () => {
       if (removeTimeoutRef.current) window.clearTimeout(removeTimeoutRef.current);
-      if (siblingStartTimeoutRef.current) window.clearTimeout(siblingStartTimeoutRef.current);
     };
   }, []);
 
+  // 애니메이션 중에는 snapshot을 사용하여 부모 refetch/props 변경을 무시
+  const displayed = isRemoving && snapshotRef.current ? snapshotRef.current : item;
+
   const displayRating = (() => {
-    const v = Number(item.averageRating) || 0;
+    const v = Number(displayed.averageRating) || 0;
     return (Math.round(v * 10) / 10).toFixed(1);
   })();
-  const starCount = Math.round(Number(item.averageRating) || 0);
+  const starCount = Math.round(Number(displayed.averageRating) || 0);
 
   return (
     <div
@@ -233,7 +244,7 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
     >
       <div css={[card, isRemoving && removingStyle]}>
         <div css={cardTitleRow}>
-          <span css={cardTitle}>{item.name}</span>
+          <span css={cardTitle}>{displayed.name}</span>
           <span onClick={handleHeartClick} style={{ cursor: 'pointer' }}>
             {isFavorite ? (
               <FaHeart color="red" css={cardHeart} />
@@ -245,13 +256,15 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
 
         <div css={cardBottomRow}>
           <img
-            src={item.photoUrl && item.photoUrl.trim() !== '' ? item.photoUrl : NoImage}
+            src={
+              displayed.photoUrl && displayed.photoUrl.trim() !== '' ? displayed.photoUrl : NoImage
+            }
             alt="찜 이미지"
             css={cardImg}
             onError={handleImageError}
           />
           <div css={cardInfo}>
-            <div css={cardinfostyle}>거리: {item.distance}</div>
+            <div css={cardinfostyle}>거리: {displayed.distance}</div>
             <div css={cardRating}>
               별점: <span css={ratingNumber}>{displayRating}</span>
               <span css={starsWrapper}>
@@ -262,7 +275,7 @@ const WishListCard = ({ item, onClick, refetchWishList }: WishListCardProps) => 
                 ))}
               </span>
             </div>
-            <div css={cardinfostyle}>주소: {item.address}</div>
+            <div css={cardinfostyle}>주소: {displayed.address}</div>
           </div>
         </div>
 

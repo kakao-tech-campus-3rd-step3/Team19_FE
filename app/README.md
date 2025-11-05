@@ -80,6 +80,17 @@ app/
 
 ## 📝 버전 히스토리
 
+### v2.2 (2025-11-05)
+
+- FCM 푸시 알림 기본 탑재 및 앱-웹 연동
+  - Android: `POST_NOTIFICATIONS` 권한(13+) 요청 추가
+  - Android: `MyFirebaseMessagingService` 구현 (토큰 저장, 메시지 수신, 알림 표시)
+  - Android: 알림 클릭 시 `MainActivity`로 딥링크 전달 → WebView에서 `/find-shelters?from=notification` 이동 및 안내 토스트 표시
+  - Android: `AndroidBridge.getDeviceToken()` 제공 (웹에서 FCM 토큰 조회)
+  - Web: `pushApi.ts` 추가 (`/api/users/me/device`, `/api/users/me/location` 연동)
+  - Web: `usePushNotification` 훅 추가(앱 시작/로그인 시 토큰·위치 자동 등록), `App.tsx`에 연결
+- 버전 업데이트: `versionCode=3`, `versionName=2.2`
+
 ### v2.1 (2025-11-04)
 
 - 세로모드 강제 (AndroidManifest.xml)

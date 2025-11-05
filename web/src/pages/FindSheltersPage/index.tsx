@@ -23,7 +23,20 @@ const FindSheltersPage = () => {
     isFetchingMore,
     handleLoadMore,
     handleToggleFavorite,
+    setToastMessage,
   } = useShelters();
+
+  // 알림으로 유입된 경우 안내 메시지 표시 및 1회 처리
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('notifData');
+      if (raw) {
+        sessionStorage.removeItem('notifData');
+        setToastMessage &&
+          setToastMessage('날씨가 많이 덥습니다! 근처 무더위 쉼터를 안내해 드릴게요.');
+      }
+    } catch {}
+  }, []);
 
   // API 호출(toggleWish) -> 성공 시 훅의 로컬 토글 호출
   const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {

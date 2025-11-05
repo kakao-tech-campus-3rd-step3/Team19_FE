@@ -2,6 +2,8 @@ package com.example.musuimsa // 본인 프로젝트의 패키지 이름
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
@@ -81,10 +83,13 @@ class MainActivity : AppCompatActivity() {
 
         // 6. 웹 로드는 권한 확인 후 진행. 권한 관련 코드 참고.
 
-        // 7. 위치 권한 확인 및 요청
+        // 7. 알림 권한(Android 13+) 요청
+        requestNotificationPermissionIfNeeded()
+
+        // 8. 위치 권한 확인 및 요청
         checkLocationPermissionWithGuide()
         
-        // 8. 스마트폰의 '뒤로 가기' 버튼을 처리하는 로직을 추가합니다.
+        // 9. 스마트폰의 '뒤로 가기' 버튼을 처리하는 로직을 추가합니다.
         handleBackButton()
     }
 
@@ -205,6 +210,11 @@ class MainActivity : AppCompatActivity() {
         webView.visibility = android.view.View.VISIBLE
         webView.setBackgroundColor(android.graphics.Color.BLACK)
         webView.loadUrl(vercelUrl)
+
+        // 푸시로 진입한 경우, 웹 로드 직후 딥링크 데이터 전달 시도
+        webView.postDelayed({
+            tryForwardNotificationExtrasToWeb(intent)
+        }, 1200)
     }
     
     // 위치 권한 안내 다이얼로그
@@ -311,6 +321,8 @@ class MainActivity : AppCompatActivity() {
                 // 권한 거부됨 - 안내 후 앱 종료
                 showPermissionDeniedDialog()
             }
+        } else if (requestCode == 200) {
+            // 알림 권한: 허용/거부 모두 앱 동작에는 치명적 영향 없음 → 별도 처리 없이 진행
         }
     }
     
@@ -369,6 +381,53 @@ class MainActivity : AppCompatActivity() {
     
     // WebAppInterface에서 TTS 접근을 위한 getter
     fun getTextToSpeech(): TextToSpeech? = textToSpeech
+
+    // 저장된 FCM 토큰을 반환 (웹에서 JS 브릿지를 통해 조회)
+    fun getStoredFcmToken(): String? =
+        MyFirebaseMessagingService.getStoredFcmToken(this)
+
+    // Android 13+ 알림 권한 요청
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    200
+                )
+            }
+        }
+    }
+
+    // 푸시 알림 클릭으로 전달된 extras를 WebView로 전달하고 라우팅합니다.
+    private fun tryForwardNotificationExtrasToWeb(srcIntent: Intent?) {
+        val extras = srcIntent?.extras ?: return
+        val map = mutableMapOf<String, String>()
+        for (key in extras.keySet()) {
+            if (key.startsWith("notif_")) {
+                val v = extras.get(key)?.toString() ?: continue
+                map[key.removePrefix("notif_")] = v
+            }
+        }
+        if (map.isEmpty()) return
+
+        val json = org.json.JSONObject(map as Map<*, *>).toString()
+        val js = "(function(){try{sessionStorage.setItem('notifData', " +
+                org.json.JSONObject.quote(json) +
+                "); if (window.location.pathname !== '/find-shelters'){ window.location.href='/find-shelters?from=notification'; }}catch(e){}})();"
+        webView.evaluateJavascript(js, null)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // 액티비티가 살아있는 상태에서 알림 클릭 시 호출
+        tryForwardNotificationExtrasToWeb(intent)
+    }
 }
 
 /**
@@ -417,5 +476,14 @@ class WebAppInterface(private val activity: MainActivity) {
         activity.runOnUiThread {
             activity.getTextToSpeech()?.stop()
         }
+    }
+
+    /**
+     * 저장된 FCM 디바이스 토큰을 반환합니다.
+     * JavaScript에서 AndroidBridge.getDeviceToken()으로 호출할 수 있습니다.
+     */
+    @JavascriptInterface
+    fun getDeviceToken(): String? {
+        return activity.getStoredFcmToken()
     }
 }

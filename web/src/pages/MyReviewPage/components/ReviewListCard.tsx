@@ -321,7 +321,7 @@ const itemWrapper = css`
 `;
 
 const card = css`
-  background: #e0e0e0;
+  background: #dcdcdcbf;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   overflow: hidden;

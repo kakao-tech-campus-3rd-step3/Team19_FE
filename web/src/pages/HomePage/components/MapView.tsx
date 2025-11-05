@@ -21,6 +21,7 @@ const MapView = ({ onMapReady }: Props) => {
   const mapInstanceRef = useRef<any>(null);
   const shelterMarkersRef = useRef<any[]>([]);
   const clusterMarkersRef = useRef<any[]>([]);
+  const clusterOverlaysRef = useRef<HTMLDivElement[]>([]); // <-- 추가: DOM 오버레이 추적
   const dismissCleanupRef = useRef<() => void | null>(null);
   const [, setIsMapReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
@@ -175,10 +176,42 @@ const MapView = ({ onMapReady }: Props) => {
     try {
       const tmapEvent = (window as any).Tmapv3?.event;
       if (tmapEvent && typeof tmapEvent.addListener === 'function') {
+        // 기본: dragend, zoomend
         const onDragEnd = tmapEvent.addListener(map, 'dragend', () => scheduleFetch(map));
         const onZoomEnd = tmapEvent.addListener(map, 'zoomend', () => scheduleFetch(map));
         mapListenersRef.current.push(onDragEnd, onZoomEnd);
+        // 추가 폴백 이벤트들 (SDK마다 이벤트명이 다를 수 있어 여러 이벤트를 시도)
+        try {
+          const onMoveEnd = tmapEvent.addListener(map, 'moveend', () => scheduleFetch(map));
+          const onCenterChanged = tmapEvent.addListener(map, 'center_changed', () =>
+            scheduleFetch(map),
+          );
+          const onBoundsChanged = tmapEvent.addListener(map, 'bounds_changed', () =>
+            scheduleFetch(map),
+          );
+          mapListenersRef.current.push(onMoveEnd, onCenterChanged, onBoundsChanged);
+        } catch {}
       }
+      // DOM-level 폴백: SDK 이벤트가 없거나 동작하지 않을 경우 map div의 mouseup/touchend로 보완
+      try {
+        const container: HTMLElement | null = map.getDiv ? map.getDiv() : mapRef.current;
+        if (container) {
+          const onEnd = () => {
+            try {
+              scheduleFetch(map);
+            } catch {}
+          };
+          container.addEventListener('mouseup', onEnd, { passive: true });
+          container.addEventListener('touchend', onEnd, { passive: true });
+          // 저장된 핸들러 제거용으로 저장
+          mapListenersRef.current.push({
+            remove: () => container.removeEventListener('mouseup', onEnd),
+          });
+          mapListenersRef.current.push({
+            remove: () => container.removeEventListener('touchend', onEnd),
+          });
+        }
+      } catch {}
     } catch (e) {
       // ignore - poll fallback remains
     }
@@ -189,10 +222,25 @@ const MapView = ({ onMapReady }: Props) => {
       if (tmapEvent && typeof tmapEvent.removeListener === 'function') {
         mapListenersRef.current.forEach((ln) => {
           try {
-            tmapEvent.removeListener(ln);
+            // SDK 리스너 객체면 removeListener로 제거
+            if (typeof ln === 'object' && ln && typeof ln.remove === 'function') {
+              try {
+                ln.remove();
+              } catch {}
+            } else {
+              tmapEvent.removeListener(ln);
+            }
           } catch {}
         });
       }
+      // DOM 폴백으로 들어온 항목(remove 함수 포함)도 실행
+      try {
+        mapListenersRef.current.forEach((ln) => {
+          try {
+            if (typeof ln === 'object' && ln && typeof ln.remove === 'function') ln.remove();
+          } catch {}
+        });
+      } catch {}
       mapListenersRef.current = [];
     } catch {}
   };
@@ -214,6 +262,16 @@ const MapView = ({ onMapReady }: Props) => {
         } catch {}
       });
       clusterMarkersRef.current = [];
+    } catch {}
+    // DOM 오버레이 제거
+    try {
+      const container = mapRef.current;
+      clusterOverlaysRef.current.forEach((el: HTMLDivElement) => {
+        try {
+          if (container && container.contains(el)) container.removeChild(el);
+        } catch {}
+      });
+      clusterOverlaysRef.current = [];
     } catch {}
   };
 
@@ -242,82 +300,192 @@ const MapView = ({ onMapReady }: Props) => {
     });
   };
 
+  // DOM 오버레이 방식으로 원형 + 숫자 렌더 (크기는 count에 따라 스케일)
   const renderClusterFeatures = (map: any, features: any[]) => {
     clearAllMarkers();
-    // 간단한 원형 오버레이 + 텍스트를 사용 (Marker 대신 CustomOverlay 필요 시 변경)
-    features.forEach((f) => {
+
+    const latLngToContainerPoint = (mapInst: any, lat: number, lng: number) => {
+      try {
+        if (!mapInst) return null;
+        // Tmapv3 Projection or map methods
+        if ((window as any).Tmapv3?.Projection && (window as any).Tmapv3.Projection.lngLatToPoint) {
+          try {
+            const p = (window as any).Tmapv3.Projection.lngLatToPoint([lng, lat]);
+            if (p && typeof p[0] === 'number' && typeof p[1] === 'number')
+              return { x: p[0], y: p[1] };
+          } catch {}
+        }
+        if (typeof mapInst.latLngToPoint === 'function') {
+          const p = mapInst.latLngToPoint(new window.Tmapv3.LatLng(lat, lng));
+          if (p && typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y };
+        }
+        if (typeof mapInst.fromLatLngToPoint === 'function') {
+          const p = mapInst.fromLatLngToPoint(new window.Tmapv3.LatLng(lat, lng));
+          if (p && typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y };
+        }
+        if (mapInst.getProjection && typeof mapInst.getProjection === 'function') {
+          const proj = mapInst.getProjection();
+          if (proj && typeof proj.fromLatLngToPoint === 'function') {
+            const p = proj.fromLatLngToPoint(new window.Tmapv3.LatLng(lat, lng));
+            if (p && typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y };
+          }
+        }
+      } catch {}
+      return null;
+    };
+
+    const positionOverlay = (mapInst: any, el: HTMLDivElement, lat: number, lng: number) => {
+      const container = mapRef.current;
+      if (!container) return false;
+      const pt = latLngToContainerPoint(mapInst, lat, lng);
+      if (pt) {
+        el.style.position = 'absolute';
+        el.style.left = `${Math.round(pt.x)}px`;
+        el.style.top = `${Math.round(pt.y)}px`;
+        el.style.transform = 'translate(-50%, -50%)';
+        if (!container.contains(el)) container.appendChild(el);
+        return true;
+      }
+      return false;
+    };
+
+    const createOverlayElement = (count: number, color: string) => {
+      // size scaling: 기본을 크게 하고, 카운트에 따라 부드럽게 확대 (단위: diameter)
+      const base = 300; // 최소 지름
+      const maxSize = 800; // 최대 지름
+      // sqrt 기반으로 부드럽게 증가 + count 비례 보정
+      const size = Math.min(
+        maxSize,
+        Math.max(base, Math.round(base + Math.sqrt(count + 1) * 24 + count / 2)),
+      );
+      const fontSize = Math.round(Math.min(72, size * 1.42));
+      // debug: count -> size 확인
+      // eslint-disable-next-line no-console
+      console.debug('[cluster] count -> size', { count, size, fontSize });
+      const el = document.createElement('div');
+      el.className = 'cluster-overlay';
+      el.style.width = `${size}px`;
+      el.style.height = `${size}px`;
+      el.style.borderRadius = '50%';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.pointerEvents = 'auto';
+      el.style.boxSizing = 'border-box';
+      el.style.fontWeight = '800';
+      el.style.color = '#ffffff';
+      el.style.fontFamily = 'Arial, Helvetica, sans-serif';
+      el.style.fontSize = `${fontSize}px`;
+      // 반투명 배경(요청): 색이 rgba면 그대로, 아니면 반투명 처리
+      if (color.indexOf('rgba') === 0) {
+        el.style.background = color;
+      } else {
+        // hex → 반투명 fallback (단순): 흰색 오버레이를 섞지 않기 위해 rgba로 변환 불가 시 그대로 사용
+        el.style.background = color;
+      }
+      el.style.opacity = '0.75'; // 좀 더 반투명
+      el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.25)';
+      el.style.border = '4px solid rgba(255,255,255,0.9)';
+      el.textContent = String(count);
+      return el;
+    };
+
+    features.forEach((f: any, _idx: number) => {
       try {
         const lat = Number(f.latitude);
         const lng = Number(f.longitude);
         const count = Number(f.count ?? 0);
         if (!isFinite(lat) || !isFinite(lng)) return;
 
-        // Create a simple DOM element for cluster
-        const el = document.createElement('div');
-        el.style.minWidth = '44px';
-        el.style.height = '44px';
-        el.style.background = 'rgba(70,170,70,0.9)';
-        el.style.borderRadius = '50%';
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.justifyContent = 'center';
-        el.style.color = '#fff';
-        el.style.fontWeight = '700';
-        el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.25)';
-        el.innerText = String(count);
+        const color =
+          count >= 100
+            ? 'rgba(220, 38, 38, 0.62)'
+            : count >= 30
+              ? 'rgba(246, 189, 18, 0.73)'
+              : 'rgba(70, 170, 70, 0.69)';
 
-        // Tmap 커스텀 오버레이 생성 방식이 다양하므로 marker로 우회 가능하면 마커에 HTML 넣기
-        const customMarker = new window.Tmapv3.Marker({
-          position: new window.Tmapv3.LatLng(lat, lng),
-          icon: undefined,
-          map,
-        });
+        const overlay = createOverlayElement(count, color);
+        const placed = positionOverlay(map, overlay, lat, lng);
 
-        // attach DOM overlay near marker if available
-        try {
-          const div = customMarker.getDiv ? customMarker.getDiv() : null;
-          if (div && div.parentElement) {
-            // 포지션된 요소가 아니면 별도 오버레이로 처리
-            const overlay = document.createElement('div');
-            overlay.style.position = 'absolute';
-            overlay.appendChild(el);
-            // fallback: append to map container and position on click/refresh (skip complex positioning)
-            // As fallback we simply set marker icon as data-URL or use default marker with count via CSS is complex.
-          } else {
-            // fallback: set marker icon to default marker (ignoring HTML) — still provides clickable spot
-          }
-        } catch {}
-
-        // 클릭 시 확대 동작을 권장(맵 센터/줌 조정)
-        try {
-          if (typeof (customMarker as any).on === 'function') {
-            customMarker.on('click', () => {
-              // 클러스터 클릭 시 맵을 해당 위치로 센터 + 한 단계 줌 인
+        if (placed) {
+          overlay.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            try {
+              map.setCenter(new window.Tmapv3.LatLng(lat, lng));
+              const z =
+                typeof map.getZoom === 'function' ? map.getZoom() : (lastZoomRef.current ?? 13);
+              if (typeof z === 'number') map.setZoom(z + 2);
+            } catch {}
+          });
+          clusterOverlaysRef.current.push(overlay);
+        } else {
+          // 폴백: 기존 마커 방식
+          const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'>
+            <circle cx='28' cy='28' r='27' fill='${color}' stroke='rgba(0,0,0,0.08)' stroke-width='2' />
+            <text x='50%' y='50%' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#fff' font-weight='700' dominant-baseline='middle' text-anchor='middle'>${count}</text>
+          </svg>`;
+          const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+          const blobUrl = URL.createObjectURL(blob);
+          const marker = new window.Tmapv3.Marker({
+            position: new window.Tmapv3.LatLng(lat, lng),
+            icon: blobUrl,
+            iconSize: new window.Tmapv3.Size(56, 56),
+            map,
+          });
+          try {
+            (marker as any).__svgBlobUrl = blobUrl;
+          } catch {}
+          if (typeof (marker as any).on === 'function') {
+            marker.on('click', () => {
               try {
                 map.setCenter(new window.Tmapv3.LatLng(lat, lng));
-                const z = map.getZoom ? map.getZoom() : null;
+                const z =
+                  typeof map.getZoom === 'function' ? map.getZoom() : (lastZoomRef.current ?? 13);
                 if (typeof z === 'number') map.setZoom(z + 2);
               } catch {}
             });
           } else if ((window as any).Tmapv3?.event?.addListener) {
-            (window as any).Tmapv3.event.addListener(customMarker, 'click', () => {
+            (window as any).Tmapv3.event.addListener(marker, 'click', () => {
               try {
                 map.setCenter(new window.Tmapv3.LatLng(lat, lng));
-                const z = map.getZoom ? map.getZoom() : null;
+                const z =
+                  typeof map.getZoom === 'function' ? map.getZoom() : (lastZoomRef.current ?? 13);
                 if (typeof z === 'number') map.setZoom(z + 2);
               } catch {}
             });
           }
-        } catch {}
-
-        clusterMarkersRef.current.push(customMarker);
+          clusterMarkersRef.current.push(marker);
+        }
       } catch {}
     });
+
+    // 업데이트: drag/zoom 시 오버레이 위치 재계산
+    const updatePositions = () => {
+      try {
+        const mapInst = mapInstanceRef.current || map;
+        clusterOverlaysRef.current.forEach((el: HTMLDivElement, i: number) => {
+          const f = features[i];
+          if (!f) return;
+          positionOverlay(mapInst, el, Number(f.latitude), Number(f.longitude));
+        });
+      } catch {}
+    };
+    try {
+      const tmapEvent = (window as any).Tmapv3?.event;
+      if (tmapEvent && typeof tmapEvent.addListener === 'function') {
+        const l1 = tmapEvent.addListener(map, 'dragend', updatePositions);
+        const l2 = tmapEvent.addListener(map, 'zoomend', updatePositions);
+        mapListenersRef.current.push(l1, l2);
+      }
+    } catch {}
+    setTimeout(updatePositions, 50);
   };
 
   // 서버 호출: bbox + zoom
   const fetchByBbox = async (map: any) => {
     if (!map) return;
+    // 개발 중에는 true로 바꿔 목데이터 강제 사용 가능
+    const FORCE_USE_MOCK = true;
     try {
       const rawZoom =
         typeof map.getZoom === 'function' ? map.getZoom() : (lastZoomRef.current ?? 13);
@@ -352,7 +520,13 @@ const MapView = ({ onMapReady }: Props) => {
       const maxLat = Number(bbox.maxLat);
       const maxLng = Number(bbox.maxLng);
 
-      // call API (page/size 추가)
+      // Force mock flag set/restore (개발 편의용)
+      const meta: any = (import.meta as any) || {};
+      const prevEnv = meta.env ? meta.env.VITE_USE_MOCK : undefined;
+      if (FORCE_USE_MOCK) {
+        meta.env = { ...(meta.env || {}), VITE_USE_MOCK: 'true' };
+      }
+
       const res = await getSheltersByBbox({
         minLat,
         minLng,
@@ -360,6 +534,19 @@ const MapView = ({ onMapReady }: Props) => {
         maxLng,
         zoom,
       });
+
+      // restore env
+      if (FORCE_USE_MOCK) {
+        try {
+          if (typeof prevEnv === 'undefined') {
+            // delete if previously undefined
+            if (meta.env) delete meta.env.VITE_USE_MOCK;
+          } else {
+            meta.env.VITE_USE_MOCK = prevEnv;
+          }
+        } catch {}
+      }
+
       console.debug('[fetchByBbox] api response:', res);
 
       const mode =
@@ -474,11 +661,17 @@ const MapView = ({ onMapReady }: Props) => {
                 container.addEventListener('click', domDismiss, { passive: true });
                 container.addEventListener('touchend', domDismiss, { passive: true });
                 container.addEventListener('mousedown', domDismiss, { passive: true });
+                // drag 폴백: 마우스 업/터치 엔드 시 fetch 예약 (짧은 디바운스로 중복 방지)
+                const onEnd = () => scheduleFetch(mapInstance);
+                container.addEventListener('mouseup', onEnd, { passive: true });
+                container.addEventListener('touchend', onEnd, { passive: true });
                 return () => {
                   try {
                     container.removeEventListener('click', domDismiss);
                     container.removeEventListener('touchend', domDismiss);
                     container.removeEventListener('mousedown', domDismiss);
+                    container.removeEventListener('mouseup', onEnd);
+                    container.removeEventListener('touchend', onEnd);
                   } catch {}
                 };
               }

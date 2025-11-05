@@ -35,6 +35,7 @@ export async function getSheltersByBbox({
   page?: number;
   size?: number;
 }) {
+  // build query string according to spec
   const params = new URLSearchParams();
   params.set('minLat', String(minLat));
   params.set('minLng', String(minLng));
@@ -44,8 +45,36 @@ export async function getSheltersByBbox({
   if (typeof page !== 'undefined') params.set('page', String(page));
   if (typeof size !== 'undefined') params.set('size', String(size));
   const qs = params.toString() ? `?${params.toString()}` : '';
-  const res = await apiClient.get(`/api/shelters${qs}`);
-  return res && (res as any).data ? (res as any).data : res;
+
+  try {
+    const res = await apiClient.get(`/api/shelters${qs}`);
+    const data = res && (res as any).data ? (res as any).data : res;
+
+    // Basic validation/coercion to match the interface:
+    // expected: { mode: 'cluster'|'detail', features: Array, total: number }
+    if (
+      data &&
+      Array.isArray(data.features) &&
+      (data.mode === 'cluster' || data.mode === 'detail')
+    ) {
+      return data;
+    }
+
+    // If backend returns an array directly, wrap as detail
+    if (Array.isArray(data)) {
+      return { mode: 'detail', features: data, total: data.length };
+    }
+
+    // Otherwise, log and return a safe empty shape
+    // eslint-disable-next-line no-console
+    console.warn('[getSheltersByBbox] unexpected response shape, returning empty result', { data });
+    return { mode: 'cluster', features: [], total: 0 };
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[getSheltersByBbox] API call failed', err);
+    // Do not return mock data — return empty response shape so caller can handle gracefully
+    return { mode: 'cluster', features: [], total: 0 };
+  }
 }
 
 // 쉼터 상세 조회

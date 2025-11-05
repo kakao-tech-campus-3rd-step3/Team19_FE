@@ -105,7 +105,7 @@ export const useWriteReview = () => {
     if (showImage && photoUrl) {
       e.preventDefault();
       // 줄바꿈 포함
-      setToastMessage('사진은 한 장만\n첨부할 수 있습니다.');
+      setToastMessage('사진 첨부는 최대 1장만 가능합니다');
     }
   };
 

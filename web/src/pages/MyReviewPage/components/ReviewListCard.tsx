@@ -341,12 +341,19 @@ const cardTitleRow = css`
 
 const cardTitle = css`
   ${theme.typography.myr2};
+  /* 한 줄로 표시하고 넘치면 ellipsis 처리 */
   display: block;
-  flex: 1 1 auto;
-  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+
+  /* 플렉스 레이아웃에서 잘 동작하도록 */
+  flex: 1 1 auto;
+  min-width: 0;
+
+  /* 휴지통 버튼(absolute)과 겹치지 않도록 우측 여유 확보 */
+  padding-right: 48px;
+
   text-align: left;
   margin-top: 4px;
   margin-bottom: 8px;

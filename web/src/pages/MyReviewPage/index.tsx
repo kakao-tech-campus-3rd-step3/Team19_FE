@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import emptyReviewImg from '@/assets/images/empty-review2.jpg';
 import theme from '@/styles/theme';
 import { useEffect, useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getMyReviews } from '@/api/reviewApi';
 import ToastMessage from '@/components/ToastMessage';
 import ReviewListCard from './components/ReviewListCard';
@@ -23,8 +24,7 @@ type MyReview = {
 };
 
 const MyReviewPage = () => {
-  const [reviews, setReviews] = useState<MyReview[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [reviews, setReviews] = useState<MyReview[] | null>(null);
   const [error, setError] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
@@ -35,29 +35,28 @@ const MyReviewPage = () => {
   // 삭제 애니메이션 중인 아이디 집합 (부모가 관리)
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 
+  // React Query로 서버 데이터 조회
+  const { data, isError } = useQuery<MyReview[], Error>({
+    queryKey: ['myReviews'],
+    queryFn: () => getMyReviews(),
+    staleTime: 120_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
   useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    getMyReviews()
-      .then((res) => {
-        if (!mounted) return;
-        const data = Array.isArray(res) ? res : res && (res as any).data ? (res as any).data : [];
-        setReviews(Array.isArray(data) ? data : []);
-      })
-      .catch((e) => {
-        if (!mounted) return;
-        console.error('[MyReviewPage] getMyReviews error', e);
-        setError(e);
-        setReviews([]); // 빈 상태
-      })
-      .finally(() => {
-        if (!mounted) return;
-        setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    if (typeof data === 'undefined') return;
+    const arr = Array.isArray(data) ? data : data && (data as any).data ? (data as any).data : [];
+    setReviews(arr);
+  }, [data]);
+
+  useEffect(() => {
+    if (isError && reviews === null) {
+      // 서버 에러로 확인이 끝났을 때 빈 배열로 처리
+      setError(new Error('리뷰 조회 실패'));
+      setReviews([]);
+    }
+  }, [isError, reviews]);
 
   const handleCardClick = (shelterId: number) => {
     navigate(`/shelter-detail/${shelterId}`);
@@ -80,6 +79,7 @@ const MyReviewPage = () => {
   // 부모: 애니메이션 종료 후 실제로 리스트에서 제거
   const handleFinalizeRemove = (reviewId: number) => {
     setReviews((prev) => {
+      if (!prev) return prev; // null 안전 처리
       const idx = prev.findIndex((r) => r.reviewId === reviewId);
       if (idx === -1) return prev;
       const removed = prev[idx];
@@ -99,14 +99,16 @@ const MyReviewPage = () => {
     const rec = lastRemovedRef.current;
     if (!rec) return;
     setReviews((prev) => {
-      const arr = [...prev];
+      const base = prev ?? []; // prev가 null이면 빈 배열로 시작
+      const arr = [...base];
       arr.splice(rec.index, 0, rec.item);
       return arr;
     });
     lastRemovedRef.current = null;
   };
 
-  if (loading) return <div>로딩 중...</div>;
+  // 서버 확인 중이면 아무것도 보여주지 않거나 로딩을 표시하여 깜빡임 방지
+  if (reviews === null) return <div>로딩 중...</div>;
 
   const isEmpty = reviews.length === 0;
 

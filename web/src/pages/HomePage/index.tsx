@@ -23,7 +23,7 @@ const HomePage = () => {
     if (typeof t !== 'number' || Number.isNaN(t)) return '#000000';
     if (t >= 35) return '#FF0000';
     if (t >= 25) return '#FFA500';
-    if (t >= 18) return '#00C2A8';
+    if (t >= 18) return '#00a323ff';
     return '#1E90FF';
   };
 

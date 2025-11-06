@@ -77,6 +77,15 @@ export async function getSheltersByBbox({
   }
 }
 
+// --- 추가: react-query용 fetcher / key 헬퍼 (FindSheltersPage에서 사용) ---
+export const nearbySheltersQueryKey = (latitude: number, longitude: number) =>
+  ['nearbyShelters', String(latitude), String(longitude)] as const;
+
+export async function fetchNearbyShelters(latitude: number, longitude: number) {
+  // 단순 wrapper: 기존 getNearbyShelters 재사용
+  return getNearbyShelters({ latitude, longitude });
+}
+
 // 쉼터 상세 조회
 export async function getShelterDetail({
   shelterId,

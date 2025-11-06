@@ -8,7 +8,8 @@ export const useUser = () => {
     error,
     isLoading,
   } = useQuery<UserProfile, any>({
-    queryKey: ['user', 'me'],
+    // EditProfile과 동일한 키 사용하여 캐시를 공유
+    queryKey: ['myProfile'],
     queryFn: getMyProfile,
     retry: 1,
   });

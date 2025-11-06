@@ -75,9 +75,18 @@ export const useEditProfile = () => {
             ...(old ?? {}),
             ...(res ?? {}),
           }));
+          // MyPage 등에서 사용하는 다른 키도 함께 갱신
+          queryClient.setQueryData(['user', 'me'], (old: any) => ({
+            ...(old ?? {}),
+            ...(res ?? {}),
+          }));
         } else {
           // 서버가 변경된 필드만 적용한 경우, merge vars
           queryClient.setQueryData(['myProfile'], (old: any) => ({
+            ...(old ?? {}),
+            ...(vars ?? {}),
+          }));
+          queryClient.setQueryData(['user', 'me'], (old: any) => ({
             ...(old ?? {}),
             ...(vars ?? {}),
           }));
@@ -105,6 +114,8 @@ export const useEditProfile = () => {
         // 서버가 새 프로필 정보를 반환하면 캐시에 즉시 반영
         if (res && typeof res === 'object') {
           queryClient.setQueryData(['myProfile'], res);
+          // MyPage에서 쓰는 키도 함께 갱신
+          queryClient.setQueryData(['user', 'me'], res);
           setProfileImageUrl(res.profileImageUrl ?? null);
           setProfileCleared(false);
           setSelectedFile(null);

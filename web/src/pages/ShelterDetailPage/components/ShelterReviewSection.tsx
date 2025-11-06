@@ -313,6 +313,44 @@ const ShelterReviewSection = ({
           document.body,
         )}
 
+      {/* 삭제 확인 모달 */}
+      {deleteConfirmModal.open &&
+        createPortal(
+          <div
+            css={deleteModalOverlay}
+            onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
+          >
+            <div css={deleteModalBox} onClick={(e) => e.stopPropagation()}>
+              <div css={deleteModalText}>
+                리뷰를
+                <br />
+                삭제하시겠습니까?
+              </div>
+              <div css={deleteModalButtons}>
+                <button
+                  css={deleteModalBtn}
+                  onClick={() => {
+                    if (deleteConfirmModal.reviewId) {
+                      handleDeleteReview(deleteConfirmModal.reviewId);
+                    }
+                  }}
+                  disabled={deleting}
+                >
+                  {deleting ? '삭제 중...' : '예'}
+                </button>
+                <button
+                  css={deleteModalBtn}
+                  onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
+                  disabled={deleting}
+                >
+                  아니요
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
       {/* 로그인 필요 모달 */}
       {showLoginModal &&
         createPortal(
@@ -599,6 +637,56 @@ const modalCloseBtn = css`
   font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
+`;
+
+// 삭제 확인 모달 스타일
+const deleteModalOverlay = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const deleteModalBox = css`
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  max-width: 80%;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const deleteModalText = css`
+  ${theme.typography.modal1};
+  color: #222;
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+const deleteModalButtons = css`
+  display: flex;
+  gap: 18px;
+`;
+
+const deleteModalBtn = css`
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: background 0.18s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 // 로그인 모달 스타일

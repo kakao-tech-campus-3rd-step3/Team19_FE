@@ -24,8 +24,8 @@ const MyPage = () => {
       await logout();
       // 사용자 캐시 초기화
       queryClient.clear();
-      // 인증 페이지로 이동
-      navigate('/auth');
+      // 메인 페이지로 이동
+      navigate('/');
     } catch (err) {
       console.error('로그아웃 실패:', err);
       alert('로그아웃에 실패했습니다. 다시 시도해 주세요.');

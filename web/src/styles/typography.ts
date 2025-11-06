@@ -55,7 +55,7 @@ const raw = {
   // EditProfile
   edit1: { fontSize: '2.39rem', fontWeight: 700, lineHeight: '3.19rem' },
   edit2: { fontSize: '1.49rem', fontWeight: 600, lineHeight: '1.70rem' },
-  edit3: { fontSize: '1.30rem', fontWeight: 500, lineHeight: '1.64rem' },
+  edit3: { fontSize: '1.20rem', fontWeight: 500, lineHeight: '1.64rem' },
   edit4: { fontSize: '2.00rem', fontWeight: 700, lineHeight: '2.21rem' },
 
   // Button

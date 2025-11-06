@@ -20,6 +20,9 @@ import android.webkit.JavascriptInterface
 import android.speech.tts.TextToSpeech
 import java.util.Locale
 import android.webkit.ValueCallback
+import android.net.Uri
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.location.LocationManager
 import android.provider.Settings
 
@@ -33,6 +36,11 @@ class MainActivity : AppCompatActivity() {
     
     // 위치 설정 화면 진입 여부 플래그
     private var launchedLocationSettings: Boolean = false
+
+    // 파일 업로드 콜백 (input type="file")
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private val FILE_CHOOSER_REQUEST_CODE = 1000
+    private val PERMISSION_REQUEST_READ_IMAGES = 300
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +65,10 @@ class MainActivity : AppCompatActivity() {
         // 2-3. HTTPS 혼합 콘텐츠 허용 (필요 시)
         webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
+        // 2-3-1. 파일/콘텐츠 접근 허용 (파일 업로드를 위해 필요)
+        webView.settings.allowFileAccess = true
+        webView.settings.allowContentAccess = true
+
         // 2-4. JavaScript 브릿지 추가 (웹에서 쿠키 삭제 및 TTS를 위해)
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidBridge")
         
@@ -76,13 +88,32 @@ class MainActivity : AppCompatActivity() {
         // 4. 위치정보 사용 가능하게 설정
         webView.settings.setGeolocationEnabled(true)
         
-        // 5. 웹페이지에서 위치정보 요청 시 자동 허용
+        // 5. 웹페이지에서 위치정보 요청 시 자동 허용 + 파일 업로드 처리
         webView.webChromeClient = object : WebChromeClient() {
             override fun onGeolocationPermissionsShowPrompt(
                 origin: String?,
                 callback: GeolocationPermissions.Callback?
             ) {
                 callback?.invoke(origin, true, false)
+            }
+
+            // input type="file" 처리 (갤러리에서 이미지 선택)
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                // 기존 콜백이 남아있다면 정리
+                this@MainActivity.filePathCallback?.onReceiveValue(null)
+                this@MainActivity.filePathCallback = filePathCallback
+
+                if (!hasImageReadPermission()) {
+                    requestImageReadPermission()
+                    return true
+                }
+
+                openImageChooser()
+                return true
             }
         }
 
@@ -96,6 +127,63 @@ class MainActivity : AppCompatActivity() {
         
         // 9. 스마트폰의 '뒤로 가기' 버튼을 처리하는 로직을 추가합니다.
         handleBackButton()
+    }
+
+    private fun openImageChooser() {
+        try {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*"))
+                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }
+            startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
+        } catch (e: ActivityNotFoundException) {
+            // 대체 인텐트
+            try {
+                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*"))
+                }
+                startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
+            } catch (_: Exception) {
+                this.filePathCallback?.onReceiveValue(null)
+                this.filePathCallback = null
+            }
+        }
+    }
+
+    private fun hasImageReadPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= 33) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_MEDIA_IMAGES
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun requestImageReadPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                PERMISSION_REQUEST_READ_IMAGES
+            )
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                PERMISSION_REQUEST_READ_IMAGES
+            )
+        }
     }
 
     private fun handleBackButton() {
@@ -393,6 +481,46 @@ class MainActivity : AppCompatActivity() {
             }
         } else if (requestCode == 200) {
             // 알림 권한: 허용/거부 모두 앱 동작에는 치명적 영향 없음 → 별도 처리 없이 진행
+        }
+        else if (requestCode == PERMISSION_REQUEST_READ_IMAGES) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // 권한 허용되면 파일 선택기 열기
+                openImageChooser()
+            } else {
+                // 권한 거부: 콜백에 null 전달하여 종료
+                filePathCallback?.onReceiveValue(null)
+                filePathCallback = null
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            val callback = filePathCallback
+            filePathCallback = null
+
+            if (callback == null) return
+
+            if (resultCode != Activity.RESULT_OK) {
+                callback.onReceiveValue(null)
+                return
+            }
+
+            // 단일 선택 처리
+            val uri: Uri? = data?.data
+            if (uri != null) {
+                // 영구 권한 부여 시도 (ACTION_OPEN_DOCUMENT의 경우)
+                try {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (_: Exception) {}
+                callback.onReceiveValue(arrayOf(uri))
+            } else {
+                callback.onReceiveValue(null)
+            }
         }
     }
     

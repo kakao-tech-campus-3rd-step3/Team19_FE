@@ -160,9 +160,6 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
         />
         <div css={infoText}>
           <p css={infoParagraph({ variant })} onClick={handleNavigateToDetail}>
-            거리: {shelter.distance}
-          </p>
-          <p css={infoParagraph({ variant })} onClick={handleNavigateToDetail}>
             별점: <span css={ratingNumber({ variant })}>{shelter.averageRating.toFixed(1)}</span>{' '}
             <span css={starsWrapper}>
               {Array.from({ length: 5 }, (_, i) => (

@@ -144,8 +144,8 @@ const ShelterReviewSection = ({
     // 3) 서버 호출 (동시 실행). 실패 시 복구
     try {
       await deleteReview(reviewId);
-      // 성공 시 부모 콜백이 있으면 알림 (외부 리프레시가 필요한 경우)
-      if (typeof onReviewDeleted === 'function') onReviewDeleted();
+      // 삭제 성공 시 UI는 로컬 상태(낙관적 업데이트)로 이미 반영되므로
+      // 부모에 리프레시를 강제하지 않도록 onReviewDeleted 호출을 제거했습니다.
     } catch (err) {
       // API 실패: 타이머 정지, 복구
       console.error('[ShelterReviewSection] Failed to delete review (api):', err);
@@ -263,6 +263,7 @@ const ShelterReviewSection = ({
                 {/* 내 리뷰인 경우 삭제 버튼 표시 (리뷰 콘텐츠 박스 우측 상단에 배치) */}
                 {myNickname && myNickname === r.nickname && (
                   <button
+                    type="button"
                     css={deleteButtonStyle}
                     onClick={() => setDeleteConfirmModal({ open: true, reviewId: r.reviewId })}
                     aria-label="리뷰 삭제"
@@ -399,6 +400,7 @@ const ShelterReviewSection = ({
               </div>
               <div css={deleteModalButtons}>
                 <button
+                  type="button"
                   css={deleteModalBtn}
                   onClick={() => {
                     const id = deleteConfirmModal.reviewId;
@@ -412,6 +414,7 @@ const ShelterReviewSection = ({
                   예
                 </button>
                 <button
+                  type="button"
                   css={deleteModalBtn}
                   onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
                 >

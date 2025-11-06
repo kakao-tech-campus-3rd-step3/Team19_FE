@@ -8,7 +8,7 @@ import { typography } from '@/styles/typography';
 import markerImage from '@/assets/images/marker.png';
 import type { LocationState, Shelter } from '../../GuidePage/types/tmap';
 import MapCache from '@/lib/MapCache';
-import { getAllShelters } from '@/api/shelterApi';
+import { fetchSheltersByBbox, getAllShelters } from '@/api/shelterApi';
 
 interface Props {
   onMapReady?: (map: any) => void;
@@ -506,62 +506,130 @@ const MapView = ({ onMapReady }: Props) => {
     setTimeout(updatePositions, 50);
   };
 
-  // 서버 호출: 지도 중앙 좌표 기반
+  // 서버 호출: zoom 레벨에 따라 분기
   const fetchByBbox = async (map: any) => {
     if (!map) return;
     try {
-      // Robust한 좌표 추출 헬퍼 (calcBboxFromMap과 동일)
-      const tryExtract = (p: any) => {
-        if (!p) return null;
-        if (typeof p.getLat === 'function' && typeof p.getLng === 'function') {
-          return { lat: Number(p.getLat()), lng: Number(p.getLng()) };
+      const rawZoom =
+        typeof map.getZoom === 'function' ? map.getZoom() : (lastZoomRef.current ?? 13);
+      const zoom = Number(rawZoom);
+
+      console.debug('[fetchByBbox] zoom level:', zoom);
+
+      // zoom >= 13: 실제 API로 detail 모드 (쉼터 마커)
+      if (zoom >= 13) {
+        // Robust한 좌표 추출 헬퍼
+        const tryExtract = (p: any) => {
+          if (!p) return null;
+          if (typeof p.getLat === 'function' && typeof p.getLng === 'function') {
+            return { lat: Number(p.getLat()), lng: Number(p.getLng()) };
+          }
+          if (typeof p.lat === 'number' && typeof p.lng === 'number')
+            return { lat: p.lat, lng: p.lng };
+          if (typeof p.y === 'number' && typeof p.x === 'number') return { lat: p.y, lng: p.x };
+          if (typeof p._lat === 'number' && typeof p._lng === 'number')
+            return { lat: p._lat, lng: p._lng };
+          if (typeof p.latitude === 'number' && typeof p.longitude === 'number')
+            return { lat: p.latitude, lng: p.longitude };
+          if (Array.isArray(p) && p.length >= 2) return { lat: Number(p[0]), lng: Number(p[1]) };
+          return null;
+        };
+
+        // 지도 중앙 좌표 가져오기
+        const centerRaw =
+          typeof map.getCenter === 'function'
+            ? map.getCenter()
+            : ((MapCache as any).lastCenter ?? lastCenterRef.current);
+
+        const center = tryExtract(centerRaw);
+
+        if (!center || !isFinite(center.lat) || !isFinite(center.lng)) {
+          console.warn('[fetchByBbox] invalid map center coordinates, skipping api call.', {
+            centerRaw,
+            center,
+          });
+          return;
         }
-        if (typeof p.lat === 'number' && typeof p.lng === 'number') return { lat: p.lat, lng: p.lng };
-        if (typeof p.y === 'number' && typeof p.x === 'number') return { lat: p.y, lng: p.x };
-        if (typeof p._lat === 'number' && typeof p._lng === 'number')
-          return { lat: p._lat, lng: p._lng };
-        if (typeof p.latitude === 'number' && typeof p.longitude === 'number')
-          return { lat: p.latitude, lng: p.longitude };
-        if (Array.isArray(p) && p.length >= 2) return { lat: Number(p[0]), lng: Number(p[1]) };
-        return null;
-      };
 
-      // 지도 중앙 좌표 가져오기
-      const centerRaw = typeof map.getCenter === 'function' 
-        ? map.getCenter() 
-        : ((MapCache as any).lastCenter ?? lastCenterRef.current);
+        console.debug('[fetchByBbox] detail mode - fetching shelters at center:', center);
 
-      const center = tryExtract(centerRaw);
+        // API 호출: /api/shelters/all?latitude={latitude}&longitude={longitude}
+        const res = await getAllShelters({
+          latitude: center.lat,
+          longitude: center.lng,
+        });
 
-      if (!center || !isFinite(center.lat) || !isFinite(center.lng)) {
-        console.warn('[fetchByBbox] invalid map center coordinates, skipping api call.', { centerRaw, center });
-        return;
+        console.debug('[fetchByBbox] detail mode - api response:', res);
+
+        // 응답이 배열인지 확인
+        if (!Array.isArray(res)) {
+          console.warn('[fetchByBbox] unexpected response format, expected array:', res);
+          return;
+        }
+
+        const features = res;
+        currentModeRef.current = 'detail';
+        currentFeaturesRef.current = features;
+
+        // detail 모드로 렌더링
+        renderDetailFeatures(map, features);
       }
+      // zoom < 13: mock 데이터로 cluster 모드
+      else {
+        const bboxRes = calcBboxFromMap(map);
+        const bbox = {
+          minLat: Number(bboxRes.minLat),
+          minLng: Number(bboxRes.minLng),
+          maxLat: Number(bboxRes.maxLat),
+          maxLng: Number(bboxRes.maxLng),
+        };
 
-      console.debug('[fetchByBbox] fetching shelters at center:', center);
+        console.debug('[fetchByBbox] cluster mode - bbox:', bbox, 'zoom:', zoom);
 
-      // API 호출: /api/shelters/all?latitude={latitude}&longitude={longitude}
-      const res = await getAllShelters({
-        latitude: center.lat,
-        longitude: center.lng,
-      });
+        // 최종 방어: 모든 값이 유한한 숫자인지 확인
+        const vals = [bbox.minLat, bbox.minLng, bbox.maxLat, bbox.maxLng, zoom].map((v) =>
+          Number(v),
+        );
+        if (!vals.every((v) => isFinite(v))) {
+          console.warn('[fetchByBbox] invalid params after calc, skip API call', { bbox, zoom });
+          return;
+        }
 
-      console.debug('[fetchByBbox] api response:', res);
+        // 안전 범위: 지나치게 큰 bbox는 서버 부담이므로 차단
+        const spanLat = Math.abs(bbox.maxLat - bbox.minLat);
+        const spanLng = Math.abs(bbox.maxLng - bbox.minLng);
+        if (spanLat > 60 || spanLng > 60) {
+          console.warn('[fetchByBbox] bbox too large, skip API call', { spanLat, spanLng });
+          return;
+        }
 
-      // 응답이 배열인지 확인
-      if (!Array.isArray(res)) {
-        console.warn('[fetchByBbox] unexpected response format, expected array:', res);
-        return;
+        const payload: any = {
+          minLat: bbox.minLat,
+          minLng: bbox.minLng,
+          maxLat: bbox.maxLat,
+          maxLng: bbox.maxLng,
+          zoom,
+        };
+
+        // mock 데이터로 호출
+        const FORCE_USE_MOCK = true;
+        const res = await fetchSheltersByBbox(payload, FORCE_USE_MOCK);
+
+        console.debug('[fetchByBbox] cluster mode - mock response:', res);
+
+        const mode =
+          res?.mode ?? (res?.features && Array.isArray(res.features) ? 'detail' : 'cluster');
+        const features = res?.features ?? [];
+
+        currentModeRef.current = mode;
+        currentFeaturesRef.current = features;
+
+        if (mode === 'detail') {
+          renderDetailFeatures(map, features);
+        } else {
+          renderClusterFeatures(map, features);
+        }
       }
-
-      // 응답 데이터를 features 형태로 변환
-      const features = res;
-      
-      currentModeRef.current = 'detail';
-      currentFeaturesRef.current = features;
-
-      // detail mode로 렌더링
-      renderDetailFeatures(map, features);
     } catch (err) {
       console.error('fetchByBbox error', err);
     }
@@ -599,7 +667,7 @@ const MapView = ({ onMapReady }: Props) => {
           center: new window.Tmapv3.LatLng(location.latitude, location.longitude),
           width: '100%',
           height: '100%',
-          zoom: 13,
+          zoom: 15,
           zoomControl: true,
           scrollwheel: true,
         });
@@ -619,7 +687,7 @@ const MapView = ({ onMapReady }: Props) => {
         try {
           if (isMapFullyLoaded(mapInstance)) {
             mapInstance.setCenter(new window.Tmapv3.LatLng(location.latitude, location.longitude));
-            mapInstance.setZoom && mapInstance.setZoom(13);
+            mapInstance.setZoom && mapInstance.setZoom(15);
           }
         } catch {}
       }

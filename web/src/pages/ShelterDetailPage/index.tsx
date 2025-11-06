@@ -10,6 +10,7 @@ import { useShelterDetail } from './hooks/useShelterDetail';
 import { toggleWish } from '@/api/wishApi';
 import { checkLoginStatus } from '@/api/userApi';
 import theme from '@/styles/theme';
+import { setPendingAction } from '@/utils/pendingAction';
 
 const ShelterDetailPage = () => {
   const { id } = useParams();
@@ -72,6 +73,14 @@ const ShelterDetailPage = () => {
 
   const handleLoginConfirm = () => {
     setShowLoginModal(false);
+    // 찜 동작 복원을 위해 PendingAction 저장
+    if (id) {
+      setPendingAction({
+        type: 'toggle-wish',
+        payload: { shelterId: id, isFavorite },
+        returnUrl: `/shelter-detail/${id}`,
+      });
+    }
     navigate('/auth');
   };
 

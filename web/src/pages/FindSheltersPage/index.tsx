@@ -11,6 +11,7 @@ import { toggleWish } from '@/api/wishApi';
 import theme from '@/styles/theme';
 import { checkLoginStatus } from '@/api/userApi';
 import { useNavigate } from 'react-router-dom';
+import { setPendingAction } from '@/utils/pendingAction';
 
 const INITIAL_VISIBLE = 4;
 const LOAD_INCREMENT = 3;
@@ -29,6 +30,9 @@ const FindSheltersPage = () => {
   const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [pendingWish, setPendingWish] = useState<{ shelterId: number; isFavorite: boolean } | null>(
+    null,
+  );
 
   // 1) 브라우저 위치 획득 (mount 시 한 번)
   useEffect(() => {
@@ -118,6 +122,7 @@ const FindSheltersPage = () => {
   const handleToggleWithApi = async (shelterId: number, isFavorite: boolean) => {
     const isLoggedIn = await checkLoginStatus();
     if (!isLoggedIn) {
+      setPendingWish({ shelterId, isFavorite });
       setShowLoginModal(true);
       return;
     }
@@ -163,6 +168,13 @@ const FindSheltersPage = () => {
 
   const handleLoginConfirm = () => {
     setShowLoginModal(false);
+    if (pendingWish) {
+      setPendingAction({
+        type: 'toggle-wish',
+        payload: { shelterId: pendingWish.shelterId, isFavorite: pendingWish.isFavorite },
+        returnUrl: '/find-shelters',
+      });
+    }
     navigate('/auth');
   };
 

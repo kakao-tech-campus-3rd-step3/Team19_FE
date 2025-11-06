@@ -25,7 +25,8 @@ const MapView = ({ onMapReady }: Props) => {
   const dismissCleanupRef = useRef<() => void | null>(null);
   const [, setIsMapReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [isLoadingMap, setIsLoadingMap] = useState(true);
+  // 재진입 시 로딩 화면을 표시하지 않기 위해 초기 상태를 체크
+  const [isLoadingMap, setIsLoadingMap] = useState(() => MapCache.map === null);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [, setMapError] = useState<string | null>(null);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
@@ -581,7 +582,12 @@ const MapView = ({ onMapReady }: Props) => {
   // 지도 초기화 (MapCache 기반, 기존 코드 재사용)
   const initializeMap = async (location: LocationState) => {
     if (!mapRef.current) return;
-    setIsLoadingMap(true);
+    
+    // 재진입 시 지도가 이미 있으면 로딩 화면 생략
+    const isReentry = MapCache.map !== null;
+    if (!isReentry) {
+      setIsLoadingMap(true);
+    }
     setMapError(null);
     try {
       const createFn = () =>
@@ -601,12 +607,15 @@ const MapView = ({ onMapReady }: Props) => {
         return;
       }
 
-      try {
-        if (isMapFullyLoaded(mapInstance)) {
-          mapInstance.setCenter(new window.Tmapv3.LatLng(location.latitude, location.longitude));
-          mapInstance.setZoom && mapInstance.setZoom(13);
-        }
-      } catch {}
+      // 재진입 시에는 지도 상태가 이미 복원되었으므로 초기 위치 설정 스킵
+      if (!isReentry) {
+        try {
+          if (isMapFullyLoaded(mapInstance)) {
+            mapInstance.setCenter(new window.Tmapv3.LatLng(location.latitude, location.longitude));
+            mapInstance.setZoom && mapInstance.setZoom(13);
+          }
+        } catch {}
+      }
 
       // wait until map reports loaded then attach listeners
       const checkMapLoaded = () => {
@@ -614,7 +623,7 @@ const MapView = ({ onMapReady }: Props) => {
           mapInstanceRef.current = mapInstance;
           if (onMapReady) onMapReady(mapInstance);
 
-          // 초기 fetch
+          // 재진입 시에도 쉼터 조회 (현재 보이는 영역 기준)
           scheduleFetch(mapInstance);
 
           // attach listeners for drag/zoom end (best-effort)
@@ -680,17 +689,25 @@ const MapView = ({ onMapReady }: Props) => {
           })();
 
           setIsMapReady(true);
-          setIsFadingOut(true);
-          const FADE_MS = 320;
-          setTimeout(() => {
+          
+          // 재진입 시에는 로딩 화면을 즉시 숨김 (또는 매우 짧게)
+          if (isReentry) {
             setIsLoadingMap(false);
             setIsFadingOut(false);
-          }, FADE_MS);
+          } else {
+            setIsFadingOut(true);
+            const FADE_MS = 320;
+            setTimeout(() => {
+              setIsLoadingMap(false);
+              setIsFadingOut(false);
+            }, FADE_MS);
+          }
         } else {
           setTimeout(checkMapLoaded, 100);
         }
       };
-      setTimeout(checkMapLoaded, 300);
+      // 재진입 시에는 지연 시간 단축 (즉시 실행)
+      setTimeout(checkMapLoaded, isReentry ? 50 : 300);
     } catch (err: any) {
       console.error('지도 초기화 실패:', err);
       setMapError(err?.message || '지도 초기화 중 오류가 발생했습니다.');
@@ -703,6 +720,15 @@ const MapView = ({ onMapReady }: Props) => {
     const setupMap = async () => {
       try {
         if (!isMounted) return;
+        
+        // 재진입 체크: 지도가 이미 있으면 로딩 화면을 표시하지 않음
+        const isReentry = MapCache.map !== null;
+        if (isReentry) {
+          // 재진입 시 로딩 화면을 확실히 숨김
+          setIsLoadingMap(false);
+          setIsFadingOut(false);
+        }
+        
         const sdkOk = await waitForTmapSDK();
         if (!isMounted) return;
         if (!sdkOk) {
@@ -710,6 +736,20 @@ const MapView = ({ onMapReady }: Props) => {
           setIsLoadingMap(false);
           return;
         }
+        
+        // 재진입 시 지도가 이미 있으면 위치 조회 스킵 (마지막 상태 복원)
+        if (isReentry && MapCache.lastCenter) {
+          // 지도 상태가 이미 복원되었으므로 위치 조회 없이 바로 초기화
+          const locationData: LocationState = {
+            latitude: MapCache.lastCenter.lat,
+            longitude: MapCache.lastCenter.lng,
+            accuracy: 0,
+          };
+          await initializeMap(locationData);
+          return;
+        }
+        
+        // 최초 로드 시에만 위치 조회
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             if (!isMounted) return;

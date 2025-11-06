@@ -90,7 +90,6 @@ const MyPage = () => {
           <FaRegCommentDots color="#444" css={iconStyle} />
           내가 쓴 리뷰 목록
         </button>
-        <button css={menuBtn}>앱 푸쉬 알림 ON/OFF</button>
       </div>
 
       <button css={logoutBtn} onClick={handleLogout} disabled={loggingOut}>

@@ -8,7 +8,7 @@ import { typography } from '@/styles/typography';
 import markerImage from '@/assets/images/marker.png';
 import type { LocationState, Shelter } from '../../GuidePage/types/tmap';
 import MapCache from '@/lib/MapCache';
-import { getSheltersByBbox } from '@/api/shelterApi';
+import { fetchSheltersByBbox } from '@/api/shelterApi';
 
 interface Props {
   onMapReady?: (map: any) => void;
@@ -305,6 +305,25 @@ const MapView = ({ onMapReady }: Props) => {
   const renderClusterFeatures = (map: any, features: any[]) => {
     clearAllMarkers();
 
+    // computeClusterSize는 renderClusterFeatures 내부에서 재사용하므로
+    // createOverlayElement 바깥에 정의하여 폴백에서도 사용 가능하게 함
+    const computeClusterSize = (count: number) => {
+      // 기존 raw 계산(극단적 차이 허용)은 유지하되 최종 크기를 1/8로 축소
+      const base = 8; // 축소된 최소 지름(px)
+      const maxSize = 640; // 내부 raw에 대한 캡(원래 값 그대로 유지)
+      const sqrtPart = Math.sqrt(Math.max(0, count)) * 8;
+      const logPart = Math.log10(Math.max(1, count)) * 72;
+      const raw = Math.round(28 + sqrtPart + logPart); // 원래 raw 기반
+      // 1/8 스케일 적용
+      const scaled = Math.round(raw / 8);
+      const size = Math.min(maxSize, Math.max(base, scaled));
+      // 폰트/그림자/테두리도 size 기준으로 계산
+      const fontSize = Math.max(8, Math.min(48, Math.round(size * 0.22)));
+      const shadowBlur = Math.max(3, Math.round(size * 0.06));
+      const borderPx = Math.max(1, Math.round(Math.min(size * 0.08, 12)));
+      return { size, fontSize, shadowBlur, borderPx };
+    };
+
     const latLngToContainerPoint = (mapInst: any, lat: number, lng: number) => {
       try {
         if (!mapInst) return null;
@@ -351,18 +370,8 @@ const MapView = ({ onMapReady }: Props) => {
     };
 
     const createOverlayElement = (count: number, color: string) => {
-      // size scaling: 기본을 크게 하고, 카운트에 따라 부드럽게 확대 (단위: diameter)
-      const base = 300; // 최소 지름
-      const maxSize = 800; // 최대 지름
-      // sqrt 기반으로 부드럽게 증가 + count 비례 보정
-      const size = Math.min(
-        maxSize,
-        Math.max(base, Math.round(base + Math.sqrt(count + 1) * 24 + count / 2)),
-      );
-      const fontSize = Math.round(Math.min(72, size * 1.42));
-      // debug: count -> size 확인
-      // eslint-disable-next-line no-console
-      console.debug('[cluster] count -> size', { count, size, fontSize });
+      const { size, fontSize, shadowBlur, borderPx } = computeClusterSize(count);
+
       const el = document.createElement('div');
       el.className = 'cluster-overlay';
       el.style.width = `${size}px`;
@@ -377,16 +386,10 @@ const MapView = ({ onMapReady }: Props) => {
       el.style.color = '#ffffff';
       el.style.fontFamily = 'Arial, Helvetica, sans-serif';
       el.style.fontSize = `${fontSize}px`;
-      // 반투명 배경(요청): 색이 rgba면 그대로, 아니면 반투명 처리
-      if (color.indexOf('rgba') === 0) {
-        el.style.background = color;
-      } else {
-        // hex → 반투명 fallback (단순): 흰색 오버레이를 섞지 않기 위해 rgba로 변환 불가 시 그대로 사용
-        el.style.background = color;
-      }
-      el.style.opacity = '0.75'; // 좀 더 반투명
-      el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.25)';
-      el.style.border = '4px solid rgba(255,255,255,0.9)';
+      el.style.background = color.indexOf('rgba') === 0 ? color : color;
+      el.style.opacity = '0.95';
+      el.style.boxShadow = `0 ${Math.round(shadowBlur / 2)}px ${shadowBlur * 2}px rgba(0,0,0,0.22)`;
+      el.style.border = `${borderPx}px solid rgba(255,255,255,0.95)`;
       el.textContent = String(count);
       return el;
     };
@@ -398,12 +401,22 @@ const MapView = ({ onMapReady }: Props) => {
         const count = Number(f.count ?? 0);
         if (!isFinite(lat) || !isFinite(lng)) return;
 
-        const color =
-          count >= 100
-            ? 'rgba(220, 38, 38, 0.62)'
-            : count >= 30
-              ? 'rgba(246, 189, 18, 0.73)'
-              : 'rgba(70, 170, 70, 0.69)';
+        // color 계산 (기존 코드) ...
+        let color = '';
+        if (count >= 9000) {
+          color = 'rgba(220, 38, 38, 0.92)'; // 빨강
+        } else if (count >= 5000) {
+          color = 'rgba(255, 140, 0, 0.88)'; // 주황
+        } else if (count >= 1000) {
+          color = 'rgba(255, 190, 50, 0.86)'; // 주황-노랑 사이
+        } else if (count >= 300) {
+          color = 'rgba(70, 170, 70, 0.82)'; // 초록
+        } else if (count <= 30) {
+          color = 'rgba(0, 123, 255, 0.74)'; // 파랑
+        } else {
+          // 31 ~ 299 구간: 연한 초록(기본)
+          color = 'rgba(106, 190, 120, 0.8)';
+        }
 
         const overlay = createOverlayElement(count, color);
         const placed = positionOverlay(map, overlay, lat, lng);
@@ -420,17 +433,28 @@ const MapView = ({ onMapReady }: Props) => {
           });
           clusterOverlaysRef.current.push(overlay);
         } else {
-          // 폴백: 기존 마커 방식
-          const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'>
-            <circle cx='28' cy='28' r='27' fill='${color}' stroke='rgba(0,0,0,0.08)' stroke-width='2' />
-            <text x='50%' y='50%' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#fff' font-weight='700' dominant-baseline='middle' text-anchor='middle'>${count}</text>
+          // 폴백: SVG 아이콘도 카운트 기반 크기를 사용하도록 변경
+          // debug 로깅 추가
+          // eslint-disable-next-line no-console
+          console.debug('[cluster] positionOverlay failed, using marker fallback', {
+            lat,
+            lng,
+            count,
+          });
+
+          const { size: svgSize, fontSize: svgFont } = computeClusterSize(count);
+          // svgFont를 텍스트 크기로 사용 => TS 경고 제거 및 일관성 유지
+          const textSize = Math.max(12, Math.round(svgFont));
+          const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${svgSize}' height='${svgSize}' viewBox='0 0 ${svgSize} ${svgSize}'>
+            <circle cx='${svgSize / 2}' cy='${svgSize / 2}' r='${Math.max(4, svgSize / 2 - 2)}' fill='${color}' stroke='rgba(0,0,0,0.08)' stroke-width='2' />
+            <text x='50%' y='50%' font-family='Arial, Helvetica, sans-serif' font-size='${textSize}' fill='#fff' font-weight='700' dominant-baseline='middle' text-anchor='middle'>${count}</text>
           </svg>`;
           const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
           const blobUrl = URL.createObjectURL(blob);
           const marker = new window.Tmapv3.Marker({
             position: new window.Tmapv3.LatLng(lat, lng),
             icon: blobUrl,
-            iconSize: new window.Tmapv3.Size(56, 56),
+            iconSize: new window.Tmapv3.Size(svgSize, svgSize),
             map,
           });
           try {
@@ -581,7 +605,8 @@ const MapView = ({ onMapReady }: Props) => {
         payload.userLat = Number(userLat);
         payload.userLng = Number(userLng);
       }
-      const res = await getSheltersByBbox(payload);
+      // 개발 중에는 FORCE_USE_MOCK=true 로 전달하여 userLat/userLng 무시하고 bbox로 목데이터 반환
+      const res = await fetchSheltersByBbox(payload, FORCE_USE_MOCK);
 
       // restore env
       if (FORCE_USE_MOCK) {

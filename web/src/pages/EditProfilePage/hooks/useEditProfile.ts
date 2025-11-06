@@ -1,17 +1,22 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import NoProfile from '@/assets/images/NoProfile.png';
+// NoProfile import removed (사용 안함)
 // 타입 전용 import로 변경
 import type { UserProfile } from '@/api/userApi';
 import { patchProfile, patchPassword, getMyProfile } from '@/api/userApi';
 import { uploadProfileImage } from '@/api/userApi';
 
+// 기본 프로필 URL (백엔드로 전송할 기본 이미지 링크)
+const DEFAULT_PROFILE_URL =
+  'https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png';
+
 export const useEditProfile = () => {
-  // 기본 프로필 이미지는 NoProfile로 초기화
-  const [profileImageUrl, setProfileImageUrl] = useState<string>(
-    typeof NoProfile === 'string' ? NoProfile : '',
-  );
+  // profileImageUrl: null = 아직 없음/서버값 사용(변경 없음)
+  // preview(파일 선택)는 문자열(객체 URL)
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  // 사용자가 "기본 프로필로 변경"을 눌러 명시적으로 기본으로 바꾼 경우 true
+  const [profileCleared, setProfileCleared] = useState<boolean>(false);
   // 선택된 실제 파일 (업로드용)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -48,14 +53,19 @@ export const useEditProfile = () => {
   // user 데이터가 도착하면 초기값 세팅
   useEffect(() => {
     if (user) {
-      setProfileImageUrl(user.profileImageUrl ?? (typeof NoProfile === 'string' ? NoProfile : ''));
+      setProfileImageUrl(user.profileImageUrl ?? null);
+      setProfileCleared(false);
       setNicknameInput(user.nickname ?? '');
       setImgError(false);
     }
   }, [user]);
 
   // useMutation에 올바른 시그니처로 설정
-  const profileMutation = useMutation<any, Error, { nickname?: string; profileImageUrl?: string }>({
+  const profileMutation = useMutation<
+    any,
+    Error,
+    { nickname?: string; profileImageUrl?: string | null }
+  >({
     mutationFn: (vars) => patchProfile(vars),
     onSuccess: (res, vars) => {
       try {
@@ -95,7 +105,9 @@ export const useEditProfile = () => {
         // 서버가 새 프로필 정보를 반환하면 캐시에 즉시 반영
         if (res && typeof res === 'object') {
           queryClient.setQueryData(['myProfile'], res);
-          setProfileImageUrl(res.profileImageUrl ?? '');
+          setProfileImageUrl(res.profileImageUrl ?? null);
+          setProfileCleared(false);
+          setSelectedFile(null);
         }
       } catch {
         // ignore
@@ -103,24 +115,19 @@ export const useEditProfile = () => {
     },
   });
 
-  // 프로필 편집 버튼 클릭
+  // 편집 관련 핸들러
   const handleEditProfileImg = () => setShowProfileModal(true);
-
-  // 앨범에서 사진 선택
   const handleProfileImgSelect = () => {
     setShowProfileModal(false);
     fileInputRef.current?.click();
   };
-
-  // 기본 이미지로 변경
   const handleSetDefaultProfile = () => {
     setShowProfileModal(false);
     setImgError(false);
     setSelectedFile(null);
-    setProfileImageUrl(typeof NoProfile === 'string' ? NoProfile : '');
+    setProfileCleared(true);
+    setProfileImageUrl(DEFAULT_PROFILE_URL);
   };
-
-  // 파일 선택 시 프로필 이미지 변경 (preview + 파일 저장)
   const handleProfileImgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -128,6 +135,7 @@ export const useEditProfile = () => {
       setProfileImageUrl(url);
       setSelectedFile(file);
       setImgError(false);
+      setProfileCleared(false);
     }
   };
 
@@ -145,7 +153,6 @@ export const useEditProfile = () => {
             setShowModal(true);
           },
           onError: (_error: any) => {
-            // TODO: 실제 API 연동 시 공통 에러 포맷이면 에러 페이지로 이동하도록 처리 가능
             setOldPasswordError(true);
           },
         },
@@ -157,9 +164,6 @@ export const useEditProfile = () => {
     if (selectedFile) {
       uploadMutation.mutate(selectedFile, {
         onSuccess: (_res) => {
-          // uploadMutation.onSuccess already set cache and profileImageUrl.
-          // 닉네임 변경이 있으면 patch 호출(그쪽 onSuccess에서 모달 띄움).
-          // 닉네임 변경이 없으면 여기서 바로 모달 띄움.
           const nicknamePayload =
             nicknameInput && nicknameInput !== (user?.nickname ?? '')
               ? { nickname: nicknameInput }
@@ -171,8 +175,6 @@ export const useEditProfile = () => {
           }
         },
         onError: (error: any) => {
-          // 디버그 로깅 추가
-          // eslint-disable-next-line no-console
           console.error('uploadProfileImage failed:', error);
           alert(error?.message || '프로필 이미지 업로드에 실패했습니다.');
         },
@@ -180,19 +182,31 @@ export const useEditProfile = () => {
       return;
     }
 
-    // 닉네임/프로필 이미지(링크) 수정 — 기존 로직 (파일 업로드가 없을 때)
-    profileMutation.mutate(
-      {
+    // 사용자가 기본 프로필로 변경한 경우 즉시 DEFAULT_PROFILE_URL 전송
+    if (profileCleared) {
+      profileMutation.mutate({
         nickname:
           nicknameInput && nicknameInput !== (user?.nickname ?? '') ? nicknameInput : undefined,
-        profileImageUrl:
-          profileImageUrl !==
-          (user?.profileImageUrl ?? (typeof NoProfile === 'string' ? NoProfile : ''))
-            ? profileImageUrl
-            : undefined,
-      },
-      // 개별 콜백 불필요: profileMutation.onSuccess에서 처리
-    );
+        profileImageUrl: DEFAULT_PROFILE_URL,
+      });
+      return;
+    }
+
+    // 그 외: 변경된 필드만 전송
+    let profileImageUrlPayload: string | undefined;
+    if (profileImageUrl == null) {
+      profileImageUrlPayload = undefined;
+    } else if (profileImageUrl !== (user?.profileImageUrl ?? null)) {
+      profileImageUrlPayload = profileImageUrl;
+    } else {
+      profileImageUrlPayload = undefined;
+    }
+
+    profileMutation.mutate({
+      nickname:
+        nicknameInput && nicknameInput !== (user?.nickname ?? '') ? nicknameInput : undefined,
+      profileImageUrl: profileImageUrlPayload,
+    });
   };
 
   const handleModalClose = () => {
@@ -200,9 +214,14 @@ export const useEditProfile = () => {
     navigate('/mypage');
   };
 
+  useEffect(() => {
+    // placeholder for side-effects if needed
+  }, [user]);
+
   return {
-    user, // 실제 API 데이터 (없으면 undefined)
+    user,
     profileImageUrl,
+    profileCleared,
     setProfileImageUrl,
     selectedFile,
     setSelectedFile,

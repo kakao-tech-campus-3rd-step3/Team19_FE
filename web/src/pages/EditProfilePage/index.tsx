@@ -11,6 +11,7 @@ const EditProfilePage = () => {
   const {
     user,
     profileImageUrl,
+    profileCleared,
     imgError,
     setImgError,
     handleEditProfileImg,
@@ -34,19 +35,31 @@ const EditProfilePage = () => {
     setShowOldPassword,
     showNewPassword,
     setShowNewPassword,
+    selectedFile,
   } = useEditProfile();
 
   const displayUser = (user as any) ?? {
     userId: 0,
     email: '',
     nickname: '',
-    profileImageUrl: typeof NoProfile === 'string' ? NoProfile : '',
+    // 서버 기본값 없음을 명확히 하기 위해 null 사용
+    profileImageUrl: null,
   };
-  // 현재 실제로 보여지는 프로필 URL (편집 중 상태 우선)
+  // 현재 보여야 하는 이미지 우선순위:
+  // 1) selectedFile preview (profileImageUrl containing object URL)
+  // 2) 프로필을 명시적으로 '기본 이미지'로 변경한 경우 -> NoProfile
+  // 3) 서버에 저장된 user.profileImageUrl
+  // 4) 기본 NoProfile
   const effectiveProfileImage =
-    profileImageUrl ||
-    (user as any)?.profileImageUrl ||
-    (typeof NoProfile === 'string' ? NoProfile : '');
+    selectedFile && typeof profileImageUrl === 'string'
+      ? profileImageUrl
+      : profileCleared
+        ? typeof NoProfile === 'string'
+          ? NoProfile
+          : ''
+        : ((user as any)?.profileImageUrl ??
+          profileImageUrl ??
+          (typeof NoProfile === 'string' ? NoProfile : ''));
 
   return (
     <div css={container}>
@@ -57,11 +70,11 @@ const EditProfilePage = () => {
       <div css={profileBox}>
         <img
           src={
-            !profileImageUrl || imgError
+            imgError || !effectiveProfileImage
               ? typeof NoProfile === 'string'
                 ? NoProfile
                 : ''
-              : profileImageUrl
+              : effectiveProfileImage
           }
           alt="프로필 이미지"
           css={profileImg}
@@ -137,7 +150,7 @@ const EditProfilePage = () => {
             <button
               type="button"
               css={eyeBtn}
-              onClick={() => setShowOldPassword((prev) => !prev)}
+              onClick={() => setShowOldPassword((prev: boolean) => !prev)}
               tabIndex={-1}
             >
               {showOldPassword ? <IoEyeOff /> : <IoEye />}
@@ -157,7 +170,7 @@ const EditProfilePage = () => {
             <button
               type="button"
               css={eyeBtn}
-              onClick={() => setShowNewPassword((prev) => !prev)}
+              onClick={() => setShowNewPassword((prev: boolean) => !prev)}
               tabIndex={-1}
             >
               {showNewPassword ? <IoEyeOff /> : <IoEye />}

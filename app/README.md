@@ -80,6 +80,19 @@ app/
 
 ## 📝 버전 히스토리
 
+### v2.3 (2025-11-06)
+
+- WebView 이미지 업로드 지원 추가 (`<input type="file">` 동작)
+  - `WebChromeClient.onShowFileChooser` 구현, `onActivityResult`에서 선택 URI 반환
+  - 파일 접근 허용: `allowFileAccess`, `allowContentAccess` 활성화
+  - 런타임 권한 처리: Android 13+ `READ_MEDIA_IMAGES`, Android 12 이하 `READ_EXTERNAL_STORAGE`
+  - 이미지 선택 인텐트: 기본 `ACTION_OPEN_DOCUMENT`(영구 권한 시도), 대체 `ACTION_GET_CONTENT`
+- WebView 로드 URL 변경: `https://team19-fe-rr1d.vercel.app/` → `https://musuimsa-pi.vercel.app/`
+  - 적용 위치: `MainActivity.kt`의 `loadWeb()` 내 `vercelUrl`
+- 앱 버전 업데이트: `versionCode=4`, `versionName=2.3`
+- 앱 라벨 업데이트: `app_name` → "무더위 쉼터를 찾는 사람들 v2.3"
+- 효과: `/edit-profile`, `/edit-review/:id`, `/write-review/:shelterId` 페이지의 사진 업로드 버튼이 앱(WebView)에서도 정상 동작
+
 ### v2.2 (2025-11-05)
 
 - FCM 푸시 알림 기본 탑재 및 앱-웹 연동

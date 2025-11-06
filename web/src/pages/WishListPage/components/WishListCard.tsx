@@ -4,7 +4,7 @@ import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { useState, useEffect, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addWish, deleteWish } from '@/api/wishApi';
 import { createPortal } from 'react-dom';
 
@@ -45,6 +45,7 @@ const WishListCard = ({
   onCancelRemoving,
   refetchWishList,
 }: WishListCardProps) => {
+  const queryClient = useQueryClient();
   const [isFavorite, setIsFavorite] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false); // 삭제 애니메이션 플래그 (ReviewListCard와 동일)
@@ -99,19 +100,41 @@ const WishListCard = ({
     };
   }, [showModal]);
 
-  // 삭제 뮤테이션: 성공 시에도 즉시 부모 리패치하지 않음(애니메이션 후 한 번만 refetch)
+  // 삭제 뮤테이션: 성공/실패 시 refetchWishList가 전달되면 호출, 없으면 queryClient.invalidateQueries로 폴백
   const deleteWishMutation = useMutation({
     mutationFn: () => deleteWish({ shelterId: item.shelterId }),
+    onSuccess: () => {
+      if (typeof refetchWishList === 'function') {
+        refetchWishList();
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['wishList'] });
+      }
+    },
+    onError: () => {
+      if (typeof refetchWishList === 'function') {
+        refetchWishList();
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['wishList'] });
+      }
+    },
   });
 
   const addWishMutation = useMutation({
     mutationFn: () => addWish({ shelterId: item.shelterId }),
     onSuccess: () => {
       setIsFavorite(true);
-      if (typeof refetchWishList === 'function') refetchWishList();
+      if (typeof refetchWishList === 'function') {
+        refetchWishList();
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['wishList'] });
+      }
     },
     onError: () => {
-      if (typeof refetchWishList === 'function') refetchWishList();
+      if (typeof refetchWishList === 'function') {
+        refetchWishList();
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['wishList'] });
+      }
     },
   });
 

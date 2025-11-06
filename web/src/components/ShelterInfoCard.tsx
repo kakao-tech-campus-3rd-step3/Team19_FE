@@ -70,23 +70,17 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
     if (!el) return;
     const original = shelter.name || '';
 
-    // 초기 스타일. 가운데 기준 축소를 위해 transform-origin center로 설정
+    // 간단한 ellipsis 처리: 축소 대신 잘린 부분에 ... 표시
     el.style.visibility = 'hidden';
     el.style.whiteSpace = 'nowrap';
-    el.style.display = 'inline-block';
-    el.style.transformOrigin = 'center center';
-    // 트랜지션 즉시 적용 (애니메이션 없음)
-    el.style.transition = 'none';
-
-    // 안전하게 오버플로우 숨김
+    el.style.display = 'block';
     el.style.overflow = 'hidden';
     el.style.textOverflow = 'ellipsis';
+    el.style.transition = 'none';
+    el.style.transform = '';
 
     const compute = () => {
       el.textContent = original;
-      el.style.transform = '';
-
-      // 부모 실제 사용가능 너비 계산: parent.width - paddingLeft - paddingRight - safetyMargin
       const parent = el.parentElement;
       const parentRect = parent ? parent.getBoundingClientRect() : el.getBoundingClientRect();
       const parentStyle = parent
@@ -94,63 +88,25 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
         : ({ paddingLeft: '0px', paddingRight: '0px' } as any);
       const padLeft = parseFloat(parentStyle.paddingLeft || '0');
       const padRight = parseFloat(parentStyle.paddingRight || '0');
-      // 카드 내부에 thumbnail/infoText 등으로 인해 실제 보이는 중앙폭이 달라질 수 있으므로 안전마진 추가
-      const safety = 8; // px
+      const safety = 8;
       const available = Math.max(20, parentRect.width - padLeft - padRight - safety);
-
-      // 텍스트 실제 폭(스크롤 폭) 측정
-      const textWidth = el.scrollWidth;
-      if (textWidth <= available) {
-        el.style.transform = '';
-        el.style.maxWidth = `${available}px`;
-        el.style.visibility = '';
-        return;
-      }
-
-      // scale 계산 및 최소 scale 제한
-      const MIN_SCALE = 0.72;
-      const scale = Math.max(MIN_SCALE, available / textWidth);
-      el.style.transform = `scale(${scale})`;
-      // 축소 후에도 좌우 여백 동일하게 보이도록 maxWidth 설정
       el.style.maxWidth = `${available}px`;
       el.style.visibility = '';
     };
 
-    // 폰트 로드/렌더 안정화 후 계산
-    const fontsReady =
-      (document as any).fonts && (document as any).fonts.ready
-        ? (document as any).fonts.ready
-        : Promise.resolve();
-    let rafId = 0;
-    fontsReady.then(() => {
-      rafId = requestAnimationFrame(() => {
-        rafId = requestAnimationFrame(() => compute());
-      });
-    });
-
-    // 부모/자식 크기 변경에 대응 (디바운스 via RAF)
+    // 즉시 계산 및 리사이즈 대응
+    compute();
     let ro: ResizeObserver | null = null;
     try {
-      ro = new ResizeObserver(() => {
-        cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => compute());
-      });
+      ro = new ResizeObserver(() => compute());
       ro.observe(el);
       if (el.parentElement) ro.observe(el.parentElement);
     } catch {
-      const onResize = () => {
-        cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => compute());
-      };
-      window.addEventListener('resize', onResize);
-      return () => {
-        window.removeEventListener('resize', onResize);
-        cancelAnimationFrame(rafId);
-      };
+      window.addEventListener('resize', compute);
+      return () => window.removeEventListener('resize', compute);
     }
 
     return () => {
-      cancelAnimationFrame(rafId);
       if (ro) {
         try {
           ro.disconnect();
@@ -191,16 +147,6 @@ const ShelterInfoCard = ({ shelter, variant, isFavorite = false, onToggleFavorit
               <MdAccessTime size={25} />
               <span css={badgeText}>{isActuallyOpen ? '운영중' : '운영종료'}</span>
             </span>
-            {shelter.isOutdoors && (
-              <span
-                css={[statusBadge, isActuallyOpen ? outdoorsOnTag : outdoorsOffTag]}
-                title="야외"
-                aria-label="야외"
-              >
-                <MdWbSunny size={25} />
-                <span css={badgeText}>야외</span>
-              </span>
-            )}
           </>
         )}
       </div>
@@ -474,11 +420,6 @@ const statusWrapper = css`
 const outdoorsOnTag = css`
   background: rgba(239, 68, 68, 0.08); /* 연한 빨강 배경 */
   color: ${theme.colors.button.red}; /* 붉은 텍스트/아이콘 */
-`;
-
-const outdoorsOffTag = css`
-  background: rgba(107, 114, 128, 0.06);
-  color: #6b7280;
 `;
 
 /* 이름과 배지 행 */

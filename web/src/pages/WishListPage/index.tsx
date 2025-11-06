@@ -3,7 +3,6 @@ import { css } from '@emotion/react';
 import { FaHeart } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { getWishList } from '@/api/wishApi';
 import emptyWishImg from '@/assets/images/empty-wish2.jpg';
 import theme from '@/styles/theme';
@@ -12,36 +11,35 @@ import WishListCard from './components/WishListCard';
 const WishListPage = () => {
   // userId는 서버에서 me로 처리되므로 불필요
 
-  // 서버 찜 목록 쿼리 (React Query)
-  const { data, isError, refetch } = useQuery<any, Error>({
-    queryKey: ['wishList'],
-    queryFn: () => getWishList(),
-    staleTime: 120_000,
-    refetchOnWindowFocus: false,
-    retry: 0,
-  });
+  const [wishList, setWishList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
 
-  // 로컬 리스트: null = 아직 서버 확인 중 (초기 깜빡임 방지)
-  const [list, setList] = useState<any[] | null>(null);
-  // 서버 데이터(sync) -> 로컬 list 채움 (초기 로드 및 refetch 시 동기화)
   useEffect(() => {
-    if (typeof data === 'undefined') return;
-    // data가 배열일 수도, { items: [...] } 형태일 수도, { data: [...] } 형태일 수도 있음
-    const items = Array.isArray(data)
-      ? data
-      : Array.isArray(data?.items)
-        ? data.items
-        : Array.isArray(data?.data)
-          ? data.data
-          : [];
-    setList(items);
-  }, [data]);
-  // 에러일 때는 로컬 list가 null이면 빈 배열로 전환(최종 확인됨)
-  useEffect(() => {
-    if (isError && list === null) {
-      setList([]);
-    }
-  }, [isError, list]);
+    let mounted = true;
+    setIsLoading(true);
+    getWishList()
+      .then((data: any) => {
+        if (!mounted) return;
+        const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+        setWishList(items);
+        setError(null); // 오류 메시지 제거 — 빈 목록 화면으로 보이도록
+      })
+      .catch((e) => {
+        // 네트워크/권한 에러가 와도 빈 목록으로 처리
+        if (mounted) {
+          console.warn('[WishListPage] getWishList failed', e);
+          setWishList([]);
+          setError(null);
+        }
+      })
+      .finally(() => {
+        if (mounted) setIsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const navigate = useNavigate();
 
@@ -49,7 +47,13 @@ const WishListPage = () => {
     navigate(`/shelter-detail/${shelterId}`);
   };
 
-  // note: list === null -> 아직 서버 확인 중. 이후 list가 [] or items로 바뀜.
+  // local list for optimistic UI removal — 초기화는 빈 배열, 서버에서 로드되면 동기화
+  const [list, setList] = useState<any[]>([]);
+
+  // 서버에서 받은 wishList와 로컬 list를 동기화
+  useEffect(() => {
+    setList(wishList);
+  }, [wishList]);
 
   const handleStartRemoving = (_id: number) => {
     // (선택) UI 상태 표시용 — _id로 unused 변수 경고 제거
@@ -57,7 +61,7 @@ const WishListPage = () => {
 
   const handleFinalizeRemove = (id: number) => {
     // 부모가 실제로 항목 제거 — 이렇게 하면 앱에서 깜박임 없음
-    setList((s) => (s ? s.filter((it) => it.shelterId !== id) : s));
+    setList((s) => s.filter((it) => it.shelterId !== id));
     // 또는 서버 권장 방식: refetchWishList();
   };
 
@@ -65,8 +69,7 @@ const WishListPage = () => {
     // 제거 취소 시 필요 처리
   };
 
-  // 로딩/확인 단계: list가 아직 null이면 로딩 UI(혹은 아무것도) 표시
-  if (list === null) return <div css={pageContainerStyle(false)}>로딩 중...</div>;
+  if (isLoading) return <div css={pageContainerStyle(false)}>로딩 중...</div>;
 
   const isEmpty = list.length === 0;
 
@@ -85,12 +88,16 @@ const WishListPage = () => {
               key={item.shelterId}
               item={item}
               onClick={handleCardClick}
-              // 카드 내부에서 refetch가 필요하면 이 refetch를 호출하도록 전달
-              refetchWishList={() => {
-                // React Query의 refetch를 호출하면 상위 useQuery의 data가 갱신되고,
-                // 그에 따라 로컬 list도 동기화됩니다.
-                refetch().catch(() => {});
-              }}
+              refetchWishList={() =>
+                getWishList()
+                  .then((d: any) => {
+                    const items = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
+                    setWishList(items);
+                  })
+                  .catch(() => {
+                    /* optional */
+                  })
+              }
               onStartRemoving={handleStartRemoving}
               onFinalizeRemove={handleFinalizeRemove}
               onCancelRemoving={handleCancelRemoving}
@@ -106,7 +113,7 @@ const WishListPage = () => {
           </div>
           <div css={emptyBox}>
             <div css={emptyText}>
-              {isError ? '찜 목록을\n불러오지 못했습니다.' : '찜이 없습니다.'}
+              {error ? '찜 목록을\n불러오지 못했습니다.' : '찜이 없습니다.'}
             </div>
             <img src={emptyWishImg} alt="찜 없음" css={emptyImg} />
           </div>

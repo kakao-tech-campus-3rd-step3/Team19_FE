@@ -356,8 +356,15 @@ const reviewCardStyle = css`
   background: ${theme.colors.text.white};
   align-items: flex-start;
   text-align: left;
-  width: 100%; /* 카드가 부모 너비를 채우도록 */
+  width: 100%;
   box-sizing: border-box;
+  flex-wrap: wrap; /* 내용이 너무 길면 다음 줄로 내려가도록 허용 */
+
+  /* 모바일 등 좁은 화면에서는 카드 내부를 세로로 쌓음 */
+  @media (max-width: 700px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const reviewLeft = css`
@@ -410,11 +417,17 @@ const reviewContentBox = css`
   margin-top: 4px;
   padding: 8px;
   background: ${theme.colors.text.gray50};
+  width: 100%; /* 내용 영역이 가용 너비를 차지하도록 */
+  box-sizing: border-box;
 `;
 
 const reviewText = css`
   ${theme.typography.review3};
   color: ${theme.colors.text.black};
+  white-space: pre-wrap; /* 줄바꿈/공백 유지하며 자동 줄바꿈 허용 */
+  overflow-wrap: anywhere; /* 긴 단어도 적절히 줄바꿈 */
+  word-break: break-word; /* 긴 단어가 박스를 넘지 않게 처리 */
+  hyphens: auto;
 `;
 
 const reviewMeta = css`
@@ -436,6 +449,14 @@ const reviewPhoto = css`
   align-self: flex-start;
   margin-top: 8px;
   background: ${theme.colors.text.white};
+  flex-shrink: 0;
+
+  /* 작아진 화면에서는 사진을 전체 너비로 내려서 텍스트가 사진 아래로 흐르도록 함 */
+  @media (max-width: 700px) {
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+  }
 `;
 
 const noReviewStyle = css`

@@ -298,7 +298,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWeb() {
-        val vercelUrl = "https://team19-fe-rr1d.vercel.app/"
+        val vercelUrl = "https://musuimsa-pi.vercel.app/"
         // 웹뷰 표시로 전환 (검은 배경에서 웹으로)
         webView.visibility = android.view.View.VISIBLE
         webView.setBackgroundColor(android.graphics.Color.BLACK)

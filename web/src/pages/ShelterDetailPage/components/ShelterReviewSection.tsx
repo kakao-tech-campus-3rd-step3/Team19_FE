@@ -136,9 +136,7 @@ const ShelterReviewSection = ({
         </button>
       </div>
 
-      {loading ? (
-        <div css={loadingStyle}>로딩 중...</div>
-      ) : reviews && reviews.length > 0 ? (
+      {loading ? null : reviews && reviews.length > 0 ? (
         <div css={reviewListStyle}>
           {reviews.slice(0, visibleCount).map((r) => (
             <article css={reviewCardStyle} key={r.reviewId}>

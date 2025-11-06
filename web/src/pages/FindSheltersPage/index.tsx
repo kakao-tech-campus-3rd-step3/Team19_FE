@@ -173,7 +173,7 @@ const FindSheltersPage = () => {
   // 위치 확인이 아직 끝나지 않았으면 아무것도 표시하지 않음(초기 깜빡임 방지)
   if (!locationChecked) return null;
 
-  if (isLoading) return <div css={pageContainerStyle(hasScroll)}>로딩 중...</div>;
+  if (isLoading) return null;
   if (error)
     return (
       <div css={pageContainerStyle(hasScroll)}>

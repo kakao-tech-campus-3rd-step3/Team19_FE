@@ -30,7 +30,7 @@ const EditReviewPage = () => {
     saving, // 훅에서 반환된 saving 사용
   } = useEditReview();
 
-  if (!review) return <div>로딩 중...</div>;
+  if (!review) return null;
 
   return (
     <div css={container}>

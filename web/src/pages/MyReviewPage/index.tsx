@@ -106,7 +106,7 @@ const MyReviewPage = () => {
     lastRemovedRef.current = null;
   };
 
-  if (loading) return <div>로딩 중...</div>;
+  if (loading) return null;
 
   const isEmpty = reviews.length === 0;
 

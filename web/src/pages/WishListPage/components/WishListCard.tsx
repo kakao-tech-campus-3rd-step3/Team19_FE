@@ -373,10 +373,11 @@ const cardBottomRow = css`
 `;
 const cardImg = css`
   width: 30%;
-  height: 120px; /* 고정 높이로 레이아웃 안정화 */
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: 8px;
   background: #fafafa;
+  flex-shrink: 0;
 `;
 const cardInfo = css`
   flex: 1;

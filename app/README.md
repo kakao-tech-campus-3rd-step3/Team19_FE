@@ -80,6 +80,20 @@ app/
 
 ## 📝 버전 히스토리
 
+### v2.4 (2025-11-06)
+
+- 길안내 종료 후 리뷰 작성 푸시 알림 기능 추가
+  - GuidePage: 도착 확인 시 `POST /api/shelters/{shelterId}/arrival` API 호출
+  - BE: 10분 후 FCM 푸시 발송 (`type: REVIEW_REMINDER`, `shelterId`, `shelterName` 포함)
+  - MainActivity: REVIEW_REMINDER 알림 클릭 시 `/shelter-detail/{shelterId}?openReview=true`로 라우팅
+  - ShelterDetailPage: `openReview` 파라미터 감지 시 자동으로 리뷰 작성 페이지로 이동
+  - 효과: 앱 종료 상태에서도 알림 클릭 시 정확한 쉼터의 리뷰 작성 페이지로 이동, 기존 로직 재사용으로 안정성 확보
+- Vercel SPA 라우팅 설정 추가
+  - `vercel.json` 추가: 모든 경로를 `index.html`로 rewrite 설정
+  - 직접 URL 접근 시 404 에러 해결 (딥링크 정상 동작)
+- 앱 버전 업데이트: `versionCode=5`, `versionName=2.4`
+- 앱 라벨 업데이트: "무더위 쉼터를 찾는 사람들 v2.4"
+
 ### v2.3 (2025-11-06)
 
 - WebView 이미지 업로드 지원 추가 (`<input type="file">` 동작)

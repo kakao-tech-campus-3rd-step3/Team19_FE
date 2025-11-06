@@ -22,6 +22,8 @@ const FindSheltersPage = () => {
 
   // 위치 좌표 (once) — 페이지 진입 시 한 번만 얻어와 React Query 키로 사용
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  // 위치 확인 완료 여부: 위치 성공/실패 중 하나라도 발생하면 true로 바뀜
+  const [locationChecked, setLocationChecked] = useState<boolean>(false);
 
   // 화면 표시 제어(로컬): visibleCount / favoriteIds / isFetchingMore
   const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE);
@@ -32,6 +34,7 @@ const FindSheltersPage = () => {
   useEffect(() => {
     if (!navigator?.geolocation) {
       console.warn('[FindSheltersPage] Geolocation not available');
+      setLocationChecked(true); // geolocation 미지원이면 확인 완료로 취급
       return;
     }
     let mounted = true;
@@ -39,9 +42,12 @@ const FindSheltersPage = () => {
       (pos) => {
         if (!mounted) return;
         setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setLocationChecked(true);
       },
       (err) => {
         console.warn('[FindSheltersPage] geolocation error', err);
+        // 위치 획득 실패도 "확인 완료"로 표시하여 빈 화면 깜빡임 방지
+        setLocationChecked(true);
         // 위치 못 얻어도 빈 상태로 진행(사용자 선택 동작 유도)
       },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 },
@@ -163,6 +169,9 @@ const FindSheltersPage = () => {
   const handleLoginCancel = () => {
     setShowLoginModal(false);
   };
+
+  // 위치 확인이 아직 끝나지 않았으면 아무것도 표시하지 않음(초기 깜빡임 방지)
+  if (!locationChecked) return null;
 
   if (isLoading) return <div css={pageContainerStyle(hasScroll)}>로딩 중...</div>;
   if (error)

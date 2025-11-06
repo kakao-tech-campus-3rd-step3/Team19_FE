@@ -3,10 +3,12 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { checkLoginStatus } from '@/api/userApi';
+import { checkLoginStatus, getMyProfile } from '@/api/userApi';
+import { deleteReview } from '@/api/reviewApi';
 import { setPendingAction } from '@/utils/pendingAction';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { createPortal } from 'react-dom';
+import { FaTrash } from 'react-icons/fa';
 
 // Review 타입 정의
 interface Review {
@@ -61,6 +63,49 @@ const ShelterReviewSection = ({
 
   // 프로필 이미지 에러 핸들링용 state
   const [profileImgErrorMap, setProfileImgErrorMap] = useState<{ [reviewId: number]: boolean }>({});
+
+  // 내 닉네임 저장 (리뷰 작성자와 비교하여 삭제 버튼 표시)
+  const [myNickname, setMyNickname] = useState<string | null>(null);
+
+  // 삭제 확인 모달 state
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    open: boolean;
+    reviewId: number | null;
+  }>({ open: false, reviewId: null });
+  const [deleting, setDeleting] = useState(false);
+
+  // 컴포넌트 마운트 시 내 프로필 정보 가져오기
+  useEffect(() => {
+    const fetchMyProfile = async () => {
+      try {
+        const isLoggedIn = await checkLoginStatus();
+        if (isLoggedIn) {
+          const profile = await getMyProfile();
+          setMyNickname(profile.nickname);
+        }
+      } catch (err) {
+        console.warn('[ShelterReviewSection] Failed to fetch my profile:', err);
+      }
+    };
+    fetchMyProfile();
+  }, []);
+
+  // 리뷰 삭제 핸들러
+  const handleDeleteReview = async (reviewId: number) => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteReview(reviewId);
+      setDeleteConfirmModal({ open: false, reviewId: null });
+      // 삭제 성공 시 페이지 새로고침으로 리뷰 목록 갱신
+      window.location.reload();
+    } catch (err) {
+      console.error('[ShelterReviewSection] Failed to delete review:', err);
+      alert('리뷰 삭제에 실패했습니다.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // 줄 수 감지 함수
   const checkLineClamp = (reviewId: number) => {

@@ -61,48 +61,36 @@ const MapCache = {
         if (this.div.parentElement !== target) {
           target.appendChild(this.div);
         }
-        // 마커 재부착 시도
-        if (this.myMarker && typeof this.myMarker.setMap === 'function') {
-          this.myMarker.setMap(this.map);
-          if (this.lastIcon && typeof this.myMarker.setIcon === 'function') {
+        
+        // 지도 DOM 재부착 후 강제 리플로우를 위해 약간의 지연
+        // requestAnimationFrame을 사용하여 브라우저 렌더링 사이클에 맞춤
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
             try {
-              this.myMarker.setIcon(this.lastIcon);
-            } catch {}
-          }
-        }
-        // 지도 상태 복원 (마지막 중심/줌이 있으면 복원)
-        try {
-          if (this.lastCenter && this.lastZoom) {
-            const LatLng = (window as any).Tmapv3?.LatLng;
-            if (LatLng && typeof this.map.setCenter === 'function' && typeof this.map.setZoom === 'function') {
-              this.map.setCenter(new LatLng(this.lastCenter.lat, this.lastCenter.lng));
-              this.map.setZoom(this.lastZoom);
-            }
-          }
-        } catch {}
-        // reflow/refresh 시도: SDK마다 메소드명이 다르므로 여러 시도
-        try {
-          if (this.map && typeof (this.map as any).updateSize === 'function') {
-            (this.map as any).updateSize();
-          } else if (this.map && typeof (this.map as any).refresh === 'function') {
-            (this.map as any).refresh();
-          } else if (this.map && typeof (this.map as any).repaint === 'function') {
-            (this.map as any).repaint();
-          } else if (
-            this.map &&
-            typeof (this.map as any).setCenter === 'function' &&
-            typeof (this.map as any).getCenter === 'function'
-          ) {
-            const c = (this.map as any).getCenter();
-            (this.map as any).setCenter(c);
-          }
-          // 추가: 재부착 직후 SDK가 내부적으로 렌더를 못하는 케이스를 대비한 지연 재시도
-          setTimeout(() => {
-            try {
+              // 마커 재부착 시도
+              if (this.myMarker && typeof this.myMarker.setMap === 'function') {
+                this.myMarker.setMap(this.map);
+                if (this.lastIcon && typeof this.myMarker.setIcon === 'function') {
+                  try {
+                    this.myMarker.setIcon(this.lastIcon);
+                  } catch {}
+                }
+              }
+              // 지도 상태 복원 (마지막 중심/줌이 있으면 복원)
+              if (this.lastCenter && this.lastZoom) {
+                const LatLng = (window as any).Tmapv3?.LatLng;
+                if (LatLng && typeof this.map.setCenter === 'function' && typeof this.map.setZoom === 'function') {
+                  this.map.setCenter(new LatLng(this.lastCenter.lat, this.lastCenter.lng));
+                  this.map.setZoom(this.lastZoom);
+                }
+              }
+              // reflow/refresh 시도: SDK마다 메소드명이 다르므로 여러 시도
               if (this.map && typeof (this.map as any).updateSize === 'function') {
                 (this.map as any).updateSize();
               } else if (this.map && typeof (this.map as any).refresh === 'function') {
                 (this.map as any).refresh();
+              } else if (this.map && typeof (this.map as any).repaint === 'function') {
+                (this.map as any).repaint();
               } else if (
                 this.map &&
                 typeof (this.map as any).setCenter === 'function' &&
@@ -111,9 +99,26 @@ const MapCache = {
                 const c = (this.map as any).getCenter();
                 (this.map as any).setCenter(c);
               }
+              // 추가: 재부착 직후 SDK가 내부적으로 렌더를 못하는 케이스를 대비한 지연 재시도
+              setTimeout(() => {
+                try {
+                  if (this.map && typeof (this.map as any).updateSize === 'function') {
+                    (this.map as any).updateSize();
+                  } else if (this.map && typeof (this.map as any).refresh === 'function') {
+                    (this.map as any).refresh();
+                  } else if (
+                    this.map &&
+                    typeof (this.map as any).setCenter === 'function' &&
+                    typeof (this.map as any).getCenter === 'function'
+                  ) {
+                    const c = (this.map as any).getCenter();
+                    (this.map as any).setCenter(c);
+                  }
+                } catch {}
+              }, 100);
             } catch {}
-          }, 60);
-        } catch {}
+          });
+        });
       } catch {}
       return this.map;
     }

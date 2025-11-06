@@ -8,7 +8,7 @@ import { patchProfile, patchPassword, getMyProfile } from '@/api/userApi';
 import { uploadProfileImage } from '@/api/userApi';
 
 // 기본 프로필 URL (백엔드로 전송할 기본 이미지 링크)
-const DEFAULT_PROFILE_URL =
+export const DEFAULT_PROFILE_URL =
   'https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png';
 
 export const useEditProfile = () => {

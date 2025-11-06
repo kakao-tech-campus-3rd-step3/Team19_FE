@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { FaRegEdit } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
-import { useEditProfile } from './hooks/useEditProfile';
+import { useEditProfile, DEFAULT_PROFILE_URL } from './hooks/useEditProfile';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 
@@ -61,6 +61,12 @@ const EditProfilePage = () => {
           profileImageUrl ??
           (typeof NoProfile === 'string' ? NoProfile : ''));
 
+  // 기본이미지이거나 유효하지 않으면 '기본 프로필로 변경' 버튼 숨김
+  const isDefaultOrInvalid =
+    !effectiveProfileImage ||
+    effectiveProfileImage === DEFAULT_PROFILE_URL ||
+    effectiveProfileImage === (typeof NoProfile === 'string' ? NoProfile : '');
+
   return (
     <div css={container}>
       <div css={titleRow}>
@@ -94,13 +100,12 @@ const EditProfilePage = () => {
               <button css={modalBtnS} onClick={handleProfileImgSelect}>
                 앨범에서 사진 선택
               </button>
-              {/* 현재 보여지는 프로필이 기본 이미지가 아니라면 '기본 프로필로 변경' 버튼 노출 */}
-              {effectiveProfileImage &&
-                effectiveProfileImage !== (typeof NoProfile === 'string' ? NoProfile : '') && (
-                  <button css={modalBtnS} onClick={handleSetDefaultProfile}>
-                    기본 프로필로 변경
-                  </button>
-                )}
+              {/* 현재 보여지는 프로필이 기본 이미지거나 유효하지 않으면 버튼 숨김 */}
+              {!isDefaultOrInvalid && (
+                <button css={modalBtnS} onClick={handleSetDefaultProfile}>
+                  기본 프로필로 변경
+                </button>
+              )}
               <button css={modalBtn} onClick={() => setShowProfileModal(false)}>
                 닫기
               </button>

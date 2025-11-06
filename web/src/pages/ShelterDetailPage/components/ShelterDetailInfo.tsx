@@ -63,37 +63,52 @@ const ShelterDetailInfo = ({
     if (!el) return;
     const original = shelter.name || '';
 
-    // 축소(스케일)로 한 줄에 맞추기
+    // 텍스트를 font-size 기반으로 축소하여 부모 폭에 맞춤 (좌우 여백 8px 보장)
     el.style.visibility = 'hidden';
     el.style.whiteSpace = 'nowrap';
-    el.style.display = 'inline-block';
-    el.style.transformOrigin = 'center center';
-    el.style.willChange = 'transform';
-    // 즉시 적용: transition 제거하여 축소 애니메이션이 보이지 않도록 함
+    el.style.display = 'block';
+    el.style.boxSizing = 'border-box';
     el.style.transition = 'none';
-    el.style.overflow = 'visible';
 
     const compute = () => {
+      // 원본 텍스트 반영 (span/br 등 제거하고 단일 텍스트로 처리)
       el.textContent = original;
-      el.style.transform = '';
+      // 기존 inline style fontSize 기준값 저장 (dataset에 보관)
+      if (!el.dataset.baseFontSize) {
+        const cs = window.getComputedStyle(el);
+        const base = parseFloat(cs.fontSize || '16') || 16;
+        el.dataset.baseFontSize = String(base);
+      }
+      const baseFontSize = parseFloat(el.dataset.baseFontSize || '16');
+
       const parent = el.parentElement;
       const parentRect = parent ? parent.getBoundingClientRect() : el.getBoundingClientRect();
       const pStyle = parent ? window.getComputedStyle(parent) : ({} as any);
       const padLeft = parseFloat(pStyle.paddingLeft || '0');
       const padRight = parseFloat(pStyle.paddingRight || '0');
-      const safety = 8;
+      const safety = 8; // 좌우 최소 여백
       const available = Math.max(40, parentRect.width - padLeft - padRight - safety);
 
+      // 텍스트의 원래 폭 측정 (현재 fontSize로 측정)
+      // reset fontSize before measuring to get consistent base measurement
+      el.style.fontSize = '';
       const textWidth = el.scrollWidth;
+      // 폭 제한을 걸어두면 줄바꿈/overflow 방지에 유리
+      el.style.maxWidth = `${available}px`;
+
       if (textWidth <= available) {
-        el.style.transform = '';
+        // 충분히 들어가면 원래 폰트 크기 사용(기본값으로 복원)
+        el.style.fontSize = '';
         el.style.visibility = '';
         return;
       }
 
-      const MIN_SCALE = 0.72;
-      const scale = Math.max(MIN_SCALE, available / textWidth);
-      el.style.transform = `scale(${scale})`;
+      // 계산된 scale과 이를 이용한 폰트 크기 적용
+      const scale = available / textWidth;
+      const MIN_FONT_PX = 12; // 최소 허용 폰트 사이즈(px) — 필요시 조정
+      const newFont = Math.max(MIN_FONT_PX, Math.floor(baseFontSize * scale));
+      el.style.fontSize = `${newFont}px`;
+
       el.style.visibility = '';
     };
 
@@ -130,11 +145,12 @@ const ShelterDetailInfo = ({
 
     return () => {
       cancelAnimationFrame(rafId);
-      if (ro) {
-        try {
-          ro.disconnect();
-        } catch {}
-      }
+      // 스타일 원복
+      try {
+        el.style.fontSize = '';
+        el.style.maxWidth = '';
+        if (ro) ro.disconnect();
+      } catch {}
     };
   }, [shelter.name]);
 
@@ -292,6 +308,11 @@ const title = css`
   margin-top: 16px;
   ${theme.typography.detail1};
   color: ${theme.colors.text.blue};
+  box-sizing: border-box;
+  padding: 0 8px; /* 좌우 최소 여백 확보 */
+  max-width: calc(100% - 16px); /* 좌우 패딩 만큼 여유 확보 */
+  display: block;
+  overflow: hidden; /* 스케일로 인해 넘칠 경우 잘라서 가로 스크롤 방지 */
 `;
 
 const topSection = css`
@@ -301,6 +322,7 @@ const topSection = css`
   align-items: center;
   width: 80%;
   box-sizing: border-box;
+  padding: 0 8px; /* 전체 상단 섹션에 좌우 여백 추가 */
 `;
 
 const thumbnail = css`

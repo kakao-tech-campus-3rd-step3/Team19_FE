@@ -51,6 +51,18 @@ export const useMap = () => {
       // 1) 위치 업데이트 시도
       const updated = MapCache.updateMyMarkerPosition(lat, lng);
 
+      // 1.5) MapCache에 최신 위치 명시적 저장: MapView에서 읽도록 보장
+      try {
+        // 안전하게 any로 할당 — MapCache에 해당 필드가 없으면 추가
+        (MapCache as any).userLocation = { lat, lng };
+        (MapCache as any).userLat = Number(lat);
+        (MapCache as any).userLng = Number(lng);
+        // lastCenter도 동기화
+        (MapCache as any).lastCenter = { lat: Number(lat), lng: Number(lng) };
+      } catch (e) {
+        // ignore
+      }
+
       // 2) 마커가 없거나 아이콘이 다르면(보장) 재생성/보정
       if (!updated || MapCache.lastIcon !== myLocationMarker) {
         MapCache.setMyMarkerOnMap(map, lat, lng, myLocationMarker);

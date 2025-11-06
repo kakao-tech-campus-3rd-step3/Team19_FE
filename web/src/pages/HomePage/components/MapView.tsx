@@ -528,13 +528,60 @@ const MapView = ({ onMapReady }: Props) => {
         meta.env = { ...(meta.env || {}), VITE_USE_MOCK: 'true' };
       }
 
-      const res = await getSheltersByBbox({
-        minLat,
-        minLng,
-        maxLat,
-        maxLng,
-        zoom,
-      });
+      // 가능한 경우 클라이언트 현재 위치(userLat/userLng)를 함께 보냄.
+      let userLat: number | undefined = undefined;
+      let userLng: number | undefined = undefined;
+      try {
+        // 우선: useMap에서 설정한 MapCache.userLocation / userLat/userLng 사용
+        const mc: any = MapCache as any;
+        if (mc && mc.userLat != null && mc.userLng != null) {
+          userLat = Number(mc.userLat);
+          userLng = Number(mc.userLng);
+        } else if (mc && mc.userLocation) {
+          userLat = Number(mc.userLocation.lat);
+          userLng = Number(mc.userLocation.lng);
+        } else {
+          // 다음: MapCache.myMarker 객체에서 추출
+          const mm = MapCache.myMarker;
+          if (mm && typeof mm.getPosition === 'function') {
+            const pos = mm.getPosition();
+            userLat =
+              typeof pos.getLat === 'function'
+                ? Number(pos.getLat())
+                : Number(pos.lat ?? pos.y ?? NaN);
+            userLng =
+              typeof pos.getLng === 'function'
+                ? Number(pos.getLng())
+                : Number(pos.lng ?? pos.x ?? NaN);
+          }
+        }
+
+        // 마지막 폴백: 맵 중심 사용 (map.getCenter 또는 lastCenterRef)
+        if (!isFinite(Number(userLat)) || !isFinite(Number(userLng))) {
+          const c =
+            typeof map.getCenter === 'function'
+              ? map.getCenter()
+              : ((MapCache as any).lastCenter ?? lastCenterRef.current);
+          if (c) {
+            if (typeof (c as any).getLat === 'function') {
+              userLat = Number((c as any).getLat());
+              userLng = Number((c as any).getLng());
+            } else {
+              userLat = Number((c as any).lat ?? (c as any).y ?? NaN);
+              userLng = Number((c as any).lng ?? (c as any).x ?? NaN);
+            }
+          }
+        }
+      } catch (e) {
+        // 위치 추출 실패 시 undefined 유지
+      }
+
+      const payload: any = { minLat, minLng, maxLat, maxLng, zoom };
+      if (isFinite(Number(userLat)) && isFinite(Number(userLng))) {
+        payload.userLat = Number(userLat);
+        payload.userLng = Number(userLng);
+      }
+      const res = await getSheltersByBbox(payload);
 
       // restore env
       if (FORCE_USE_MOCK) {

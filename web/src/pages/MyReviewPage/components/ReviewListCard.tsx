@@ -343,13 +343,15 @@ const cardTitleRow = css`
 
 const cardTitle = css`
   ${theme.typography.myr2};
-  /* 한 줄로 표시하고 넘치면 ellipsis 처리 */
-  display: block;
+  /* 여러 줄 허용: 최대 2줄에서 말줄임(휴대성) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: normal;
 
-  /* 플렉스 레이아웃에서 잘 동작하도록 */
+  /* 플렉스 컨테이너에서 정상 동작하도록 */
   flex: 1 1 auto;
   min-width: 0;
 
@@ -440,6 +442,9 @@ const cardContent = css`
   text-align: left;
   color: #3c3a3aff;
   margin-bottom: 8px;
+  white-space: pre-wrap; /* 줄바꿈 문자 유지, 자동 줄바꿈 허용 */
+  word-break: break-word; /* 긴 단어가 박스 밖으로 나가지 않도록 */
+  overflow-wrap: anywhere;
 `;
 
 const deleteBtn = css`

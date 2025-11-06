@@ -619,9 +619,8 @@ class MainActivity : AppCompatActivity() {
         if (notifType == "REVIEW_REMINDER") {
             val shelterId = map["shelterId"] ?: ""
             val js = "(function(){try{" +
-                    "if (window.location.pathname !== '/shelter-detail/" + shelterId + "'){ " +
-                    "window.location.href='/shelter-detail/" + shelterId + "?openReview=true&from=notification'; " +
-                    "}" +
+                    "sessionStorage.setItem('reviewNotifData', " + org.json.JSONObject.quote(json) + ");" +
+                    "if (window.location.pathname !== '/write-review/" + shelterId + "'){ window.location.href='/write-review/" + shelterId + "?from=notification'; }" +
                     "}catch(e){console.error('notif error:', e);}})();"
             webView.evaluateJavascript(js, null)
             return

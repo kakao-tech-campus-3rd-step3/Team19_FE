@@ -79,6 +79,7 @@ const MyReviewPage = () => {
   // 부모: 애니메이션 종료 후 실제로 리스트에서 제거
   const handleFinalizeRemove = (reviewId: number) => {
     setReviews((prev) => {
+      if (!prev) return prev; // null 안전 처리
       const idx = prev.findIndex((r) => r.reviewId === reviewId);
       if (idx === -1) return prev;
       const removed = prev[idx];
@@ -98,7 +99,8 @@ const MyReviewPage = () => {
     const rec = lastRemovedRef.current;
     if (!rec) return;
     setReviews((prev) => {
-      const arr = [...prev];
+      const base = prev ?? []; // prev가 null이면 빈 배열로 시작
+      const arr = [...base];
       arr.splice(rec.index, 0, rec.item);
       return arr;
     });

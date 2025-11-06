@@ -197,6 +197,16 @@ const ShelterReviewSection = ({
           {reviews.slice(0, visibleCount).map((r) => (
             <article css={reviewCardStyle} key={r.reviewId}>
               <div css={reviewLeft}>
+                {/* 내 리뷰인 경우 삭제 버튼 표시 (리뷰 콘텐츠 박스 우측 상단에 배치) */}
+                {myNickname && myNickname === r.nickname && (
+                  <button
+                    css={deleteButtonStyle}
+                    onClick={() => setDeleteConfirmModal({ open: true, reviewId: r.reviewId })}
+                    aria-label="리뷰 삭제"
+                  >
+                    <FaTrash size={30} />
+                  </button>
+                )}
                 <div css={avatarRow}>
                   {r.profileImageUrl &&
                   r.profileImageUrl !== '' &&
@@ -410,6 +420,7 @@ const reviewLeft = css`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 `;
 
 const avatarRow = css`
@@ -423,6 +434,25 @@ const avatarInfoCol = css`
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+`;
+
+const deleteButtonStyle = css`
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #d76464;
+  }
 `;
 
 const avatarImgStyle = css`

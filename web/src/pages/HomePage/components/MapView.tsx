@@ -25,7 +25,8 @@ const MapView = ({ onMapReady }: Props) => {
   const dismissCleanupRef = useRef<() => void | null>(null);
   const [, setIsMapReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [isLoadingMap, setIsLoadingMap] = useState(true);
+  // 재진입 시 로딩 화면을 표시하지 않기 위해 초기 상태를 체크
+  const [isLoadingMap, setIsLoadingMap] = useState(() => MapCache.map === null);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [, setMapError] = useState<string | null>(null);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
@@ -580,8 +581,17 @@ const MapView = ({ onMapReady }: Props) => {
 
   // 지도 초기화 (MapCache 기반, 기존 코드 재사용)
   const initializeMap = async (location: LocationState) => {
-    if (!mapRef.current) return;
-    setIsLoadingMap(true);
+    if (!mapRef.current) {
+      console.error('[MapView] mapRef.current가 null입니다!');
+      return;
+    }
+
+    // 재진입 시 지도가 이미 있으면 로딩 화면 생략
+    const isReentry = MapCache.map !== null;
+    console.log('[MapView] initializeMap 시작:', { isReentry, location });
+    if (!isReentry) {
+      setIsLoadingMap(true);
+    }
     setMapError(null);
     try {
       const createFn = () =>
@@ -594,19 +604,25 @@ const MapView = ({ onMapReady }: Props) => {
           scrollwheel: true,
         });
 
+      console.log('[MapView] MapCache.ensureMap 호출, mapRef.current:', mapRef.current);
       const mapInstance = await MapCache.ensureMap(mapRef.current, createFn);
       if (!mapInstance) {
+        console.error('[MapView] 지도 인스턴스 생성 실패');
         setMapError('지도 인스턴스를 생성할 수 없습니다.');
         setIsLoadingMap(false);
         return;
       }
+      console.log('[MapView] mapInstance 획득 완료:', mapInstance);
 
-      try {
-        if (isMapFullyLoaded(mapInstance)) {
-          mapInstance.setCenter(new window.Tmapv3.LatLng(location.latitude, location.longitude));
-          mapInstance.setZoom && mapInstance.setZoom(13);
-        }
-      } catch {}
+      // 재진입 시에는 지도 상태가 이미 복원되었으므로 초기 위치 설정 스킵
+      if (!isReentry) {
+        try {
+          if (isMapFullyLoaded(mapInstance)) {
+            mapInstance.setCenter(new window.Tmapv3.LatLng(location.latitude, location.longitude));
+            mapInstance.setZoom && mapInstance.setZoom(13);
+          }
+        } catch {}
+      }
 
       // wait until map reports loaded then attach listeners
       const checkMapLoaded = () => {
@@ -614,8 +630,29 @@ const MapView = ({ onMapReady }: Props) => {
           mapInstanceRef.current = mapInstance;
           if (onMapReady) onMapReady(mapInstance);
 
-          // 초기 fetch
-          scheduleFetch(mapInstance);
+          // 재진입 시 지도 렌더링 강제 갱신 (로그인 후 흰 화면 문제 해결)
+          if (isReentry) {
+            // requestAnimationFrame을 사용하여 브라우저 렌더링 사이클에 맞춤
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                try {
+                  // 지도 리프레시 강제 실행
+                  if (typeof mapInstance.updateSize === 'function') {
+                    mapInstance.updateSize();
+                  } else if (typeof mapInstance.refresh === 'function') {
+                    mapInstance.refresh();
+                  } else if (typeof mapInstance.repaint === 'function') {
+                    mapInstance.repaint();
+                  }
+                  // 지도가 제대로 렌더링되었는지 확인 후 쉼터 조회
+                  scheduleFetch(mapInstance);
+                } catch {}
+              });
+            });
+          } else {
+            // 최초 로드 시에는 일반적으로 처리
+            scheduleFetch(mapInstance);
+          }
 
           // attach listeners for drag/zoom end (best-effort)
           attachMapEventListeners(mapInstance);
@@ -680,17 +717,25 @@ const MapView = ({ onMapReady }: Props) => {
           })();
 
           setIsMapReady(true);
-          setIsFadingOut(true);
-          const FADE_MS = 320;
-          setTimeout(() => {
+
+          // 재진입 시에는 로딩 화면을 즉시 숨김 (또는 매우 짧게)
+          if (isReentry) {
             setIsLoadingMap(false);
             setIsFadingOut(false);
-          }, FADE_MS);
+          } else {
+            setIsFadingOut(true);
+            const FADE_MS = 320;
+            setTimeout(() => {
+              setIsLoadingMap(false);
+              setIsFadingOut(false);
+            }, FADE_MS);
+          }
         } else {
           setTimeout(checkMapLoaded, 100);
         }
       };
-      setTimeout(checkMapLoaded, 300);
+      // 재진입 시에는 지연 시간 단축 (즉시 실행)
+      setTimeout(checkMapLoaded, isReentry ? 50 : 300);
     } catch (err: any) {
       console.error('지도 초기화 실패:', err);
       setMapError(err?.message || '지도 초기화 중 오류가 발생했습니다.');
@@ -703,6 +748,15 @@ const MapView = ({ onMapReady }: Props) => {
     const setupMap = async () => {
       try {
         if (!isMounted) return;
+
+        // 재진입 체크: 지도가 이미 있으면 로딩 화면을 표시하지 않음
+        const isReentry = MapCache.map !== null;
+        if (isReentry) {
+          // 재진입 시 로딩 화면을 확실히 숨김
+          setIsLoadingMap(false);
+          setIsFadingOut(false);
+        }
+
         const sdkOk = await waitForTmapSDK();
         if (!isMounted) return;
         if (!sdkOk) {
@@ -710,6 +764,45 @@ const MapView = ({ onMapReady }: Props) => {
           setIsLoadingMap(false);
           return;
         }
+
+        // 재진입 시 지도가 이미 있으면 위치 조회 스킵 (마지막 상태 복원)
+        if (isReentry) {
+          // lastCenter가 있으면 복원, 없으면 현재 위치 조회
+          if (MapCache.lastCenter) {
+            // 지도 상태가 이미 복원되었으므로 위치 조회 없이 바로 초기화
+            const locationData: LocationState = {
+              latitude: MapCache.lastCenter.lat,
+              longitude: MapCache.lastCenter.lng,
+              accuracy: 0,
+            };
+            await initializeMap(locationData);
+            return;
+          } else {
+            // 재진입이지만 lastCenter가 없는 경우 (로그인 후 첫 진입 등)
+            // 현재 위치를 조회하여 지도 초기화
+            navigator.geolocation.getCurrentPosition(
+              async (pos) => {
+                if (!isMounted) return;
+                setPermissionDenied(false);
+                const locationData: LocationState = {
+                  latitude: pos.coords.latitude,
+                  longitude: pos.coords.longitude,
+                  accuracy: pos.coords.accuracy,
+                };
+                await initializeMap(locationData);
+              },
+              () => {
+                if (!isMounted) return;
+                setPermissionDenied(true);
+                setIsLoadingMap(false);
+              },
+              { enableHighAccuracy: true, timeout: 10000 },
+            );
+            return;
+          }
+        }
+
+        // 최초 로드 시에만 위치 조회
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             if (!isMounted) return;

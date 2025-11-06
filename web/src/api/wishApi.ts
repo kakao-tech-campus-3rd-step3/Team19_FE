@@ -35,9 +35,19 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 /** 브라우저 위치 획득 유틸 (타임아웃 포함). 실패 시 null 반환 */
 const getCurrentLocation = async (
-  timeoutMs = 3000,
+  timeoutMs = 10000,
 ): Promise<{ latitude: number; longitude: number } | null> => {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null;
+  // quick permission check (if supported) - 거부 상태면 바로 null 반환
+  try {
+    // navigator.permissions 타입 이슈 때문에 any 사용
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const perm: any = (navigator as any).permissions?.query
+      ? await (navigator as any).permissions.query({ name: 'geolocation' })
+      : null;
+    if (perm && perm.state === 'denied') return null;
+  } catch {}
+
   return new Promise((resolve) => {
     let done = false;
     const onSuccess = (pos: GeolocationPosition) => {
@@ -50,12 +60,16 @@ const getCurrentLocation = async (
       done = true;
       resolve(null);
     };
-    navigator.geolocation.getCurrentPosition(onSuccess, onError, { timeout: timeoutMs });
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+      timeout: timeoutMs,
+      enableHighAccuracy: true,
+    });
+    // safety timeout
     setTimeout(() => {
       if (done) return;
       done = true;
       resolve(null);
-    }, timeoutMs + 200);
+    }, timeoutMs + 500);
   });
 };
 
@@ -84,16 +98,23 @@ export async function getWishList() {
     return Promise.resolve(MOCK_WISHES);
   }
 
-  const coords = await getCurrentLocation(3000);
-  // coords가 있으면 쿼리 문자열로 붙여 한 개의 인수로 호출
+  const coords = await getCurrentLocation(10000); // 타임아웃 늘림
   const base = '/api/users/me/wishes';
   const path = coords
     ? `${base}?latitude=${encodeURIComponent(String(coords.latitude))}&longitude=${encodeURIComponent(
         String(coords.longitude),
       )}`
     : base;
-  const res = await apiClient.get(path);
-  return res && (res as any).data ? (res as any).data : res;
+
+  try {
+    const res = await apiClient.get(path);
+    return res && (res as any).data ? (res as any).data : res;
+  } catch (err) {
+    // 네트워크/권한 오류가 나면 빈 배열 반환 — 호출부에서 빈 목록으로 처리
+    // eslint-disable-next-line no-console
+    console.warn('[getWishList] failed, returning empty list', err);
+    return [];
+  }
 }
 
 /**

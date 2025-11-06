@@ -105,9 +105,10 @@ const WishListCard = ({
   const deleteWishMutation = useMutation({
     mutationFn: () => deleteWish({ shelterId: item.shelterId }),
     onMutate: async () => {
-      await queryClient.cancelQueries(['wishList', 'me']);
-      const prev = queryClient.getQueryData<any[]>(['wishList', 'me']);
-      queryClient.setQueryData(['wishList', 'me'], (old: any) =>
+      // react-query v5 타입 호환: object 형태로 호출하거나 any로 단언
+      await queryClient.cancelQueries({ queryKey: ['wishList', 'me'] } as any);
+      const prev = queryClient.getQueryData<any>({ queryKey: ['wishList', 'me'] } as any);
+      queryClient.setQueryData({ queryKey: ['wishList', 'me'] } as any, (old: any) =>
         Array.isArray(old)
           ? old.filter((it) => Number(it.shelterId) !== Number(item.shelterId))
           : old,
@@ -118,7 +119,7 @@ const WishListCard = ({
       if (context?.prev) queryClient.setQueryData(['wishList', 'me'], context.prev);
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['wishList', 'me']);
+      queryClient.invalidateQueries({ queryKey: ['wishList', 'me'] } as any);
     },
   });
 
@@ -126,9 +127,9 @@ const WishListCard = ({
   const addWishMutation = useMutation({
     mutationFn: () => addWish({ shelterId: item.shelterId }),
     onMutate: async () => {
-      await queryClient.cancelQueries(['wishList', 'me']);
-      const prev = queryClient.getQueryData<any[]>(['wishList', 'me']);
-      queryClient.setQueryData(['wishList', 'me'], (old: any) =>
+      await queryClient.cancelQueries({ queryKey: ['wishList', 'me'] } as any);
+      const prev = queryClient.getQueryData<any>({ queryKey: ['wishList', 'me'] } as any);
+      queryClient.setQueryData({ queryKey: ['wishList', 'me'] } as any, (old: any) =>
         Array.isArray(old) ? [...old, item] : old,
       );
       return { prev };
@@ -137,7 +138,7 @@ const WishListCard = ({
       if (context?.prev) queryClient.setQueryData(['wishList', 'me'], context.prev);
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['wishList', 'me']);
+      queryClient.invalidateQueries({ queryKey: ['wishList', 'me'] } as any);
     },
     onSuccess: () => {
       setIsFavorite(true);

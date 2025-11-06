@@ -31,6 +31,7 @@ interface ShelterReviewSectionProps {
   handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   shelterName: string; // props로 쉼터 이름 받기
   shelterId: number; // props로 쉼터 id 받기
+  onReviewDeleted?: () => void; // 리뷰 삭제 후 새로고침 콜백
 }
 
 // 날짜 포맷팅 함수
@@ -50,6 +51,7 @@ const ShelterReviewSection = ({
   handleImageError,
   shelterName,
   shelterId,
+  onReviewDeleted,
 }: ShelterReviewSectionProps) => {
   const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
@@ -97,12 +99,13 @@ const ShelterReviewSection = ({
     try {
       await deleteReview(reviewId);
       setDeleteConfirmModal({ open: false, reviewId: null });
-      // 삭제 성공 시 페이지 새로고침으로 리뷰 목록 갱신
-      window.location.reload();
+      // 삭제 성공 시 부모 컴포넌트에 알려서 리뷰 목록 새로고침
+      if (onReviewDeleted) {
+        onReviewDeleted();
+      }
     } catch (err) {
       console.error('[ShelterReviewSection] Failed to delete review:', err);
       alert('리뷰 삭제에 실패했습니다.');
-    } finally {
       setDeleting(false);
     }
   };

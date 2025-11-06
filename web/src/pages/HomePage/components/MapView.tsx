@@ -405,13 +405,13 @@ const MapView = ({ onMapReady }: Props) => {
         let color = '';
         if (count >= 9000) {
           color = 'rgba(220, 38, 38, 0.92)'; // 빨강
-        } else if (count >= 5000) {
+        } else if (count >= 4000) {
           color = 'rgba(255, 140, 0, 0.88)'; // 주황
-        } else if (count >= 1000) {
+        } else if (count >= 2000) {
           color = 'rgba(255, 190, 50, 0.86)'; // 주황-노랑 사이
         } else if (count >= 300) {
           color = 'rgba(70, 170, 70, 0.82)'; // 초록
-        } else if (count <= 30) {
+        } else if (count <= 60) {
           color = 'rgba(0, 123, 255, 0.74)'; // 파랑
         } else {
           // 31 ~ 299 구간: 연한 초록(기본)

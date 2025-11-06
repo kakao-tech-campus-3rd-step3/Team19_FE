@@ -24,8 +24,12 @@ export async function getSheltersByBbox({
   maxLat,
   maxLng,
   zoom,
+
   page,
   size,
+  // optional: 클라이언트 현재 위치(전달되면 서버에 함께 보냄)
+  userLat,
+  userLng,
 }: {
   minLat: number;
   minLng: number;
@@ -34,6 +38,8 @@ export async function getSheltersByBbox({
   zoom: number;
   page?: number;
   size?: number;
+  userLat?: number;
+  userLng?: number;
 }) {
   // build query string according to spec
   const params = new URLSearchParams();
@@ -42,6 +48,13 @@ export async function getSheltersByBbox({
   params.set('maxLat', String(maxLat));
   params.set('maxLng', String(maxLng));
   params.set('zoom', String(zoom));
+  // user 위치가 주어진 경우 쿼리에 포함
+  if (typeof userLat !== 'undefined' && isFinite(Number(userLat))) {
+    params.set('userLat', String(userLat));
+  }
+  if (typeof userLng !== 'undefined' && isFinite(Number(userLng))) {
+    params.set('userLng', String(userLng));
+  }
   if (typeof page !== 'undefined') params.set('page', String(page));
   if (typeof size !== 'undefined') params.set('size', String(size));
   const qs = params.toString() ? `?${params.toString()}` : '';

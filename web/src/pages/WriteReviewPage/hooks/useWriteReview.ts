@@ -45,7 +45,15 @@ export const useWriteReview = () => {
       const reviewId = (created && (created as any).reviewId) || (created && (created as any).id);
       if (payload.photoFile && reviewId) {
         // 2) 사진 업로드 (multipart/form-data, 파일만 전송)
-        await uploadReviewPhoto(Number(reviewId), payload.photoFile);
+        try {
+          await uploadReviewPhoto(Number(reviewId), payload.photoFile);
+        } catch (uploadErr) {
+          // 업로드 실패 시 로그와 에러를 던져 상위에서 처리하게 하거나, 여기서 토스트 처리
+          // 여기서는 에러를 위로 던져 onError에서 처리되도록 함
+          // eslint-disable-next-line no-console
+          console.error('[useWriteReview] uploadReviewPhoto failed', uploadErr);
+          throw uploadErr;
+        }
       }
       return created;
     },
@@ -60,8 +68,8 @@ export const useWriteReview = () => {
     },
   });
 
-  // React Query 타입 호환: status 문자열로 로딩 여부 판단
-  const isPending = mutation.status === null;
+  // 로딩 상태는 mutation.isLoading 사용
+  const isPending = mutation.isLoading;
 
   // 별점 클릭 핸들러
   const handleStarClick = (idx: number) => {

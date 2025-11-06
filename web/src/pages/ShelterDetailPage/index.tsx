@@ -136,6 +136,12 @@ const ShelterDetailPage = () => {
         handleImageError={handleImageError}
         shelterName={shelter?.name ?? ''}
         shelterId={shelter?.shelterId ?? 0}
+        onReviewDeleted={() => {
+          // 리뷰 삭제 후 상세 정보 및 리뷰 목록 새로고침
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }}
       />
 
       {/* 로그인 필요 모달 */}

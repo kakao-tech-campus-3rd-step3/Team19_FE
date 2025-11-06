@@ -3,10 +3,12 @@ import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { checkLoginStatus } from '@/api/userApi';
+import { checkLoginStatus, getMyProfile } from '@/api/userApi';
+import { deleteReview } from '@/api/reviewApi';
 import { setPendingAction } from '@/utils/pendingAction';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { createPortal } from 'react-dom';
+import { FaTrash } from 'react-icons/fa';
 
 // Review 타입 정의
 interface Review {
@@ -29,6 +31,7 @@ interface ShelterReviewSectionProps {
   handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   shelterName: string; // props로 쉼터 이름 받기
   shelterId: number; // props로 쉼터 id 받기
+  onReviewDeleted?: () => void; // 리뷰 삭제 후 새로고침 콜백
 }
 
 // 날짜 포맷팅 함수
@@ -48,6 +51,7 @@ const ShelterReviewSection = ({
   handleImageError,
   shelterName,
   shelterId,
+  onReviewDeleted,
 }: ShelterReviewSectionProps) => {
   const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
@@ -61,6 +65,45 @@ const ShelterReviewSection = ({
 
   // 프로필 이미지 에러 핸들링용 state
   const [profileImgErrorMap, setProfileImgErrorMap] = useState<{ [reviewId: number]: boolean }>({});
+
+  // 내 닉네임 저장 (리뷰 작성자와 비교하여 삭제 버튼 표시)
+  const [myNickname, setMyNickname] = useState<string | null>(null);
+
+  // 삭제 확인 모달 state
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    open: boolean;
+    reviewId: number | null;
+  }>({ open: false, reviewId: null });
+
+  // 컴포넌트 마운트 시 내 프로필 정보 가져오기
+  useEffect(() => {
+    const fetchMyProfile = async () => {
+      try {
+        const isLoggedIn = await checkLoginStatus();
+        if (isLoggedIn) {
+          const profile = await getMyProfile();
+          setMyNickname(profile.nickname);
+        }
+      } catch (err) {
+        console.warn('[ShelterReviewSection] Failed to fetch my profile:', err);
+      }
+    };
+    fetchMyProfile();
+  }, []);
+
+  // 리뷰 삭제 핸들러
+  const handleDeleteReview = async (reviewId: number) => {
+    try {
+      await deleteReview(reviewId);
+      // 삭제 성공 시 부모 컴포넌트에 알려서 리뷰 목록 새로고침
+      if (onReviewDeleted) {
+        onReviewDeleted();
+      }
+    } catch (err) {
+      console.error('[ShelterReviewSection] Failed to delete review:', err);
+      alert('리뷰 삭제에 실패했습니다.');
+    }
+  };
 
   // 줄 수 감지 함수
   const checkLineClamp = (reviewId: number) => {
@@ -152,6 +195,16 @@ const ShelterReviewSection = ({
           {reviews.slice(0, visibleCount).map((r) => (
             <article css={reviewCardStyle} key={r.reviewId}>
               <div css={reviewLeft}>
+                {/* 내 리뷰인 경우 삭제 버튼 표시 (리뷰 콘텐츠 박스 우측 상단에 배치) */}
+                {myNickname && myNickname === r.nickname && (
+                  <button
+                    css={deleteButtonStyle}
+                    onClick={() => setDeleteConfirmModal({ open: true, reviewId: r.reviewId })}
+                    aria-label="리뷰 삭제"
+                  >
+                    <FaTrash size={30} />
+                  </button>
+                )}
                 <div css={avatarRow}>
                   {r.profileImageUrl &&
                   r.profileImageUrl !== '' &&
@@ -253,6 +306,45 @@ const ShelterReviewSection = ({
               <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
                 닫기
               </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* 삭제 확인 모달 */}
+      {deleteConfirmModal.open &&
+        createPortal(
+          <div
+            css={deleteModalOverlay}
+            onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
+          >
+            <div css={deleteModalBox} onClick={(e) => e.stopPropagation()}>
+              <div css={deleteModalText}>
+                리뷰를
+                <br />
+                삭제하시겠습니까?
+              </div>
+              <div css={deleteModalButtons}>
+                <button
+                  css={deleteModalBtn}
+                  onClick={() => {
+                    const id = deleteConfirmModal.reviewId;
+                    setDeleteConfirmModal({ open: false, reviewId: null });
+                    if (id) {
+                      // 모달을 먼저 닫고 삭제 진행
+                      handleDeleteReview(id);
+                    }
+                  }}
+                >
+                  예
+                </button>
+                <button
+                  css={deleteModalBtn}
+                  onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
+                >
+                  아니요
+                </button>
+              </div>
             </div>
           </div>,
           document.body,
@@ -372,6 +464,7 @@ const reviewLeft = css`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 `;
 
 const avatarRow = css`
@@ -385,6 +478,25 @@ const avatarInfoCol = css`
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+`;
+
+const deleteButtonStyle = css`
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #d76464;
+  }
 `;
 
 const avatarImgStyle = css`
@@ -545,6 +657,56 @@ const modalCloseBtn = css`
   font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
+`;
+
+// 삭제 확인 모달 스타일
+const deleteModalOverlay = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const deleteModalBox = css`
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  max-width: 80%;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const deleteModalText = css`
+  ${theme.typography.modal1};
+  color: #222;
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+const deleteModalButtons = css`
+  display: flex;
+  gap: 18px;
+`;
+
+const deleteModalBtn = css`
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: background 0.18s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 // 로그인 모달 스타일

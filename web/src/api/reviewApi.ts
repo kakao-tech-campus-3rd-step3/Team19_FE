@@ -52,13 +52,11 @@ export async function patchReview(
 
 // 리뷰 삭제
 export async function deleteReview(reviewId: number) {
-  const res = await apiClient.delete(`/api/reviews/${reviewId}`);
-  const status = (res && (res as any).status) ?? res?.status ?? 0;
-  if (status !== 204 && status !== 200) {
-    const msg =
-      (res && (res as any).data && (res as any).data.message) || '리뷰 삭제에 실패했습니다.';
-    throw new Error(msg);
-  }
+  // apiClient.delete는 fetchWithReissue를 통해 parseResponse를 호출합니다.
+  // parseResponse는 res.ok가 false면 에러를 throw하고, true면 파싱된 body를 반환합니다.
+  // DELETE 요청이 성공하면 보통 204 No Content를 반환하므로 body가 없어도 정상입니다.
+  // 따라서 parseResponse가 성공적으로 반환되면 (에러가 throw되지 않으면) 삭제가 성공한 것입니다.
+  await apiClient.delete(`/api/reviews/${reviewId}`);
   return;
 }
 

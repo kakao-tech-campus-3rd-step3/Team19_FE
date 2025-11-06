@@ -219,25 +219,52 @@ async function fetchWithReissue(input: RequestInfo | URL, init: RequestInit = {}
   }
 }
 
+// apiClient: fetchWithReissue 래퍼 — FormData(파일 업로드)를 자동으로 처리하도록 수정
 export const apiClient = {
   get: (
     url: string,
     _p0?: { params: { latitude: string; longitude: string } } | { params?: undefined },
   ) => fetchWithReissue(`${BASE}${url}`, { credentials: 'include' }),
-  post: (url: string, body?: any, options?: { headers?: Record<string, string> }) =>
-    fetchWithReissue(`${BASE}${url}`, {
+  post: (url: string, body?: any, options?: { headers?: Record<string, string> }) => {
+    const headers = { ...(options?.headers || {}) };
+    if (typeof FormData !== 'undefined' && body instanceof FormData) {
+      // 안전: FormData 전송 시 Content-Type 헤더가 있으면 제거하여
+      // 브라우저가 boundary를 포함한 Content-Type을 자동으로 설정하도록 함
+      delete (headers as Record<string, any>)['Content-Type'];
+      delete (headers as Record<string, any>)['content-type'];
+      return fetchWithReissue(`${BASE}${url}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body,
+      });
+    }
+    return fetchWithReissue(`${BASE}${url}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
+      headers: { 'Content-Type': 'application/json', ...headers },
       credentials: 'include',
       body: body ? JSON.stringify(body) : undefined,
-    }),
-  patch: (url: string, body?: any, options?: { headers?: Record<string, string> }) =>
-    fetchWithReissue(`${BASE}${url}`, {
+    });
+  },
+  patch: (url: string, body?: any, options?: { headers?: Record<string, string> }) => {
+    const headers = { ...(options?.headers || {}) };
+    if (typeof FormData !== 'undefined' && body instanceof FormData) {
+      delete (headers as Record<string, any>)['Content-Type'];
+      delete (headers as Record<string, any>)['content-type'];
+      return fetchWithReissue(`${BASE}${url}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers,
+        body,
+      });
+    }
+    return fetchWithReissue(`${BASE}${url}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
+      headers: { 'Content-Type': 'application/json', ...headers },
       credentials: 'include',
       body: body ? JSON.stringify(body) : undefined,
-    }),
+    });
+  },
   delete: (url: string) =>
     fetchWithReissue(`${BASE}${url}`, { method: 'DELETE', credentials: 'include' }),
 };

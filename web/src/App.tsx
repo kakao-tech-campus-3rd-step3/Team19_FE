@@ -18,6 +18,7 @@ import ErrorPage from './pages/ErrorPage';
 import { ErrorBoundary } from 'react-error-boundary';
 import AuthPage from './pages/AuthPage';
 import ScrollToTop from './components/ScrollToTop';
+import { usePushNotification } from './hooks/usePushNotification';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
@@ -33,6 +34,8 @@ function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void
 
 const App = () => {
   const location = useLocation();
+  // 앱 시작/로그인 시 FCM 토큰 및 위치 등록
+  usePushNotification();
 
   // 라우트 변경 시 스크롤 맨 위로 이동
   useEffect(() => {

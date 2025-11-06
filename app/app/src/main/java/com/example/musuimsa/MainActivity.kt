@@ -2,6 +2,8 @@ package com.example.musuimsa // 본인 프로젝트의 패키지 이름
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
@@ -18,6 +20,8 @@ import android.webkit.JavascriptInterface
 import android.speech.tts.TextToSpeech
 import java.util.Locale
 import android.webkit.ValueCallback
+import android.location.LocationManager
+import android.provider.Settings
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,6 +30,9 @@ class MainActivity : AppCompatActivity() {
     
     // TTS(Text-to-Speech) 객체
     private var textToSpeech: TextToSpeech? = null
+    
+    // 위치 설정 화면 진입 여부 플래그
+    private var launchedLocationSettings: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,10 +88,13 @@ class MainActivity : AppCompatActivity() {
 
         // 6. 웹 로드는 권한 확인 후 진행. 권한 관련 코드 참고.
 
-        // 7. 위치 권한 확인 및 요청
+        // 7. 알림 권한(Android 13+) 요청
+        requestNotificationPermissionIfNeeded()
+
+        // 8. 위치 권한 및 위치 설정 확인
         checkLocationPermissionWithGuide()
         
-        // 8. 스마트폰의 '뒤로 가기' 버튼을 처리하는 로직을 추가합니다.
+        // 9. 스마트폰의 '뒤로 가기' 버튼을 처리하는 로직을 추가합니다.
         handleBackButton()
     }
 
@@ -194,8 +204,8 @@ class MainActivity : AppCompatActivity() {
             // 먼저 친절한 안내 다이얼로그 표시
             showLocationPermissionGuide()
         } else {
-            // 이미 권한 허용됨 → 웹 로드
-            loadWeb()
+            // 이미 권한 허용됨 → 위치 설정 확인 후 웹 로드
+            ensureLocationEnabledThenLoadWeb()
         }
     }
 
@@ -205,6 +215,76 @@ class MainActivity : AppCompatActivity() {
         webView.visibility = android.view.View.VISIBLE
         webView.setBackgroundColor(android.graphics.Color.BLACK)
         webView.loadUrl(vercelUrl)
+
+        // 푸시로 진입한 경우, 웹 로드 직후 딥링크 데이터 전달 시도
+        webView.postDelayed({
+            tryForwardNotificationExtrasToWeb(intent)
+        }, 1200)
+    }
+
+    // 단말의 위치 서비스(GPS/네트워크)가 켜져 있는지 확인 후, 꺼져 있으면 설정으로 유도
+    private fun ensureLocationEnabledThenLoadWeb() {
+        if (isLocationEnabled()) {
+            loadWeb()
+        } else {
+            showTurnOnLocationSettingsDialog()
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        val gpsEnabled = try { locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) } catch (_: Exception) { false }
+        val networkEnabled = try { locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) } catch (_: Exception) { false }
+        return gpsEnabled || networkEnabled
+    }
+
+    private fun showTurnOnLocationSettingsDialog() {
+        val dialogView = layoutInflater.inflate(android.R.layout.simple_list_item_1, null)
+        val textView = dialogView.findViewById<android.widget.TextView>(android.R.id.text1)
+        textView.textSize = 32f
+        textView.text = "정확한 길안내를 위해\n스마트폰의 위치서비스를 켜주세요.\n\n'설정 열기'를 눌러\n위치 서비스를 활성화해주세요."
+
+        val titleView = android.widget.TextView(this).apply {
+            text = "📍"
+            textSize = 32f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+            setPadding(32, 32, 32, 16)
+        }
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setCustomTitle(titleView)
+            .setView(dialogView)
+            .setPositiveButton("설정 열기") { _, _ ->
+                // 위치 설정 화면으로 이동
+                try {
+                    launchedLocationSettings = true
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                } catch (_: Exception) {
+                }
+            }
+            .setNegativeButton("앱 종료") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .create()
+
+        dialog.setOnShowListener {
+            val positive = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            val negative = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)
+            positive.textSize = 30f
+            negative.textSize = 30f
+            positive.isAllCaps = false
+            negative.isAllCaps = false
+            positive.setPadding(40, 24, 40, 24)
+            negative.setPadding(40, 24, 40, 24)
+            val density = resources.displayMetrics.density
+            val heightPx = (56 * density).toInt()
+            positive.layoutParams = positive.layoutParams.apply { height = heightPx }
+            negative.layoutParams = negative.layoutParams.apply { height = heightPx }
+        }
+
+        dialog.show()
     }
     
     // 위치 권한 안내 다이얼로그
@@ -305,12 +385,14 @@ class MainActivity : AppCompatActivity() {
         
         if (requestCode == 100) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // 권한 허용됨 → 웹 로드
-                loadWeb()
+                // 권한 허용됨 → 위치 설정 확인 후 웹 로드
+                ensureLocationEnabledThenLoadWeb()
             } else {
                 // 권한 거부됨 - 안내 후 앱 종료
                 showPermissionDeniedDialog()
             }
+        } else if (requestCode == 200) {
+            // 알림 권한: 허용/거부 모두 앱 동작에는 치명적 영향 없음 → 별도 처리 없이 진행
         }
     }
     
@@ -369,6 +451,68 @@ class MainActivity : AppCompatActivity() {
     
     // WebAppInterface에서 TTS 접근을 위한 getter
     fun getTextToSpeech(): TextToSpeech? = textToSpeech
+
+    // 저장된 FCM 토큰을 반환 (웹에서 JS 브릿지를 통해 조회)
+    fun getStoredFcmToken(): String? =
+        MyFirebaseMessagingService.getStoredFcmToken(this)
+
+    // Android 13+ 알림 권한 요청
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    200
+                )
+            }
+        }
+    }
+
+    // 푸시 알림 클릭으로 전달된 extras를 WebView로 전달하고 라우팅합니다.
+    private fun tryForwardNotificationExtrasToWeb(srcIntent: Intent?) {
+        val extras = srcIntent?.extras ?: return
+        val map = mutableMapOf<String, String>()
+        for (key in extras.keySet()) {
+            if (key.startsWith("notif_")) {
+                val v = extras.get(key)?.toString() ?: continue
+                map[key.removePrefix("notif_")] = v
+            }
+        }
+        if (map.isEmpty()) return
+
+        val json = org.json.JSONObject(map as Map<*, *>).toString()
+        val js = "(function(){try{sessionStorage.setItem('notifData', " +
+                org.json.JSONObject.quote(json) +
+                "); if (window.location.pathname !== '/find-shelters'){ window.location.href='/find-shelters?from=notification'; }}catch(e){}})();"
+        webView.evaluateJavascript(js, null)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // 액티비티가 살아있는 상태에서 알림 클릭 시 호출
+        tryForwardNotificationExtrasToWeb(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 설정 화면에서 돌아왔을 때 위치가 켜졌다면 웹 로드 진행
+        if (launchedLocationSettings) {
+            launchedLocationSettings = false
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                if (isLocationEnabled()) {
+                    loadWeb()
+                } else {
+                    showTurnOnLocationSettingsDialog()
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -417,5 +561,14 @@ class WebAppInterface(private val activity: MainActivity) {
         activity.runOnUiThread {
             activity.getTextToSpeech()?.stop()
         }
+    }
+
+    /**
+     * 저장된 FCM 디바이스 토큰을 반환합니다.
+     * JavaScript에서 AndroidBridge.getDeviceToken()으로 호출할 수 있습니다.
+     */
+    @JavascriptInterface
+    fun getDeviceToken(): String? {
+        return activity.getStoredFcmToken()
     }
 }

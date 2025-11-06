@@ -25,7 +25,8 @@ const MapView = ({ onMapReady }: Props) => {
   const dismissCleanupRef = useRef<() => void | null>(null);
   const [, setIsMapReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [isLoadingMap, setIsLoadingMap] = useState(true);
+  // 재진입 시 로딩 화면을 표시하지 않기 위해 초기 상태를 체크
+  const [isLoadingMap, setIsLoadingMap] = useState(() => MapCache.map === null);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [, setMapError] = useState<string | null>(null);
   const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
@@ -719,6 +720,15 @@ const MapView = ({ onMapReady }: Props) => {
     const setupMap = async () => {
       try {
         if (!isMounted) return;
+        
+        // 재진입 체크: 지도가 이미 있으면 로딩 화면을 표시하지 않음
+        const isReentry = MapCache.map !== null;
+        if (isReentry) {
+          // 재진입 시 로딩 화면을 확실히 숨김
+          setIsLoadingMap(false);
+          setIsFadingOut(false);
+        }
+        
         const sdkOk = await waitForTmapSDK();
         if (!isMounted) return;
         if (!sdkOk) {
@@ -728,7 +738,6 @@ const MapView = ({ onMapReady }: Props) => {
         }
         
         // 재진입 시 지도가 이미 있으면 위치 조회 스킵 (마지막 상태 복원)
-        const isReentry = MapCache.map !== null;
         if (isReentry && MapCache.lastCenter) {
           // 지도 상태가 이미 복원되었으므로 위치 조회 없이 바로 초기화
           const locationData: LocationState = {

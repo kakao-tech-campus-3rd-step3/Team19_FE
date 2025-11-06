@@ -74,7 +74,6 @@ const ShelterReviewSection = ({
     open: boolean;
     reviewId: number | null;
   }>({ open: false, reviewId: null });
-  const [deleting, setDeleting] = useState(false);
 
   // 컴포넌트 마운트 시 내 프로필 정보 가져오기
   useEffect(() => {
@@ -94,11 +93,8 @@ const ShelterReviewSection = ({
 
   // 리뷰 삭제 핸들러
   const handleDeleteReview = async (reviewId: number) => {
-    if (deleting) return;
-    setDeleting(true);
     try {
       await deleteReview(reviewId);
-      setDeleteConfirmModal({ open: false, reviewId: null });
       // 삭제 성공 시 부모 컴포넌트에 알려서 리뷰 목록 새로고침
       if (onReviewDeleted) {
         onReviewDeleted();
@@ -106,7 +102,6 @@ const ShelterReviewSection = ({
     } catch (err) {
       console.error('[ShelterReviewSection] Failed to delete review:', err);
       alert('리뷰 삭제에 실패했습니다.');
-      setDeleting(false);
     }
   };
 
@@ -333,18 +328,19 @@ const ShelterReviewSection = ({
                 <button
                   css={deleteModalBtn}
                   onClick={() => {
-                    if (deleteConfirmModal.reviewId) {
-                      handleDeleteReview(deleteConfirmModal.reviewId);
+                    const id = deleteConfirmModal.reviewId;
+                    setDeleteConfirmModal({ open: false, reviewId: null });
+                    if (id) {
+                      // 모달을 먼저 닫고 삭제 진행
+                      handleDeleteReview(id);
                     }
                   }}
-                  disabled={deleting}
                 >
-                  {deleting ? '삭제 중...' : '예'}
+                  예
                 </button>
                 <button
                   css={deleteModalBtn}
                   onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
-                  disabled={deleting}
                 >
                   아니요
                 </button>

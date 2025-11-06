@@ -125,3 +125,10 @@ export async function getShelterReviews(shelterId: number, sort?: string) {
   const res = await apiClient.get(`/api/shelters/${shelterId}/reviews${qs}`);
   return res && (res as any).data ? (res as any).data : res;
 }
+
+// 쉼터 도착 알림 (리뷰 푸시 알림 트리거용)
+// BE가 10분 후 FCM 푸시 알림을 자동으로 발송합니다.
+export async function notifyShelterArrival(shelterId: number) {
+  const res = await apiClient.post(`/api/shelters/${shelterId}/arrival`);
+  return res && (res as any).data ? (res as any).data : res;
+}

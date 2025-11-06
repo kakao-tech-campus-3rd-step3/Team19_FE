@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getNearbyShelters } from '@/api/shelterApi';
+import { getNearbyShelters, notifyShelterArrival } from '@/api/shelterApi';
 import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
@@ -353,7 +353,19 @@ const GuidePage = () => {
   }, [currentLocation, guidancePoints, guidanceSteps, targetShelter]);
 
   // 도착 확인 버튼 클릭 핸들러
-  const handleArrivalConfirm = () => {
+  const handleArrivalConfirm = async () => {
+    // 도착 알림 API 호출 (리뷰 푸시 트리거)
+    const sid = targetShelter?.shelterId;
+    if (typeof sid === 'number') {
+      try {
+        await notifyShelterArrival(sid);
+        console.log('[GuidePage] 도착 알림 전송 완료:', sid);
+      } catch (err) {
+        console.warn('[GuidePage] 도착 알림 전송 실패(무시):', err);
+      }
+    } else {
+      console.warn('[GuidePage] targetShelter.shelterId가 유효하지 않습니다:', targetShelter);
+    }
     navigate('/');
   };
 

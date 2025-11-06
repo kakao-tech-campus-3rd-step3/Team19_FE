@@ -11,30 +11,29 @@ import WishListCard from './components/WishListCard';
 const WishListPage = () => {
   // userId는 서버에서 me로 처리되므로 불필요
 
-  const [wishList, setWishList] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [wishList, setWishList] = useState<any[] | null>(null);
   const [error, setError] = useState<any>(null);
 
   useEffect(() => {
     let mounted = true;
-    setIsLoading(true);
+    setWishList(null); // 요청 전 상태를 명확히
     getWishList()
       .then((data: any) => {
         if (!mounted) return;
         const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
         setWishList(items);
-        setError(null); // 오류 메시지 제거 — 빈 목록 화면으로 보이도록
+        setError(null);
       })
       .catch((e) => {
-        // 네트워크/권한 에러가 와도 빈 목록으로 처리
         if (mounted) {
           console.warn('[WishListPage] getWishList failed', e);
+          // 에러 발생 시 "확인 완료"로 간주하여 빈 목록으로 전환
           setWishList([]);
-          setError(null);
+          setError(e);
         }
       })
       .finally(() => {
-        if (mounted) setIsLoading(false);
+        /* loading state removed — keep list null until resolved to avoid flicker */
       });
     return () => {
       mounted = false;
@@ -47,12 +46,16 @@ const WishListPage = () => {
     navigate(`/shelter-detail/${shelterId}`);
   };
 
-  // local list for optimistic UI removal — 초기화는 빈 배열, 서버에서 로드되면 동기화
-  const [list, setList] = useState<any[]>([]);
+  // local list for optimistic UI removal — null = 아직 서버 확인 중
+  const [list, setList] = useState<any[] | null>(null);
 
   // 서버에서 받은 wishList와 로컬 list를 동기화
   useEffect(() => {
-    setList(wishList);
+    if (wishList === null) {
+      setList(null);
+    } else {
+      setList(wishList);
+    }
   }, [wishList]);
 
   const handleStartRemoving = (_id: number) => {
@@ -60,8 +63,8 @@ const WishListPage = () => {
   };
 
   const handleFinalizeRemove = (id: number) => {
-    // 부모가 실제로 항목 제거 — 이렇게 하면 앱에서 깜박임 없음
-    setList((s) => s.filter((it) => it.shelterId !== id));
+    // 부모가 실제로 항목 제거 — null 안전 처리
+    setList((s) => (s ? s.filter((it) => it.shelterId !== id) : s));
     // 또는 서버 권장 방식: refetchWishList();
   };
 
@@ -69,7 +72,8 @@ const WishListPage = () => {
     // 제거 취소 시 필요 처리
   };
 
-  if (isLoading) return <div css={pageContainerStyle(false)}>로딩 중...</div>;
+  // 서버 확인 전엔 로딩(또는 null 반환)하여 빈 컨테이너 깜빡임 방지
+  if (list === null) return <div css={pageContainerStyle(false)}></div>;
 
   const isEmpty = list.length === 0;
 

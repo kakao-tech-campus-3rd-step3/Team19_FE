@@ -42,6 +42,11 @@ const EditProfilePage = () => {
     nickname: '',
     profileImageUrl: typeof NoProfile === 'string' ? NoProfile : '',
   };
+  // 현재 실제로 보여지는 프로필 URL (편집 중 상태 우선)
+  const effectiveProfileImage =
+    profileImageUrl ||
+    (user as any)?.profileImageUrl ||
+    (typeof NoProfile === 'string' ? NoProfile : '');
 
   return (
     <div css={container}>
@@ -76,11 +81,13 @@ const EditProfilePage = () => {
               <button css={modalBtnS} onClick={handleProfileImgSelect}>
                 앨범에서 사진 선택
               </button>
-              {profileImageUrl !== displayUser.profileImageUrl && (
-                <button css={modalBtnS} onClick={handleSetDefaultProfile}>
-                  기본 프로필로 변경
-                </button>
-              )}
+              {/* 현재 보여지는 프로필이 기본 이미지가 아니라면 '기본 프로필로 변경' 버튼 노출 */}
+              {effectiveProfileImage &&
+                effectiveProfileImage !== (typeof NoProfile === 'string' ? NoProfile : '') && (
+                  <button css={modalBtnS} onClick={handleSetDefaultProfile}>
+                    기본 프로필로 변경
+                  </button>
+                )}
               <button css={modalBtn} onClick={() => setShowProfileModal(false)}>
                 닫기
               </button>

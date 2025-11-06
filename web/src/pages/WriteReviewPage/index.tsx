@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useEffect } from 'react';
 import { FaRegCommentDots } from 'react-icons/fa';
 import { IoCloseCircleSharp } from 'react-icons/io5';
 import { MdImage } from 'react-icons/md';
@@ -37,23 +36,6 @@ const WriteReviewPage = () => {
     shelterId,
     isPending, // 추가: 저장 상태
   } = useWriteReview();
-
-  // 알림으로 유입된 경우(reviewNotifData) 쉼터 이름 상태 주입 및 1회 처리
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('reviewNotifData');
-      if (!raw) return;
-      sessionStorage.removeItem('reviewNotifData');
-      const data = JSON.parse(raw);
-      // shelterName이 state로 없으면 현재 경로에 상태로 주입
-      if (!shelterName && data?.shelterName) {
-        navigate(location.pathname, { state: { shelterName: data.shelterName }, replace: true });
-      }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[WriteReviewPage] reviewNotifData 파싱 실패:', err);
-    }
-  }, []);
 
   return (
     <div css={container}>

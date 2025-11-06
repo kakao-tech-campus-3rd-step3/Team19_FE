@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import ToastMessage from '../../components/ToastMessage';
 import ShelterDetailInfo from './components/ShelterDetailInfo';
@@ -15,6 +15,7 @@ import { setPendingAction } from '@/utils/pendingAction';
 const ShelterDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     shelter,
@@ -88,6 +89,19 @@ const ShelterDetailPage = () => {
   const handleLoginCancel = () => {
     setShowLoginModal(false);
   };
+
+  // 푸시 알림으로 유입 시 리뷰 작성 페이지로 자동 이동
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const openReview = params.get('openReview');
+    if (openReview === 'true' && shelter?.shelterId) {
+      // 쿼리 파라미터 제거 후 리뷰 작성 페이지로 이동
+      navigate(`/write-review/${shelter.shelterId}`, {
+        state: { shelterName: shelter.name },
+        replace: true,
+      });
+    }
+  }, [location.search, shelter, navigate]);
 
   if (isLoading) {
     return null;

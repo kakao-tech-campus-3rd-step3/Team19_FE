@@ -43,21 +43,6 @@ const App = () => {
     window.scrollTo({ top: 0 });
   }, [location.pathname]);
 
-  // 리뷰 알림(REVIEW_REMINDER)으로 유입 시 라우팅 보조 처리
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('reviewNotifData');
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      const shelterId = data?.shelterId;
-      if (shelterId && location.pathname !== `/write-review/${shelterId}`) {
-        // 1회 처리: 즉시 제거 후 라우팅
-        sessionStorage.removeItem('reviewNotifData');
-        navigate(`/write-review/${shelterId}?from=notification`);
-      }
-    } catch {}
-  }, [location.pathname, navigate]);
-
   // GuidePage에서는 NavBar를 자체적으로 렌더링하므로 여기서는 제외
   const shouldShowNavBar = location.pathname !== '/guide';
 

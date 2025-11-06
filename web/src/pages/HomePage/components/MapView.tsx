@@ -8,7 +8,7 @@ import { typography } from '@/styles/typography';
 import markerImage from '@/assets/images/marker.png';
 import type { LocationState, Shelter } from '../../GuidePage/types/tmap';
 import MapCache from '@/lib/MapCache';
-import { getSheltersByBbox, setForceUseMock } from '@/api/shelterApi';
+import { getSheltersByBbox } from '@/api/shelterApi';
 
 interface Props {
   onMapReady?: (map: any) => void;
@@ -485,8 +485,8 @@ const MapView = ({ onMapReady }: Props) => {
   // 서버 호출: bbox + zoom
   const fetchByBbox = async (map: any) => {
     if (!map) return;
-    // 개발용: 런타임에서 목데이터 강제 사용 (테스트용)
-    setForceUseMock(true);
+    // 개발 중에는 true로 바꿔 목데이터 강제 사용 가능
+    const FORCE_USE_MOCK = true;
     try {
       const rawZoom =
         typeof map.getZoom === 'function' ? map.getZoom() : (lastZoomRef.current ?? 13);
@@ -521,6 +521,13 @@ const MapView = ({ onMapReady }: Props) => {
       const maxLat = Number(bbox.maxLat);
       const maxLng = Number(bbox.maxLng);
 
+      // Force mock flag set/restore (개발 편의용)
+      const meta: any = (import.meta as any) || {};
+      const prevEnv = meta.env ? meta.env.VITE_USE_MOCK : undefined;
+      if (FORCE_USE_MOCK) {
+        meta.env = { ...(meta.env || {}), VITE_USE_MOCK: 'true' };
+      }
+
       const res = await getSheltersByBbox({
         minLat,
         minLng,
@@ -528,6 +535,18 @@ const MapView = ({ onMapReady }: Props) => {
         maxLng,
         zoom,
       });
+
+      // restore env
+      if (FORCE_USE_MOCK) {
+        try {
+          if (typeof prevEnv === 'undefined') {
+            // delete if previously undefined
+            if (meta.env) delete meta.env.VITE_USE_MOCK;
+          } else {
+            meta.env.VITE_USE_MOCK = prevEnv;
+          }
+        } catch {}
+      }
 
       console.debug('[fetchByBbox] api response:', res);
 
@@ -545,11 +564,6 @@ const MapView = ({ onMapReady }: Props) => {
       }
     } catch (err) {
       console.error('fetchByBbox error', err);
-    } finally {
-      // 테스트 후 플래그 원복
-      try {
-        setForceUseMock(false);
-      } catch {}
     }
   };
 

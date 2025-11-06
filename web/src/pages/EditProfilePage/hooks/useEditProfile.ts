@@ -158,13 +158,16 @@ export const useEditProfile = () => {
       uploadMutation.mutate(selectedFile, {
         onSuccess: (_res) => {
           // uploadMutation.onSuccess already set cache and profileImageUrl.
-          // 이제 닉네임 변경이 있으면 profile patch를 호출 (profileMutation의 onSuccess에서 캐시/모달 처리)
+          // 닉네임 변경이 있으면 patch 호출(그쪽 onSuccess에서 모달 띄움).
+          // 닉네임 변경이 없으면 여기서 바로 모달 띄움.
           const nicknamePayload =
             nicknameInput && nicknameInput !== (user?.nickname ?? '')
               ? { nickname: nicknameInput }
               : undefined;
           if (nicknamePayload) {
             profileMutation.mutate(nicknamePayload);
+          } else {
+            setShowModal(true);
           }
         },
         onError: (error: any) => {

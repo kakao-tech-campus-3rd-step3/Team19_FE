@@ -80,7 +80,7 @@ const ShelterDetailPage = () => {
   };
 
   if (isLoading) {
-    return <div>로딩 중...</div>;
+    return null;
   }
   if (shelterError) {
     return <div>쉼터 정보를 불러오지 못했습니다.</div>;

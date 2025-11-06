@@ -136,9 +136,7 @@ const ShelterReviewSection = ({
         </button>
       </div>
 
-      {loading ? (
-        <div css={loadingStyle}>로딩 중...</div>
-      ) : reviews && reviews.length > 0 ? (
+      {loading ? null : reviews && reviews.length > 0 ? (
         <div css={reviewListStyle}>
           {reviews.slice(0, visibleCount).map((r) => (
             <article css={reviewCardStyle} key={r.reviewId}>
@@ -297,12 +295,6 @@ const reviewWriteButton = css`
   color: white;
   cursor: pointer;
   ${theme.typography.detail3};
-`;
-
-const loadingStyle = css`
-  text-align: center;
-  padding: 16px;
-  color: ${theme.colors.text.gray500};
 `;
 
 const reviewListStyle = css`

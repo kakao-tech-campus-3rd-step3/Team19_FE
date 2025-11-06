@@ -20,7 +20,7 @@ const WriteReviewPage = () => {
     content,
     setContent,
     rating,
-    photoUrl,
+    previewUrl,
     showImage,
     showModal,
     modalText,
@@ -80,9 +80,9 @@ const WriteReviewPage = () => {
         />
         <div css={charCount}>{content.length}/100</div>
         <div css={imgRow}>
-          {showImage && photoUrl && (
+          {showImage && previewUrl && (
             <div css={imgWrapper}>
-              <img src={photoUrl} alt="리뷰" css={reviewImg} />
+              <img src={previewUrl} alt="리뷰" css={reviewImg} />
               <IoCloseCircleSharp css={imgRemoveBtn} onClick={handleRemoveImage} />
             </div>
           )}

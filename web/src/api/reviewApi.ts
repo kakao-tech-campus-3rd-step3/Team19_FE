@@ -64,3 +64,13 @@ export async function getMyReviews() {
   const res = await apiClient.get('/api/users/me/reviews');
   return res && (res as any).data ? (res as any).data : res;
 }
+
+// --- 새로 추가: 리뷰 사진 업로드 (multipart/form-data) ---
+// file만 전송합니다 (파일명은 FormData가 자동으로 포함)
+export async function uploadReviewPhoto(reviewId: number, file: File) {
+  const fd = new FormData();
+  fd.append('file', file);
+  // axios 기반 client는 FormData 전달 시 Content-Type을 자동으로 설정합니다.
+  const res = await apiClient.post(`/api/reviews/${reviewId}/photo`, fd);
+  return res && (res as any).data ? (res as any).data : res;
+}

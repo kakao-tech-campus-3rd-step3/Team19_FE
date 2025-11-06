@@ -34,7 +34,7 @@ const MyPage = () => {
     }
   };
 
-  if (isLoading) return <div css={container}>로딩 중...</div>;
+  if (isLoading) return null;
 
   if (error)
     return (

@@ -13,7 +13,7 @@ const EditReviewPage = () => {
     content,
     setContent,
     rating,
-    photoUrl,
+    previewUrl,
     showImage,
     showModal,
     modalText,
@@ -30,7 +30,7 @@ const EditReviewPage = () => {
     saving, // 훅에서 반환된 saving 사용
   } = useEditReview();
 
-  if (!review) return <div>로딩 중...</div>;
+  if (!review) return null;
 
   return (
     <div css={container}>
@@ -64,9 +64,9 @@ const EditReviewPage = () => {
         />
         <div css={charCount}>{content.length}/100</div>
         <div css={imgRow}>
-          {showImage && photoUrl && (
+          {showImage && previewUrl && (
             <div css={imgWrapper}>
-              <img src={photoUrl ?? ''} alt="리뷰" css={reviewImg} />
+              <img src={previewUrl ?? ''} alt="리뷰" css={reviewImg} />
               <IoCloseCircleSharp css={imgRemoveBtn} onClick={handleRemoveImage} />
             </div>
           )}

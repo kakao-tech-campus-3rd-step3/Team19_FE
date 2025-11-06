@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import NoProfile from '@/assets/images/NoProfile.png';
 // 타입 전용 import로 변경
 import type { UserProfile } from '@/api/userApi';
@@ -29,6 +29,7 @@ export const useEditProfile = () => {
   const [nicknameInput, setNicknameInput] = useState('');
 
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // useQuery 제네릭 및 옵션 객체 형식 사용
   const {
@@ -39,6 +40,8 @@ export const useEditProfile = () => {
     queryKey: ['myProfile'],
     queryFn: () => getMyProfile(),
     staleTime: 2 * 60_000,
+    // 컴포넌트 재진입 시 최신 데이터를 확인하도록 설정 (원하면 'always'로 변경)
+    refetchOnMount: 'always',
     // TODO: 실제 API 연동 시 onError에서 공통 에러 포맷 처리 (navigate('/error', { state: err }))
   });
 
@@ -54,6 +57,26 @@ export const useEditProfile = () => {
   // useMutation에 올바른 시그니처로 설정
   const profileMutation = useMutation<any, Error, { nickname?: string; profileImageUrl?: string }>({
     mutationFn: (vars) => patchProfile(vars),
+    onSuccess: (res, vars) => {
+      try {
+        // 즉시 캐시 갱신: 서버가 반환한 값이 있다면 그대로 반영, 없으면 기존 user와 병합
+        if (res && typeof res === 'object') {
+          queryClient.setQueryData(['myProfile'], (old: any) => ({
+            ...(old ?? {}),
+            ...(res ?? {}),
+          }));
+        } else {
+          // 서버가 변경된 필드만 적용한 경우, merge vars
+          queryClient.setQueryData(['myProfile'], (old: any) => ({
+            ...(old ?? {}),
+            ...(vars ?? {}),
+          }));
+        }
+      } catch {
+        // 무시
+      }
+      setShowModal(true);
+    },
   });
 
   const passwordMutation = useMutation<
@@ -67,6 +90,17 @@ export const useEditProfile = () => {
   // 프로필 이미지 업로드 뮤테이션
   const uploadMutation = useMutation<UserProfile, Error, File>({
     mutationFn: (file) => uploadProfileImage(file),
+    onSuccess: (res) => {
+      try {
+        // 서버가 새 프로필 정보를 반환하면 캐시에 즉시 반영
+        if (res && typeof res === 'object') {
+          queryClient.setQueryData(['myProfile'], res);
+          setProfileImageUrl(res.profileImageUrl ?? '');
+        }
+      } catch {
+        // ignore
+      }
+    },
   });
 
   // 프로필 편집 버튼 클릭
@@ -122,24 +156,15 @@ export const useEditProfile = () => {
     // 이미지 파일이 선택되어 있으면 먼저 업로드
     if (selectedFile) {
       uploadMutation.mutate(selectedFile, {
-        onSuccess: (res) => {
-          const newImageUrl = res.profileImageUrl ?? '';
-          setProfileImageUrl(newImageUrl);
+        onSuccess: (_res) => {
+          // uploadMutation.onSuccess already set cache and profileImageUrl.
+          // 이제 닉네임 변경이 있으면 profile patch를 호출 (profileMutation의 onSuccess에서 캐시/모달 처리)
           const nicknamePayload =
             nicknameInput && nicknameInput !== (user?.nickname ?? '')
               ? { nickname: nicknameInput }
               : undefined;
           if (nicknamePayload) {
-            profileMutation.mutate(nicknamePayload, {
-              onSuccess: () => setShowModal(true),
-              onError: (error: any) => {
-                // eslint-disable-next-line no-console
-                console.error('patchProfile error:', error);
-                alert(error?.message || '서버와 연결할 수 없습니다.');
-              },
-            });
-          } else {
-            setShowModal(true);
+            profileMutation.mutate(nicknamePayload);
           }
         },
         onError: (error: any) => {
@@ -163,13 +188,7 @@ export const useEditProfile = () => {
             ? profileImageUrl
             : undefined,
       },
-      {
-        onSuccess: () => setShowModal(true),
-        onError: (error: any) => {
-          // TODO: 실제 API 연동 시 공통 에러 포맷이면 에러 페이지로 이동하도록 처리 가능
-          alert(error?.message || '서버와 연결할 수 없습니다.');
-        },
-      },
+      // 개별 콜백 불필요: profileMutation.onSuccess에서 처리
     );
   };
 

@@ -79,7 +79,7 @@ const ShelterList = ({
       })}
       {/* sentinel: 리스트 끝에서 더 불러오기 트리거 */}
       <div ref={sentinelRef} css={sentinelStyle} />
-      {isFetchingMore && <div css={loadingMoreStyle}>로딩 중...</div>}
+      {isFetchingMore && <div css={loadingMoreStyle} aria-hidden="true" />}
     </div>
   );
 };

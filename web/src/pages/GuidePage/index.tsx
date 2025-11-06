@@ -355,13 +355,16 @@ const GuidePage = () => {
   // 도착 확인 버튼 클릭 핸들러
   const handleArrivalConfirm = async () => {
     // 도착 알림 API 호출 (리뷰 푸시 트리거)
-    if (targetShelter && typeof (targetShelter as any).id === 'number') {
+    const sid = targetShelter?.shelterId;
+    if (typeof sid === 'number') {
       try {
-        await notifyShelterArrival((targetShelter as any).id as number);
-        console.log('[GuidePage] 도착 알림 전송 완료:', (targetShelter as any).id);
+        await notifyShelterArrival(sid);
+        console.log('[GuidePage] 도착 알림 전송 완료:', sid);
       } catch (err) {
         console.warn('[GuidePage] 도착 알림 전송 실패(무시):', err);
       }
+    } else {
+      console.warn('[GuidePage] targetShelter.shelterId가 유효하지 않습니다:', targetShelter);
     }
     navigate('/');
   };

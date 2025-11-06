@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
 import { login } from '@/api/userApi';
+import { getPendingAction, clearPendingAction } from '@/utils/pendingAction';
+import { toggleWish } from '@/api/wishApi';
 import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
@@ -31,6 +33,45 @@ const LoginForm = () => {
     setSubmitting(true);
     try {
       await login({ email, password });
+      // 로그인 성공: 보류된 동작이 있는지 확인 후 처리
+      try {
+        const action = getPendingAction();
+        if (action) {
+          if (action.type === 'toggle-wish') {
+            const shelterId = action.payload?.shelterId as any;
+            const isFavorite = Boolean(action.payload?.isFavorite);
+            try {
+              if (shelterId != null) {
+                await toggleWish({ shelterId, isFavorite });
+              }
+            } catch {
+              // 실패해도 흐름은 계속 진행 (토스트는 추후 필요 시 추가)
+            }
+            clearPendingAction();
+            navigate(action.returnUrl || '/');
+            return;
+          }
+          if (action.type === 'write-review') {
+            const shelterId = action.payload?.shelterId;
+            clearPendingAction();
+            if (shelterId != null) {
+              navigate(`/write-review/${shelterId}`, { state: action.payload?.state });
+              return;
+            }
+            navigate(action.returnUrl || '/');
+            return;
+          }
+          if (action.type === 'navigate') {
+            const path = action.payload?.path || '/';
+            const state = action.payload?.state;
+            clearPendingAction();
+            navigate(path, { state });
+            return;
+          }
+        }
+      } catch {
+        // pending action 파싱 문제 등은 무시하고 기본 이동
+      }
       navigate('/');
     } catch (err: any) {
       const message = err?.message || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';

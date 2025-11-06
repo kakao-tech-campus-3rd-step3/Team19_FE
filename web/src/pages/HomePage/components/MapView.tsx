@@ -581,10 +581,14 @@ const MapView = ({ onMapReady }: Props) => {
 
   // 지도 초기화 (MapCache 기반, 기존 코드 재사용)
   const initializeMap = async (location: LocationState) => {
-    if (!mapRef.current) return;
+    if (!mapRef.current) {
+      console.error('[MapView] mapRef.current가 null입니다!');
+      return;
+    }
 
     // 재진입 시 지도가 이미 있으면 로딩 화면 생략
     const isReentry = MapCache.map !== null;
+    console.log('[MapView] initializeMap 시작:', { isReentry, location });
     if (!isReentry) {
       setIsLoadingMap(true);
     }
@@ -600,12 +604,15 @@ const MapView = ({ onMapReady }: Props) => {
           scrollwheel: true,
         });
 
+      console.log('[MapView] MapCache.ensureMap 호출, mapRef.current:', mapRef.current);
       const mapInstance = await MapCache.ensureMap(mapRef.current, createFn);
       if (!mapInstance) {
+        console.error('[MapView] 지도 인스턴스 생성 실패');
         setMapError('지도 인스턴스를 생성할 수 없습니다.');
         setIsLoadingMap(false);
         return;
       }
+      console.log('[MapView] mapInstance 획득 완료:', mapInstance);
 
       // 재진입 시에는 지도 상태가 이미 복원되었으므로 초기 위치 설정 스킵
       if (!isReentry) {

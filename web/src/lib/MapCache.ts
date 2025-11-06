@@ -55,35 +55,60 @@ const MapCache = {
     // 이미 생성된 map이 있으면 div를 재부착(또는 영속 루트에서 가져와 붙임)하고
     // SDK에 따라 리레이아웃/리프레시를 시도한다.
     if (this.map && this.div) {
-      try {
-        // 보통 container가 주어지면 그 안에 붙임, 없으면 persistent root에 보관
-        const target = container ?? this.getPersistentRoot();
-        if (this.div.parentElement !== target) {
-          target.appendChild(this.div);
+      console.log('[MapCache] 재진입 감지: 지도 DOM 재부착 시작');
+      
+      // WebView 이슈 대응: container(mapRef.current)가 기존 div와 다른 경우
+      // React Router navigate 후 DOM이 교체되어 mapRef.current가 새로운 엘리먼트를 가리키는 경우
+      if (container && this.div !== container && !container.contains(this.div)) {
+        console.warn('[MapCache] WebView DOM 불일치 감지: 지도를 완전히 재생성합니다');
+        // 기존 지도 정리
+        try {
+          if (typeof this.map.destroy === 'function') {
+            this.map.destroy();
+          }
+        } catch {}
+        this.map = null;
+        this.div = null;
+        // 재생성을 위해 아래 로직으로 진행
+      } else {
+        try {
+          // 보통 container가 주어지면 그 안에 붙임, 없으면 persistent root에 보관
+          const target = container ?? this.getPersistentRoot();
+          console.log('[MapCache] target container:', target, 'div parent:', this.div.parentElement);
+          
+          // DOM 재부착은 동기적으로 즉시 실행 (중요!)
+          if (this.div.parentElement !== target) {
+            target.appendChild(this.div);
+            console.log('[MapCache] DOM 재부착 완료');
+          } else {
+            console.log('[MapCache] 이미 올바른 위치에 부착됨');
+          }
+        
+        // 마커 재부착 (동기)
+        if (this.myMarker && typeof this.myMarker.setMap === 'function') {
+          this.myMarker.setMap(this.map);
+          if (this.lastIcon && typeof this.myMarker.setIcon === 'function') {
+            try {
+              this.myMarker.setIcon(this.lastIcon);
+            } catch {}
+          }
         }
         
-        // 지도 DOM 재부착 후 강제 리플로우를 위해 약간의 지연
-        // requestAnimationFrame을 사용하여 브라우저 렌더링 사이클에 맞춤
+        // 지도 상태 복원 (동기)
+        if (this.lastCenter && this.lastZoom) {
+          const LatLng = (window as any).Tmapv3?.LatLng;
+          if (LatLng && typeof this.map.setCenter === 'function' && typeof this.map.setZoom === 'function') {
+            this.map.setCenter(new LatLng(this.lastCenter.lat, this.lastCenter.lng));
+            this.map.setZoom(this.lastZoom);
+            console.log('[MapCache] 지도 상태 복원 완료:', this.lastCenter, 'zoom:', this.lastZoom);
+          }
+        }
+        
+        // 지도 리프레시는 비동기로 처리 (브라우저 렌더링 후 실행)
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             try {
-              // 마커 재부착 시도
-              if (this.myMarker && typeof this.myMarker.setMap === 'function') {
-                this.myMarker.setMap(this.map);
-                if (this.lastIcon && typeof this.myMarker.setIcon === 'function') {
-                  try {
-                    this.myMarker.setIcon(this.lastIcon);
-                  } catch {}
-                }
-              }
-              // 지도 상태 복원 (마지막 중심/줌이 있으면 복원)
-              if (this.lastCenter && this.lastZoom) {
-                const LatLng = (window as any).Tmapv3?.LatLng;
-                if (LatLng && typeof this.map.setCenter === 'function' && typeof this.map.setZoom === 'function') {
-                  this.map.setCenter(new LatLng(this.lastCenter.lat, this.lastCenter.lng));
-                  this.map.setZoom(this.lastZoom);
-                }
-              }
+              console.log('[MapCache] 지도 리프레시 실행');
               // reflow/refresh 시도: SDK마다 메소드명이 다르므로 여러 시도
               if (this.map && typeof (this.map as any).updateSize === 'function') {
                 (this.map as any).updateSize();
@@ -102,6 +127,7 @@ const MapCache = {
               // 추가: 재부착 직후 SDK가 내부적으로 렌더를 못하는 케이스를 대비한 지연 재시도
               setTimeout(() => {
                 try {
+                  console.log('[MapCache] 지도 리프레시 재시도');
                   if (this.map && typeof (this.map as any).updateSize === 'function') {
                     (this.map as any).updateSize();
                   } else if (this.map && typeof (this.map as any).refresh === 'function') {
@@ -115,19 +141,26 @@ const MapCache = {
                     (this.map as any).setCenter(c);
                   }
                 } catch {}
-              }, 100);
+              }, 150);
             } catch {}
           });
         });
-      } catch {}
-      return this.map;
+        } catch (e) {
+          console.error('[MapCache] DOM 재부착 실패:', e);
+        }
+        return this.map;
+      }
     }
+    
+    // 재생성 또는 최초 생성
 
+    console.log('[MapCache] 새 지도 인스턴스 생성');
     const mapInstance = createFn();
     const div =
       mapInstance && typeof mapInstance.getDiv === 'function' ? mapInstance.getDiv() : container;
     this.map = mapInstance;
     this.div = div instanceof HTMLElement ? div : null;
+    console.log('[MapCache] 지도 생성 완료, div:', this.div);
 
     // 최초 생성 시, div가 문서에 붙지 않으면 persistent root에 먼저 보관
     try {

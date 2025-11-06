@@ -61,7 +61,28 @@ const MapCache = {
       // React Router navigate 후 DOM이 교체되어 mapRef.current가 새로운 엘리먼트를 가리키는 경우
       if (container && this.div !== container && !container.contains(this.div)) {
         console.warn('[MapCache] WebView DOM 불일치 감지: 지도를 완전히 재생성합니다');
-        // 기존 지도 정리
+        // 마커 위치 정보 백업 (재생성 후 복원용)
+        const savedMarkerPosition = this.myMarker && typeof this.myMarker.getPosition === 'function'
+          ? (() => {
+              try {
+                const pos = this.myMarker.getPosition();
+                return { 
+                  lat: pos.getLat ? pos.getLat() : (pos.lat ?? pos.y ?? null),
+                  lng: pos.getLng ? pos.getLng() : (pos.lng ?? pos.x ?? null)
+                };
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+        console.log('[MapCache] 마커 위치 백업:', savedMarkerPosition, 'lastIcon:', this.lastIcon);
+        
+        // 기존 지도 및 마커 정리
+        try {
+          if (this.myMarker && typeof this.myMarker.setMap === 'function') {
+            this.myMarker.setMap(null);
+          }
+        } catch {}
         try {
           if (typeof this.map.destroy === 'function') {
             this.map.destroy();
@@ -69,6 +90,11 @@ const MapCache = {
         } catch {}
         this.map = null;
         this.div = null;
+        this.myMarker = null; // 마커도 초기화
+        
+        // 새 지도 생성 후 마커 위치 복원을 위해 임시 저장
+        (this as any)._tempMarkerPos = savedMarkerPosition;
+        
         // 재생성을 위해 아래 로직으로 진행
       } else {
         try {
@@ -169,6 +195,7 @@ const MapCache = {
       }
     } catch {}
 
+    // 기존 마커가 있으면 새 지도에 재부착
     try {
       if (this.myMarker && typeof this.myMarker.setMap === 'function') {
         this.myMarker.setMap(this.map);
@@ -179,8 +206,19 @@ const MapCache = {
             }
           } catch {}
         }
+        console.log('[MapCache] 기존 마커 재부착 완료');
+      } else if ((this as any)._tempMarkerPos && this.lastIcon) {
+        // WebView 재생성 시: 백업된 마커 위치로 새 마커 생성
+        const pos = (this as any)._tempMarkerPos;
+        delete (this as any)._tempMarkerPos;
+        if (pos && pos.lat !== null && pos.lng !== null) {
+          console.log('[MapCache] 백업된 마커 위치로 새 마커 생성:', pos);
+          this.setMyMarkerOnMap(this.map, pos.lat, pos.lng, this.lastIcon);
+        }
       }
-    } catch {}
+    } catch (e) {
+      console.error('[MapCache] 마커 재부착 실패:', e);
+    }
 
     return this.map;
   },

@@ -5,7 +5,7 @@ import theme from '@/styles/theme';
 import { FaTrash } from 'react-icons/fa';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { deleteReview } from '@/api/reviewApi';
 import { createPortal } from 'react-dom';
 
@@ -103,17 +103,8 @@ const ReviewListCard = ({
     };
   }, [showDeleteModal, modalImg]);
 
-  const queryClient = useQueryClient();
-  const mutation = useMutation<void, unknown, number>({
+  const mutation = useMutation({
     mutationFn: (reviewId: number) => deleteReview(reviewId),
-    onSuccess: () => {
-      // 서버 기준으로 목록 갱신
-      queryClient.invalidateQueries({ queryKey: ['myReviews'] });
-    },
-    onError: () => {
-      // 에러 발생 시에도 캐시 무효화로 안전하게 동기화 시도
-      queryClient.invalidateQueries({ queryKey: ['myReviews'] });
-    },
   });
 
   const handleDeleteClick = (e: React.MouseEvent) => {

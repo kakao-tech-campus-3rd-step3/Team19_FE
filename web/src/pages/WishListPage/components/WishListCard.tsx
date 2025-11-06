@@ -4,7 +4,7 @@ import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { useState, useEffect, useRef } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { addWish, deleteWish } from '@/api/wishApi';
 import { createPortal } from 'react-dom';
 
@@ -45,7 +45,6 @@ const WishListCard = ({
   onCancelRemoving,
   refetchWishList,
 }: WishListCardProps) => {
-  const queryClient = useQueryClient();
   const [isFavorite, setIsFavorite] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false); // 삭제 애니메이션 플래그 (ReviewListCard와 동일)
@@ -100,85 +99,19 @@ const WishListCard = ({
     };
   }, [showModal]);
 
-  // 삭제 뮤테이션: 낙관적 업데이트 + 롤백
+  // 삭제 뮤테이션: 성공 시에도 즉시 부모 리패치하지 않음(애니메이션 후 한 번만 refetch)
   const deleteWishMutation = useMutation({
     mutationFn: () => deleteWish({ shelterId: item.shelterId }),
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['wishList'] });
-      const previous = queryClient.getQueryData<any>(['wishList']);
-      queryClient.setQueryData<any>(['wishList'], (old: any) => {
-        if (!old) return old;
-        if (Array.isArray(old))
-          return old.filter((it: any) => Number(it.shelterId) !== Number(item.shelterId));
-        const copy: any = { ...old };
-        if (Array.isArray(copy.items))
-          copy.items = copy.items.filter(
-            (it: any) => Number(it.shelterId) !== Number(item.shelterId),
-          );
-        if (Array.isArray(copy.data))
-          copy.data = copy.data.filter(
-            (it: any) => Number(it.shelterId) !== Number(item.shelterId),
-          );
-        return copy;
-      });
-      return { previous };
-    },
-    onError: (_err, _vars, context: any) => {
-      if (context?.previous) queryClient.setQueryData(['wishList'], context.previous);
-      if (typeof refetchWishList === 'function') refetchWishList();
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishList'] });
-    },
   });
 
-  // 추가 뮤테이션: 낙관적 업데이트 + 롤백
   const addWishMutation = useMutation({
     mutationFn: () => addWish({ shelterId: item.shelterId }),
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['wishList'] });
-      const previous = queryClient.getQueryData<any>(['wishList']);
-      const newItem = {
-        shelterId: item.shelterId,
-        name: item.name,
-        address: item.address,
-        operatingHours: item.operatingHours,
-        averageRating: item.averageRating,
-        photoUrl: item.photoUrl,
-        distance: item.distance,
-      };
-      queryClient.setQueryData<any>(['wishList'], (old: any) => {
-        if (!old) return [newItem];
-        if (Array.isArray(old))
-          return [
-            newItem,
-            ...old.filter((it: any) => Number(it.shelterId) !== Number(newItem.shelterId)),
-          ];
-        const copy: any = { ...old };
-        if (Array.isArray(copy.items))
-          copy.items = [
-            newItem,
-            ...copy.items.filter((it: any) => Number(it.shelterId) !== Number(newItem.shelterId)),
-          ];
-        if (Array.isArray(copy.data))
-          copy.data = [
-            newItem,
-            ...copy.data.filter((it: any) => Number(it.shelterId) !== Number(newItem.shelterId)),
-          ];
-        return copy;
-      });
-      return { previous };
-    },
-    onSuccess: (_resp, _vars) => {
+    onSuccess: () => {
       setIsFavorite(true);
-      // 서버 응답이 있다면 필요한 병합 처리 가능
-    },
-    onError: (_err, _vars, context: any) => {
-      if (context?.previous) queryClient.setQueryData(['wishList'], context.previous);
       if (typeof refetchWishList === 'function') refetchWishList();
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishList'] });
+    onError: () => {
+      if (typeof refetchWishList === 'function') refetchWishList();
     },
   });
 

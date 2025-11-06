@@ -191,6 +191,8 @@ const title = css`
   ${theme.typography.myr1};
   text-shadow: 2px 2px 6px #bbb;
   color: #222;
+  white-space: normal;
+  word-break: keep-all;
 `;
 
 const listBox = css`
@@ -255,6 +257,8 @@ const emptyTitle = css`
   ${theme.typography.myr1};
   color: #fff;
   text-shadow: 2px 2px 6px #222;
+  white-space: normal;
+  word-break: keep-all;
 `;
 
 const emptyBox = css`

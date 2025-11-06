@@ -8,7 +8,7 @@ import { typography } from '@/styles/typography';
 import markerImage from '@/assets/images/marker.png';
 import type { LocationState, Shelter } from '../../GuidePage/types/tmap';
 import MapCache from '@/lib/MapCache';
-import { fetchSheltersByBbox } from '@/api/shelterApi';
+import { fetchSheltersByBbox, getAllShelters } from '@/api/shelterApi';
 
 interface Props {
   onMapReady?: (map: any) => void;
@@ -506,133 +506,129 @@ const MapView = ({ onMapReady }: Props) => {
     setTimeout(updatePositions, 50);
   };
 
-  // 서버 호출: bbox + zoom
+  // 서버 호출: zoom 레벨에 따라 분기
   const fetchByBbox = async (map: any) => {
     if (!map) return;
-    // 개발 중에는 true로 바꿔 목데이터 강제 사용 가능
-    const FORCE_USE_MOCK = true;
     try {
       const rawZoom =
         typeof map.getZoom === 'function' ? map.getZoom() : (lastZoomRef.current ?? 13);
       const zoom = Number(rawZoom);
-      const bboxRes = calcBboxFromMap(map);
-      const bbox = {
-        minLat: Number(bboxRes.minLat),
-        minLng: Number(bboxRes.minLng),
-        maxLat: Number(bboxRes.maxLat),
-        maxLng: Number(bboxRes.maxLng),
-      };
-      const corners = bboxRes.corners ?? null;
-      console.debug('[fetchByBbox] corners:', corners, 'bbox:', bbox, 'zoom:', zoom);
 
-      // 최종 방어: 모든 값이 유한한 숫자인지 확인. 아니면 호출 건너뜀.
-      const vals = [bbox.minLat, bbox.minLng, bbox.maxLat, bbox.maxLng, zoom].map((v) => Number(v));
-      if (!vals.every((v) => isFinite(v))) {
-        console.warn('[fetchByBbox] invalid params after calc, skip API call', { bbox, zoom });
-        return;
-      }
+      console.debug('[fetchByBbox] zoom level:', zoom);
 
-      // 안전 범위: 지나치게 큰 bbox는 서버 부담이므로 차단
-      const spanLat = Math.abs(bbox.maxLat - bbox.minLat);
-      const spanLng = Math.abs(bbox.maxLng - bbox.minLng);
-      if (spanLat > 60 || spanLng > 60) {
-        console.warn('[fetchByBbox] bbox too large, skip API call', { spanLat, spanLng });
-        return;
-      }
-
-      const minLat = Number(bbox.minLat);
-      const minLng = Number(bbox.minLng);
-      const maxLat = Number(bbox.maxLat);
-      const maxLng = Number(bbox.maxLng);
-
-      // Force mock flag set/restore (개발 편의용)
-      const meta: any = (import.meta as any) || {};
-      const prevEnv = meta.env ? meta.env.VITE_USE_MOCK : undefined;
-      if (FORCE_USE_MOCK) {
-        meta.env = { ...(meta.env || {}), VITE_USE_MOCK: 'true' };
-      }
-
-      // 가능한 경우 클라이언트 현재 위치(userLat/userLng)를 함께 보냄.
-      let userLat: number | undefined = undefined;
-      let userLng: number | undefined = undefined;
-      try {
-        // 우선: useMap에서 설정한 MapCache.userLocation / userLat/userLng 사용
-        const mc: any = MapCache as any;
-        if (mc && mc.userLat != null && mc.userLng != null) {
-          userLat = Number(mc.userLat);
-          userLng = Number(mc.userLng);
-        } else if (mc && mc.userLocation) {
-          userLat = Number(mc.userLocation.lat);
-          userLng = Number(mc.userLocation.lng);
-        } else {
-          // 다음: MapCache.myMarker 객체에서 추출
-          const mm = MapCache.myMarker;
-          if (mm && typeof mm.getPosition === 'function') {
-            const pos = mm.getPosition();
-            userLat =
-              typeof pos.getLat === 'function'
-                ? Number(pos.getLat())
-                : Number(pos.lat ?? pos.y ?? NaN);
-            userLng =
-              typeof pos.getLng === 'function'
-                ? Number(pos.getLng())
-                : Number(pos.lng ?? pos.x ?? NaN);
+      // zoom >= 13: 실제 API로 detail 모드 (쉼터 마커)
+      if (zoom >= 13) {
+        // Robust한 좌표 추출 헬퍼
+        const tryExtract = (p: any) => {
+          if (!p) return null;
+          if (typeof p.getLat === 'function' && typeof p.getLng === 'function') {
+            return { lat: Number(p.getLat()), lng: Number(p.getLng()) };
           }
+          if (typeof p.lat === 'number' && typeof p.lng === 'number')
+            return { lat: p.lat, lng: p.lng };
+          if (typeof p.y === 'number' && typeof p.x === 'number') return { lat: p.y, lng: p.x };
+          if (typeof p._lat === 'number' && typeof p._lng === 'number')
+            return { lat: p._lat, lng: p._lng };
+          if (typeof p.latitude === 'number' && typeof p.longitude === 'number')
+            return { lat: p.latitude, lng: p.longitude };
+          if (Array.isArray(p) && p.length >= 2) return { lat: Number(p[0]), lng: Number(p[1]) };
+          return null;
+        };
+
+        // 지도 중앙 좌표 가져오기
+        const centerRaw =
+          typeof map.getCenter === 'function'
+            ? map.getCenter()
+            : ((MapCache as any).lastCenter ?? lastCenterRef.current);
+
+        const center = tryExtract(centerRaw);
+
+        if (!center || !isFinite(center.lat) || !isFinite(center.lng)) {
+          console.warn('[fetchByBbox] invalid map center coordinates, skipping api call.', {
+            centerRaw,
+            center,
+          });
+          return;
         }
 
-        // 마지막 폴백: 맵 중심 사용 (map.getCenter 또는 lastCenterRef)
-        if (!isFinite(Number(userLat)) || !isFinite(Number(userLng))) {
-          const c =
-            typeof map.getCenter === 'function'
-              ? map.getCenter()
-              : ((MapCache as any).lastCenter ?? lastCenterRef.current);
-          if (c) {
-            if (typeof (c as any).getLat === 'function') {
-              userLat = Number((c as any).getLat());
-              userLng = Number((c as any).getLng());
-            } else {
-              userLat = Number((c as any).lat ?? (c as any).y ?? NaN);
-              userLng = Number((c as any).lng ?? (c as any).x ?? NaN);
-            }
-          }
+        console.debug('[fetchByBbox] detail mode - fetching shelters at center:', center);
+
+        // API 호출: /api/shelters/all?latitude={latitude}&longitude={longitude}
+        const res = await getAllShelters({
+          latitude: center.lat,
+          longitude: center.lng,
+        });
+
+        console.debug('[fetchByBbox] detail mode - api response:', res);
+
+        // 응답이 배열인지 확인
+        if (!Array.isArray(res)) {
+          console.warn('[fetchByBbox] unexpected response format, expected array:', res);
+          return;
         }
-      } catch (e) {
-        // 위치 추출 실패 시 undefined 유지
-      }
 
-      const payload: any = { minLat, minLng, maxLat, maxLng, zoom };
-      if (isFinite(Number(userLat)) && isFinite(Number(userLng))) {
-        payload.userLat = Number(userLat);
-        payload.userLng = Number(userLng);
-      }
-      // 개발 중에는 FORCE_USE_MOCK=true 로 전달하여 userLat/userLng 무시하고 bbox로 목데이터 반환
-      const res = await fetchSheltersByBbox(payload, FORCE_USE_MOCK);
+        const features = res;
+        currentModeRef.current = 'detail';
+        currentFeaturesRef.current = features;
 
-      // restore env
-      if (FORCE_USE_MOCK) {
-        try {
-          if (typeof prevEnv === 'undefined') {
-            // delete if previously undefined
-            if (meta.env) delete meta.env.VITE_USE_MOCK;
-          } else {
-            meta.env.VITE_USE_MOCK = prevEnv;
-          }
-        } catch {}
-      }
-
-      console.debug('[fetchByBbox] api response:', res);
-
-      const mode =
-        res?.mode ?? (res?.features && Array.isArray(res.features) ? 'detail' : 'cluster');
-      const features = res?.features ?? [];
-
-      currentModeRef.current = mode;
-      currentFeaturesRef.current = features;
-
-      if (mode === 'detail') {
+        // detail 모드로 렌더링
         renderDetailFeatures(map, features);
-      } else {
-        renderClusterFeatures(map, features);
+      }
+      // zoom < 13: mock 데이터로 cluster 모드
+      else {
+        const bboxRes = calcBboxFromMap(map);
+        const bbox = {
+          minLat: Number(bboxRes.minLat),
+          minLng: Number(bboxRes.minLng),
+          maxLat: Number(bboxRes.maxLat),
+          maxLng: Number(bboxRes.maxLng),
+        };
+
+        console.debug('[fetchByBbox] cluster mode - bbox:', bbox, 'zoom:', zoom);
+
+        // 최종 방어: 모든 값이 유한한 숫자인지 확인
+        const vals = [bbox.minLat, bbox.minLng, bbox.maxLat, bbox.maxLng, zoom].map((v) =>
+          Number(v),
+        );
+        if (!vals.every((v) => isFinite(v))) {
+          console.warn('[fetchByBbox] invalid params after calc, skip API call', { bbox, zoom });
+          return;
+        }
+
+        // 안전 범위: 지나치게 큰 bbox는 서버 부담이므로 차단
+        const spanLat = Math.abs(bbox.maxLat - bbox.minLat);
+        const spanLng = Math.abs(bbox.maxLng - bbox.minLng);
+        if (spanLat > 60 || spanLng > 60) {
+          console.warn('[fetchByBbox] bbox too large, skip API call', { spanLat, spanLng });
+          return;
+        }
+
+        const payload: any = {
+          minLat: bbox.minLat,
+          minLng: bbox.minLng,
+          maxLat: bbox.maxLat,
+          maxLng: bbox.maxLng,
+          zoom,
+        };
+
+        // mock 데이터로 호출
+        const FORCE_USE_MOCK = true;
+        const res = await fetchSheltersByBbox(payload, FORCE_USE_MOCK);
+
+        console.debug('[fetchByBbox] cluster mode - mock response:', res);
+
+        const mode =
+          res?.mode ?? (res?.features && Array.isArray(res.features) ? 'detail' : 'cluster');
+        const features = res?.features ?? [];
+
+        currentModeRef.current = mode;
+        currentFeaturesRef.current = features;
+
+        if (mode === 'detail') {
+          renderDetailFeatures(map, features);
+        } else {
+          renderClusterFeatures(map, features);
+        }
       }
     } catch (err) {
       console.error('fetchByBbox error', err);
@@ -671,7 +667,7 @@ const MapView = ({ onMapReady }: Props) => {
           center: new window.Tmapv3.LatLng(location.latitude, location.longitude),
           width: '100%',
           height: '100%',
-          zoom: 13,
+          zoom: 15,
           zoomControl: true,
           scrollwheel: true,
         });
@@ -691,7 +687,7 @@ const MapView = ({ onMapReady }: Props) => {
         try {
           if (isMapFullyLoaded(mapInstance)) {
             mapInstance.setCenter(new window.Tmapv3.LatLng(location.latitude, location.longitude));
-            mapInstance.setZoom && mapInstance.setZoom(13);
+            mapInstance.setZoom && mapInstance.setZoom(15);
           }
         } catch {}
       }

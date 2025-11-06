@@ -134,9 +134,20 @@ export async function notifyShelterArrival(shelterId: number) {
 }
 
 // 전체 쉼터 조회 (백엔드: /api/shelters/all)
-export async function getAllShelters() {
+// latitude, longitude: 지도 중앙 좌표 (필수)
+export async function getAllShelters({
+  latitude,
+  longitude,
+}: {
+  latitude: number;
+  longitude: number;
+}) {
   try {
-    const res = await apiClient.get('/api/shelters/all');
+    const params = new URLSearchParams();
+    params.set('latitude', String(latitude));
+    params.set('longitude', String(longitude));
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await apiClient.get(`/api/shelters/all${qs}`);
     return res && (res as any).data ? (res as any).data : res;
   } catch (err) {
     // eslint-disable-next-line no-console
@@ -146,8 +157,8 @@ export async function getAllShelters() {
 }
 
 // wrapper: react-query 등에서 사용하기 위한 간단한 fetcher
-export async function fetchAllShelters() {
-  return getAllShelters();
+export async function fetchAllShelters(latitude: number, longitude: number) {
+  return getAllShelters({ latitude, longitude });
 }
 
 // 목데이터: bbox -> count 매핑 (userLat/userLng 무시)

@@ -91,6 +91,10 @@ export const useMap = () => {
     if (moveCenter) {
       try {
         map.setCenter(new window.Tmapv3.LatLng(lat, lng));
+        // 내 위치 버튼 클릭 시 기본 줌 레벨(15)로 설정
+        if (typeof map.setZoom === 'function') {
+          map.setZoom(15);
+        }
       } catch {}
     }
   };
@@ -114,6 +118,10 @@ export const useMap = () => {
       if (existingMarker && typeof existingMarker.getPosition === 'function') {
         const pos = existingMarker.getPosition();
         map.setCenter(pos);
+        // 내 위치 버튼 클릭 시 기본 줌 레벨(15)로 설정
+        if (typeof map.setZoom === 'function') {
+          map.setZoom(15);
+        }
         return;
       }
     } catch {}

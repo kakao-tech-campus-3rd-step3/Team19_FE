@@ -230,10 +230,9 @@ const profileImg = css`
 
 const editIcon = css`
   position: absolute;
-  right: 5%;
+  right: 2%;
   top: 95px;
   font-size: 2.2rem;
-  background: #fff;
   padding: 4px;
 `;
 

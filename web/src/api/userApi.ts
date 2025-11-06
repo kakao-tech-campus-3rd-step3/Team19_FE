@@ -73,9 +73,19 @@ export async function patchProfile({
   profileImageUrl,
 }: {
   nickname?: string;
-  profileImageUrl?: string;
+  // null을 명시적으로 전달할 수 있도록 허용
+  profileImageUrl?: string | null;
 }) {
-  return apiClient.patch('/api/users/me', { nickname, profileImageUrl });
+  // profileImageUrl이 undefined면 필드를 제외, null이면 null을 그대로 전송
+  const body: any = {};
+  if (typeof nickname !== 'undefined') body.nickname = nickname;
+  // 기본 프로필 요청을 빈 문자열("")로 전송하도록 처리
+  if (profileImageUrl === null) {
+    body.profileImageUrl = '';
+  } else if (typeof profileImageUrl !== 'undefined') {
+    body.profileImageUrl = profileImageUrl;
+  }
+  return apiClient.patch('/api/users/me', body);
 }
 
 // 비밀번호 수정

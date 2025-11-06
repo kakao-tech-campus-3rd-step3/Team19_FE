@@ -31,7 +31,8 @@ interface ShelterReviewSectionProps {
   handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   shelterName: string; // props로 쉼터 이름 받기
   shelterId: number; // props로 쉼터 id 받기
-  onReviewDeleted?: () => void; // 리뷰 삭제 후 새로고침 콜백
+  // 삭제 성공 시 부모에 삭제된 reviewId 전달 -> 부모가 로컬 상태에서 제거
+  onReviewDeleted?: (reviewId: number) => void;
 }
 
 // 날짜 포맷팅 함수
@@ -95,10 +96,8 @@ const ShelterReviewSection = ({
   const handleDeleteReview = async (reviewId: number) => {
     try {
       await deleteReview(reviewId);
-      // 삭제 성공 시 부모 컴포넌트에 알려서 리뷰 목록 새로고침
-      if (onReviewDeleted) {
-        onReviewDeleted();
-      }
+      // 삭제 성공 시 부모에 id 전달하여 로컬에서 바로 제거하도록 함 (스크롤 유지)
+      onReviewDeleted?.(reviewId);
     } catch (err) {
       console.error('[ShelterReviewSection] Failed to delete review:', err);
       alert('리뷰 삭제에 실패했습니다.');
@@ -198,6 +197,7 @@ const ShelterReviewSection = ({
                 {/* 내 리뷰인 경우 삭제 버튼 표시 (리뷰 콘텐츠 박스 우측 상단에 배치) */}
                 {myNickname && myNickname === r.nickname && (
                   <button
+                    type="button"
                     css={deleteButtonStyle}
                     onClick={() => setDeleteConfirmModal({ open: true, reviewId: r.reviewId })}
                     aria-label="리뷰 삭제"
@@ -331,7 +331,7 @@ const ShelterReviewSection = ({
                     const id = deleteConfirmModal.reviewId;
                     setDeleteConfirmModal({ open: false, reviewId: null });
                     if (id) {
-                      // 모달을 먼저 닫고 삭제 진행
+                      // 모달 닫고 삭제 API 호출 및 부모에 id 전달
                       handleDeleteReview(id);
                     }
                   }}
@@ -451,12 +451,6 @@ const reviewCardStyle = css`
   width: 100%;
   box-sizing: border-box;
   flex-wrap: wrap; /* 내용이 너무 길면 다음 줄로 내려가도록 허용 */
-
-  /* 모바일 등 좁은 화면에서는 카드 내부를 세로로 쌓음 */
-  @media (max-width: 700px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
 `;
 
 const reviewLeft = css`
@@ -562,13 +556,6 @@ const reviewPhoto = css`
   margin-top: 8px;
   background: ${theme.colors.text.white};
   flex-shrink: 0;
-
-  /* 작아진 화면에서는 사진을 전체 너비로 내려서 텍스트가 사진 아래로 흐르도록 함 */
-  @media (max-width: 700px) {
-    width: 100%;
-    max-width: none;
-    align-self: stretch;
-  }
 `;
 
 const noReviewStyle = css`

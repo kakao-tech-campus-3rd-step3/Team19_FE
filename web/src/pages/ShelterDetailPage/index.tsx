@@ -31,6 +31,7 @@ const ShelterDetailPage = () => {
     setIsFavorite,
     shelterError,
     reviewsError,
+    removeReview, // 부모에서 로컬 제거 함수 사용
   } = useShelterDetail(id);
 
   const [toast] = useState<{ open: boolean; message: string }>({
@@ -148,10 +149,14 @@ const ShelterDetailPage = () => {
         handleImageError={handleImageError}
         shelterName={shelter?.name ?? ''}
         shelterId={shelter?.shelterId ?? 0}
-        onReviewDeleted={() => {
-          // 리뷰 삭제 후 상세 정보 및 리뷰 목록 새로고침
-          if (typeof window !== 'undefined') {
-            window.location.reload();
+        // 삭제된 reviewId를 받아 로컬에서 즉시 제거 -> 스크롤 유지, 카운트/평균 즉시 반영
+        onReviewDeleted={(reviewId: number) => {
+          try {
+            removeReview(reviewId);
+          } catch (err) {
+            console.error('[ShelterDetailPage] removeReview failed:', err);
+            // 실패 시 폴백으로 전체 refresh를 시도할 수 있음
+            // refresh();
           }
         }}
       />

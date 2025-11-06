@@ -99,7 +99,7 @@ const HomePage = () => {
                 lineHeight: 1,
               }}
             >
-              {weather.temperature.toFixed(1)}°
+              {Math.trunc(Number(weather.temperature))}°
             </div>
           </div>
         </div>

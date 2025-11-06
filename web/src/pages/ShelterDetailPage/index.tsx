@@ -30,6 +30,7 @@ const ShelterDetailPage = () => {
     setIsFavorite,
     shelterError,
     reviewsError,
+    refresh, // <-- 추가: 삭제 후 상세/리뷰 다시 로드
   } = useShelterDetail(id);
 
   const [toast] = useState<{ open: boolean; message: string }>({
@@ -137,9 +138,11 @@ const ShelterDetailPage = () => {
         shelterName={shelter?.name ?? ''}
         shelterId={shelter?.shelterId ?? 0}
         onReviewDeleted={() => {
-          // 리뷰 삭제 후 상세 정보 및 리뷰 목록 새로고침
-          if (typeof window !== 'undefined') {
-            window.location.reload();
+          // 리뷰 삭제 후 상세/리뷰만 다시 로드하여 즉시 반영 (전체 페이지 리로드 금지)
+          try {
+            refresh();
+          } catch (err) {
+            console.error('[ShelterDetailPage] refresh after delete failed:', err);
           }
         }}
       />

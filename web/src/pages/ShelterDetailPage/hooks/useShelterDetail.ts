@@ -111,6 +111,26 @@ export const useShelterDetail = (shelterIdParam?: string | number) => {
     /* 길안내 시작 콜백(필요시 구현) */
   };
 
+  const removeReview = (reviewId: number) => {
+    setReviews((prev) => {
+      const updated = prev.filter((r: any) => {
+        // API에 따라 id 필드명이 다를 수 있으니 둘 다 확인
+        return r.reviewId !== reviewId && r.id !== reviewId;
+      });
+
+      // 평균 별점 재계산 (리뷰 객체에 rating 필드가 있다고 가정)
+      if (Array.isArray(updated)) {
+        const total = updated.reduce((s: number, rv: any) => s + (Number(rv.rating) || 0), 0);
+        const avg = updated.length ? total / updated.length : 0;
+        setAverageRating(Number.isFinite(avg) ? Math.round(avg * 10) / 10 : 0);
+      } else {
+        setAverageRating(0);
+      }
+
+      return updated;
+    });
+  };
+
   return {
     shelter,
     isLoading,
@@ -137,5 +157,6 @@ export const useShelterDetail = (shelterIdParam?: string | number) => {
       }
       fetchReviews();
     },
+    removeReview, // 추가: 로컬에서 리뷰 제거
   };
 };

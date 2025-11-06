@@ -326,7 +326,7 @@ const topSection = css`
 `;
 
 const thumbnail = css`
-  width: 220px; /* 고정 크기: 이미지가 너무 커지지 않도록 제한 */
+  width: 100%; /* 고정 크기: 이미지가 너무 커지지 않도록 제한 */
   height: 220px;
   flex: 0 0 220px;
   border-radius: 8px;

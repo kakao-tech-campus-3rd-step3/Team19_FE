@@ -410,7 +410,8 @@ const emptyStar = css`
 const infoBold = css`
   ${theme.typography.detail3};
   color: ${theme.colors.text.black};
-  font-weight: 700;
+  align-items: center;
+  justify-content: center;
 `;
 
 /* 냉방 장비 2열 레이아웃 */
@@ -507,11 +508,9 @@ const hoursDetailRow = css`
 const openStatus = css`
   color: #000000ff; /* 검은색: 운영중 */
   ${theme.typography.detail3};
-  font-weight: 800;
 `;
 
 const closedStatus = css`
   color: #6b7280; /* 회색: 운영종료 */
   ${theme.typography.detail3};
-  font-weight: 700;
 `;

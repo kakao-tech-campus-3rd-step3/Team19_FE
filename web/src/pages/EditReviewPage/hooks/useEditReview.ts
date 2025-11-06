@@ -64,37 +64,6 @@ export const useEditReview = () => {
     setShowModal(true);
   };
 
-  // 실제 API 호출: 리뷰 수정
-  const patchReviewMutation = useMutation({
-    mutationFn: async (params: {
-      reviewId: number;
-      content: string;
-      rating?: number;
-      // previewUrl가 ''이면 서버에서 사진 제거, null이면 서버로 photo 업로드 예정(업로드는 이후 수행)
-      photoUrl?: string | null;
-      photoFile?: File | null;
-    }) => {
-      // 1) 리뷰 본문 업데이트
-      const patched = await patchReview(params.reviewId, {
-        content: params.content,
-        rating: params.rating,
-        photoUrl: params.photoUrl ?? '',
-      });
-      // 2) 파일 업로드가 필요한 경우 업로드 수행 (multipart/form-data, 파일만 전송)
-      if (params.photoFile && params.photoFile instanceof File) {
-        await uploadReviewPhoto(params.reviewId, params.photoFile);
-      }
-      return patched;
-    },
-    onError: (error: any) => {
-      setErrorMessage(error?.message || '리뷰 수정 중 오류가 발생했습니다.');
-    },
-    onSuccess: (_res: any) => {
-      // 성공 시 이동 또는 상태 반영
-      navigate('/myreviews');
-    },
-  });
-
   // 저장 모달에서 "예" 클릭 시
   const handleSaveConfirm = async () => {
     setShowModal(false);
@@ -102,36 +71,81 @@ export const useEditReview = () => {
       setErrorMessage('리뷰 ID가 없습니다.');
       return;
     }
-    // 저장 처리 로직:
-    // - photoFile 존재: patch -> upload file (photoUrl: null 으로 서버에 알림 가능)
-    // - showImage === false: photoUrl: '' 으로 서버에서 제거
-    // - 그 외(기존 URL 유지): previewUrl(서버 URL) 전달
+
+    // 변경 여부에 따라 null로 전송할 필드 결정 (null = 변경 없음)
+    const contentPayload: string | null = review && review.content === content ? null : content;
+    const ratingPayload: number | null =
+      review && typeof review.rating === 'number' && review.rating === rating ? null : rating;
+
     const payload: {
       reviewId: number;
-      content: string;
-      rating?: number;
+      content?: string | null;
+      rating?: number | null;
       photoUrl?: string | null;
       photoFile?: File | null;
     } = {
       reviewId,
-      content,
-      rating,
+      content: contentPayload,
+      rating: ratingPayload,
     };
 
     if (photoFile) {
-      // 새 파일 업로드: instruct server to expect file by setting photoUrl=null, then upload
+      // 새 파일 업로드: 서버에 photo 업로드 예정임을 알리기 위해 null로 전달
       payload.photoUrl = null;
       payload.photoFile = photoFile;
     } else if (!showImage) {
-      // 사용자가 사진을 삭제한 경우
+      // 사용자가 사진을 삭제한 경우: 빈 문자열(또는 서버 규약에 따라 '') 전달
       payload.photoUrl = '';
     } else {
-      // 기존 서버 URL 유지 or no-op
-      payload.photoUrl = previewUrl ?? '';
+      // 이미지 표시중이고 previewUrl이 서버의 기존 URL과 동일하면 변경 없음(null)
+      const originalUrl = review?.photoUrl ?? '';
+      payload.photoUrl = previewUrl && previewUrl !== originalUrl ? previewUrl : null;
     }
 
     patchReviewMutation.mutate(payload);
   };
+
+  const patchReviewMutation = useMutation({
+    mutationFn: async (params: {
+      reviewId: number;
+      content?: string | null;
+      rating?: number | null;
+      photoUrl?: string | null;
+      photoFile?: File | null;
+    }) => {
+      // 1) 리뷰 본문 업데이트: nullable 값을 그대로 서버로 전달
+      const patched = await patchReview(params.reviewId, {
+        content: typeof params.content === 'undefined' ? null : params.content,
+        rating: typeof params.rating === 'undefined' ? null : params.rating,
+        photoUrl: typeof params.photoUrl === 'undefined' ? null : params.photoUrl,
+      });
+
+      // patched에서 review id를 확실히 얻기 (서버 리턴 구조에 맞춰 조정)
+      const returnedId =
+        (patched && (patched as any).reviewId) ||
+        (patched && (patched as any).id) ||
+        params.reviewId;
+
+      // 2) 파일 업로드는 patch 성공 후, reviewId가 확실할 때만 수행
+      if (params.photoFile && returnedId) {
+        try {
+          await uploadReviewPhoto(Number(returnedId), params.photoFile);
+        } catch (uploadErr) {
+          const errMsg =
+            (uploadErr && (uploadErr as any).message) || '사진 업로드 중 오류가 발생했습니다.';
+          throw new Error(errMsg);
+        }
+      }
+
+      return patched;
+    },
+    onError: (error: any) => {
+      setErrorMessage(error?.message || '리뷰 수정 중 오류가 발생했습니다.');
+    },
+    onSuccess: (_res: any) => {
+      navigate('/myreviews');
+    },
+  });
 
   // 사진 삭제 버튼 클릭
   const handleRemoveImage = () => {

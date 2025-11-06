@@ -56,8 +56,7 @@ const FindSheltersPage = () => {
     data: nearbyData,
     isLoading,
     error,
-    refetch,
-  } = useQuery({
+  } = useQuery<any, Error>({
     queryKey: coords
       ? nearbySheltersQueryKey(coords.latitude, coords.longitude)
       : ['nearbyShelters', 'idle'],
@@ -67,7 +66,6 @@ const FindSheltersPage = () => {
     },
     enabled: !!coords,
     staleTime: 1000 * 60 * 5, // 5분
-    cacheTime: 1000 * 60 * 30, // 30분
     refetchOnWindowFocus: false,
     retry: 1,
   });

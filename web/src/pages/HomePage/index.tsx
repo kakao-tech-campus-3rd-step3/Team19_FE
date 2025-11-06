@@ -99,7 +99,7 @@ const HomePage = () => {
                 lineHeight: 1,
               }}
             >
-              {weather.temperature.toFixed(1)}°C
+              {weather.temperature.toFixed(1)}°
             </div>
           </div>
         </div>

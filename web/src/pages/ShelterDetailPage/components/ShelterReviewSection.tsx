@@ -57,6 +57,14 @@ const ShelterReviewSection = ({
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
   const [modalImg, setModalImg] = useState<string | null>(null); // 추가: 확대 이미지 상태
 
+  // 로컬 리뷰 상태: 낙관적 업데이트(애니메이션)용
+  const [localReviews, setLocalReviews] = useState<Review[]>(reviews ?? []);
+  // 삭제 중 표시 맵 (애니메이션 클래스 토글)
+  const [removingMap, setRemovingMap] = useState<{ [reviewId: number]: boolean }>({});
+  // (countPulse 제거 — 사용되지 않음)
+
+  const removingTimers = useRef<{ [id: number]: number | null }>({});
+
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
   const navigate = useNavigate();
   const location = useLocation();
@@ -91,17 +99,71 @@ const ShelterReviewSection = ({
     fetchMyProfile();
   }, []);
 
+  // props.reviews 변경에 따라 로컬 상태 동기화 (단, 삭제 애니메이션이 진행중이면 강제로 덮어쓰지 않음)
+  useEffect(() => {
+    setLocalReviews((prev) => {
+      // 만약 local에서 이미 제거중인 항목이 있다면 그 항목 보존(애니메이션) 후 병합
+      const removingIds = new Set(
+        Object.keys(removingMap)
+          .filter((k) => removingMap[Number(k)])
+          .map(Number),
+      );
+      const newList = reviews ?? [];
+      if (removingIds.size === 0) return newList;
+      // 유지해야 할 기존 항목도 포함 (간단하게 우선순위: local preserved + new items unique)
+      const preserved = prev.filter((p) => removingIds.has(p.reviewId));
+      const merged = [
+        ...preserved,
+        ...newList.filter((n) => !preserved.some((p) => p.reviewId === n.reviewId)),
+      ];
+      return merged;
+    });
+  }, [reviews]);
+
   // 리뷰 삭제 핸들러
+  // 낙관적 삭제: 애니메이션 실행 → 배열에서 제거 → API 호출(실패 시 복구)
   const handleDeleteReview = async (reviewId: number) => {
+    const target = localReviews.find((r) => r.reviewId === reviewId);
+    if (!target) return;
+
+    // 1) 애니메이션 시작 토글
+    setRemovingMap((m) => ({ ...m, [reviewId]: true }));
+    window.clearTimeout((removingTimers.current[reviewId] as any) ?? null);
+
+    // 2) 애니메이션(transition) 시간 후 실제 배열에서 제거
+    const TRANS_MS = 320;
+    removingTimers.current[reviewId] = window.setTimeout(() => {
+      setLocalReviews((prev) => prev.filter((r) => r.reviewId !== reviewId));
+      setRemovingMap((m) => {
+        const copy = { ...m };
+        delete copy[reviewId];
+        return copy;
+      });
+    }, TRANS_MS);
+
+    // 3) 서버 호출 (동시 실행). 실패 시 복구
     try {
       await deleteReview(reviewId);
-      // 삭제 성공 시 부모 컴포넌트에 알려서 리뷰 목록 새로고침
-      if (onReviewDeleted) {
-        onReviewDeleted();
-      }
+      // 성공 시 부모 콜백이 있으면 알림 (외부 리프레시가 필요한 경우)
+      if (typeof onReviewDeleted === 'function') onReviewDeleted();
     } catch (err) {
-      console.error('[ShelterReviewSection] Failed to delete review:', err);
-      alert('리뷰 삭제에 실패했습니다.');
+      // API 실패: 타이머 정지, 복구
+      console.error('[ShelterReviewSection] Failed to delete review (api):', err);
+      alert('리뷰 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      // 복구: 삭제 애니메이션 중인 항목을 복구
+      window.clearTimeout((removingTimers.current[reviewId] as any) ?? null);
+      setRemovingMap((m) => {
+        const copy = { ...m };
+        delete copy[reviewId];
+        return copy;
+      });
+      setLocalReviews((prev) => {
+        // 이미 제거되었으면 재삽입
+        if (prev.some((r) => r.reviewId === reviewId)) return prev;
+        return [target, ...prev];
+      });
+    } finally {
+      removingTimers.current[reviewId] = null;
     }
   };
 
@@ -190,10 +252,13 @@ const ShelterReviewSection = ({
         </button>
       </div>
 
-      {loading ? null : reviews && reviews.length > 0 ? (
+      {loading ? null : localReviews && localReviews.length > 0 ? (
         <div css={reviewListStyle}>
-          {reviews.slice(0, visibleCount).map((r) => (
-            <article css={reviewCardStyle} key={r.reviewId}>
+          {localReviews.slice(0, visibleCount).map((r) => (
+            <article
+              css={[reviewCardStyle, removingMap[r.reviewId] ? reviewRemovingStyle : undefined]}
+              key={r.reviewId}
+            >
               <div css={reviewLeft}>
                 {/* 내 리뷰인 경우 삭제 버튼 표시 (리뷰 콘텐츠 박스 우측 상단에 배치) */}
                 {myNickname && myNickname === r.nickname && (
@@ -235,42 +300,48 @@ const ShelterReviewSection = ({
                   </div>
                 </div>
                 <div css={reviewContentBox}>
-                  <div
-                    ref={(el) => {
-                      contentRefs.current[r.reviewId] = el;
-                    }}
-                    css={[
-                      reviewText,
-                      !expandedMap[r.reviewId] && showMoreMap[r.reviewId]
-                        ? clamp3LineStyle
-                        : undefined,
-                    ]}
-                  >
-                    {r.content}
+                  <div css={reviewContentInner}>
+                    <div css={reviewTextCol}>
+                      <div
+                        ref={(el) => {
+                          contentRefs.current[r.reviewId] = el;
+                        }}
+                        css={[
+                          reviewText,
+                          !expandedMap[r.reviewId] && showMoreMap[r.reviewId]
+                            ? clamp3LineStyle
+                            : undefined,
+                        ]}
+                      >
+                        {r.content}
+                      </div>
+                      {showMoreMap[r.reviewId] && (
+                        <button
+                          css={moreTextButtonStyle}
+                          onClick={() =>
+                            setExpandedMap((prev) => ({
+                              ...prev,
+                              [r.reviewId]: !prev[r.reviewId],
+                            }))
+                          }
+                        >
+                          {expandedMap[r.reviewId] ? '접기' : '더보기'}
+                        </button>
+                      )}
+                    </div>
+
+                    {r.photoUrl && (
+                      <img
+                        src={r.photoUrl}
+                        alt={`review-${r.reviewId}`}
+                        css={reviewPhoto}
+                        onError={handleImageError}
+                        onClick={() => setModalImg(r.photoUrl)} // 클릭 시 확대
+                        style={{ cursor: 'pointer' }}
+                      />
+                    )}
                   </div>
-                  {showMoreMap[r.reviewId] && (
-                    <button
-                      css={moreTextButtonStyle}
-                      onClick={() =>
-                        setExpandedMap((prev) => ({
-                          ...prev,
-                          [r.reviewId]: !prev[r.reviewId],
-                        }))
-                      }
-                    >
-                      {expandedMap[r.reviewId] ? '접기' : '더보기'}
-                    </button>
-                  )}
-                  {r.photoUrl && (
-                    <img
-                      src={r.photoUrl}
-                      alt={`review-${r.reviewId}`}
-                      css={reviewPhoto}
-                      onError={handleImageError}
-                      onClick={() => setModalImg(r.photoUrl)} // 클릭 시 확대
-                      style={{ cursor: 'pointer' }}
-                    />
-                  )}
+
                   <div css={reviewMeta}>
                     <span>{formatDateShort(r.createdAt)}</span>
                   </div>
@@ -280,7 +351,9 @@ const ShelterReviewSection = ({
           ))}
         </div>
       ) : (
-        <div css={noReviewStyle}>리뷰가 없습니다.</div>
+        <div css={emptyWrap}>
+          <div css={emptyBox}>리뷰가 없습니다.</div>
+        </div>
       )}
 
       {/* 더보기 버튼: 보여줄 리뷰가 남아있을 때만 노출 */}
@@ -331,7 +404,7 @@ const ShelterReviewSection = ({
                     const id = deleteConfirmModal.reviewId;
                     setDeleteConfirmModal({ open: false, reviewId: null });
                     if (id) {
-                      // 모달을 먼저 닫고 삭제 진행
+                      // 모달을 먼저 닫고 낙관적 삭제 진행
                       handleDeleteReview(id);
                     }
                   }}
@@ -402,11 +475,10 @@ const emptyStar = css`
 
 /* 리뷰 섹션 스타일 */
 const reviewSectionStyle = css`
-  margin: 32px auto 0; /* 상단 마진은 유지, 가운데 정렬 */
+  margin: 32px 14px 0; /* 상단 마진은 유지, 가운데 정렬 */
   padding: 16px;
   border-top: 1px solid ${theme.colors.text.gray500};
   width: 90%; /* 화면의 90% 사용 */
-  max-width: 1100px; /* 필요 시 최대 너비 제한 (선택) */
   box-sizing: border-box;
 `;
 
@@ -451,12 +523,17 @@ const reviewCardStyle = css`
   width: 100%;
   box-sizing: border-box;
   flex-wrap: wrap; /* 내용이 너무 길면 다음 줄로 내려가도록 허용 */
+`;
 
-  /* 모바일 등 좁은 화면에서는 카드 내부를 세로로 쌓음 */
-  @media (max-width: 700px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
+// 삭제 애니메이션 스타일 (collapse + fade + translate)
+const reviewRemovingStyle = css`
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: all 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
 `;
 
 const reviewLeft = css`
@@ -533,6 +610,23 @@ const reviewContentBox = css`
   box-sizing: border-box;
 `;
 
+/* content 내부를 세로로 쌓음: 텍스트 위, 이미지 아래 */
+const reviewContentInner = css`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+`;
+
+const reviewTextCol = css`
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+`;
+
 const reviewText = css`
   ${theme.typography.review3};
   color: ${theme.colors.text.black};
@@ -552,31 +646,48 @@ const reviewMeta = css`
 `;
 
 const reviewPhoto = css`
-  width: 35%;
-  max-width: 180px;
+  display: block;
+  width: 40%;
+  max-width: 180px; /* 필요시 조정 */
   height: auto;
   border-radius: 8px;
   object-fit: cover;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.23);
-  align-self: flex-start;
-  margin-top: 8px;
   background: ${theme.colors.text.white};
-  flex-shrink: 0;
+  margin: 8px 0 0 0; /* 위쪽 간격만 유지, 좌측 정렬을 위해 오른쪽/가운데 자동 마진 제거 */
+  align-self: flex-start; /* 좌측 정렬 */
+`;
 
-  /* 작아진 화면에서는 사진을 전체 너비로 내려서 텍스트가 사진 아래로 흐르도록 함 */
-  @media (max-width: 700px) {
-    width: 100%;
-    max-width: none;
-    align-self: stretch;
+/* 여유를 더해 카드 간 겹침 방지 */
+const reviewCardSpacingFix = css`
+  margin-bottom: 8px;
+`;
+
+// 빈 상태 래퍼: 페이드 인/아웃
+const emptyWrap = css`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+`;
+
+const emptyBox = css`
+  ${theme.typography.review1};
+  color: ${theme.colors.text.gray500};
+  padding: 12px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: fadeInUp 320ms forwards;
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 `;
 
-const noReviewStyle = css`
-  text-align: center;
-  color: ${theme.colors.text.gray500};
-  padding: 16px;
-  ${theme.typography.review1};
-`;
+/* reviewCountPulse 제거 (미사용) */
 
 const moreWrap = css`
   display: flex;

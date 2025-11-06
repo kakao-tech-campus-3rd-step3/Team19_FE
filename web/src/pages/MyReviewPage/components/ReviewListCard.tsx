@@ -229,7 +229,9 @@ const ReviewListCard = ({
         <div css={cardBottomRow}>
           <div css={cardInfo}>
             <div css={cardRating}>
-              <span css={ratingNumber}>{item.rating}</span>
+              <span css={ratingNumber}>
+                {Number.isFinite(item.rating) ? item.rating.toFixed(1) : item.rating}
+              </span>
               <span css={starsWrapper}>
                 {Array.from({ length: 5 }, (_, i) => (
                   <span key={i} css={i < item.rating ? filledStar : emptyStar}>
@@ -405,14 +407,30 @@ const starsWrapper = css`
 `;
 
 const filledStar = css`
-  color: #ffd900ff;
-  shadow: 1px 1px 2px #bfa800ff;
-  ${theme.typography.myr3};
+  color: ${theme.colors.text.yellow};
+  font-size: ${theme.typography.cardh4.fontSize};
+  /* 부드러운 어두운 외곽선: 여러 방향 text-shadow로 균일하게 처리 */
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.2),
+    -1px 1px 0 rgba(0, 0, 0, 0.2),
+    1px -1px 0 rgba(0, 0, 0, 0.2),
+    -1px -1px 0 rgba(0, 0, 0, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.06);
+  /* WebKit 기반 브라우저에서 약한 스트로크 보강(선명도) */
+  -webkit-text-stroke: 0.4px rgba(0, 0, 0, 0.14);
 `;
 
 const emptyStar = css`
-  color: #9d9c9cff;
-  ${theme.typography.myr3};
+  color: ${theme.colors.text.gray150};
+  font-size: ${theme.typography.cardh4.fontSize};
+  /* 빈 별도 약한 외곽선으로 가독성 확보 */
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.2),
+    -1px 1px 0 rgba(0, 0, 0, 0.2),
+    1px -1px 0 rgba(0, 0, 0, 0.2),
+    -1px -1px 0 rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  -webkit-text-stroke: 0.3px rgba(0, 0, 0, 0.08);
 `;
 
 const cardContent = css`

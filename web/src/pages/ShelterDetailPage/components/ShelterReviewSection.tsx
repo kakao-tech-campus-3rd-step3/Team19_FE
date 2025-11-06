@@ -2,7 +2,9 @@
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { checkLoginStatus } from '@/api/userApi';
+import { setPendingAction } from '@/utils/pendingAction';
 import NoProfile from '@/assets/images/NoProfile.png';
 import { createPortal } from 'react-dom';
 
@@ -53,7 +55,9 @@ const ShelterReviewSection = ({
 
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
   const navigate = useNavigate();
+  const location = useLocation();
   const bodyLockRef = useRef(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // 프로필 이미지 에러 핸들링용 state
   const [profileImgErrorMap, setProfileImgErrorMap] = useState<{ [reviewId: number]: boolean }>({});
@@ -130,7 +134,14 @@ const ShelterReviewSection = ({
         <div css={reviewTitle}>리뷰({reviews ? reviews.length : 0})</div>
         <button
           css={reviewWriteButton}
-          onClick={() => navigate(`/write-review/${shelterId}`, { state: { shelterName } })}
+          onClick={async () => {
+            const isLoggedIn = await checkLoginStatus();
+            if (!isLoggedIn) {
+              setShowLoginModal(true);
+              return;
+            }
+            navigate(`/write-review/${shelterId}`, { state: { shelterName } });
+          }}
         >
           리뷰 작성
         </button>
@@ -242,6 +253,40 @@ const ShelterReviewSection = ({
               <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
                 닫기
               </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* 로그인 필요 모달 */}
+      {showLoginModal &&
+        createPortal(
+          <div css={loginModalOverlay} onClick={() => setShowLoginModal(false)}>
+            <div css={loginModalBox} onClick={(e) => e.stopPropagation()}>
+              <div css={loginModalText}>
+                로그인이 필요한
+                <br />
+                기능입니다
+              </div>
+              <div css={loginModalButtons}>
+                <button
+                  css={loginModalBtn}
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    setPendingAction({
+                      type: 'write-review',
+                      payload: { shelterId, state: { shelterName } },
+                      returnUrl: location.pathname,
+                    });
+                    navigate('/auth');
+                  }}
+                >
+                  로그인
+                </button>
+                <button css={loginModalBtn} onClick={() => setShowLoginModal(false)}>
+                  취소
+                </button>
+              </div>
             </div>
           </div>,
           document.body,
@@ -479,4 +524,49 @@ const modalCloseBtn = css`
   font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
+`;
+
+// 로그인 모달 스타일
+const loginModalOverlay = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const loginModalBox = css`
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  max-width: 80%;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const loginModalText = css`
+  ${theme.typography.modal1};
+  color: #222;
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+const loginModalButtons = css`
+  display: flex;
+  gap: 18px;
+`;
+
+const loginModalBtn = css`
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: background 0.18s;
 `;

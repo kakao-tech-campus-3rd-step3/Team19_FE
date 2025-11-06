@@ -297,12 +297,6 @@ const reviewWriteButton = css`
   ${theme.typography.detail3};
 `;
 
-const loadingStyle = css`
-  text-align: center;
-  padding: 16px;
-  color: ${theme.colors.text.gray500};
-`;
-
 const reviewListStyle = css`
   display: flex;
   flex-direction: column;

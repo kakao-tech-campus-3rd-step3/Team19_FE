@@ -6,7 +6,7 @@ import HomePage from './pages/HomePage';
 import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './components/NavBar';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import MyPage from './pages/MyPage';
 import WishListPage from './pages/WishListPage';
@@ -34,7 +34,6 @@ function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void
 
 const App = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   // 앱 시작/로그인 시 FCM 토큰 및 위치 등록
   usePushNotification();
 
@@ -42,21 +41,6 @@ const App = () => {
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [location.pathname]);
-
-  // 리뷰 알림(REVIEW_REMINDER)으로 유입 시 라우팅 보조 처리
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('reviewNotifData');
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      const shelterId = data?.shelterId;
-      if (shelterId && location.pathname !== `/write-review/${shelterId}`) {
-        // 1회 처리: 즉시 제거 후 라우팅
-        sessionStorage.removeItem('reviewNotifData');
-        navigate(`/write-review/${shelterId}?from=notification`);
-      }
-    } catch {}
-  }, [location.pathname, navigate]);
 
   // GuidePage에서는 NavBar를 자체적으로 렌더링하므로 여기서는 제외
   const shouldShowNavBar = location.pathname !== '/guide';

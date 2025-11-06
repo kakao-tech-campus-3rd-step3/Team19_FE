@@ -614,9 +614,23 @@ class MainActivity : AppCompatActivity() {
         if (map.isEmpty()) return
 
         val json = org.json.JSONObject(map as Map<*, *>).toString()
-        val js = "(function(){try{sessionStorage.setItem('notifData', " +
-                org.json.JSONObject.quote(json) +
-                "); if (window.location.pathname !== '/find-shelters'){ window.location.href='/find-shelters?from=notification'; }}catch(e){}})();"
+        val notifType = map["type"] ?: ""
+
+        if (notifType == "REVIEW_REMINDER") {
+            val shelterId = map["shelterId"] ?: ""
+            val js = "(function(){try{" +
+                    "sessionStorage.setItem('reviewNotifData', " + org.json.JSONObject.quote(json) + ");" +
+                    "if (window.location.pathname !== '/write-review/" + shelterId + "'){ window.location.href='/write-review/" + shelterId + "?from=notification'; }" +
+                    "}catch(e){console.error('notif error:', e);}})();"
+            webView.evaluateJavascript(js, null)
+            return
+        }
+
+        // default: 기존 알림 흐름 (예: 근처 쉼터 안내 등)
+        val js = "(function(){try{" +
+                "sessionStorage.setItem('notifData', " + org.json.JSONObject.quote(json) + ");" +
+                "if (window.location.pathname !== '/find-shelters'){ window.location.href='/find-shelters?from=notification'; }" +
+                "}catch(e){console.error('notif error:', e);}})();"
         webView.evaluateJavascript(js, null)
     }
 

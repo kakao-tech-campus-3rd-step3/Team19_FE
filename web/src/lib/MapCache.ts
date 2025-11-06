@@ -9,6 +9,10 @@ const MapCache = {
   myMarker: null as any | null,
   lastIcon: null as any | null,
 
+  // 지도 상태 저장 (재진입 시 복원용)
+  lastCenter: null as { lat: number; lng: number } | null,
+  lastZoom: null as number | null,
+
   // SDK 로드/준비를 나타내는 전역 Promise (앱에서 반복 폴링을 피하기 위함)
   sdkReady: null as Promise<boolean> | null,
 
@@ -66,6 +70,16 @@ const MapCache = {
             } catch {}
           }
         }
+        // 지도 상태 복원 (마지막 중심/줌이 있으면 복원)
+        try {
+          if (this.lastCenter && this.lastZoom) {
+            const LatLng = (window as any).Tmapv3?.LatLng;
+            if (LatLng && typeof this.map.setCenter === 'function' && typeof this.map.setZoom === 'function') {
+              this.map.setCenter(new LatLng(this.lastCenter.lat, this.lastCenter.lng));
+              this.map.setZoom(this.lastZoom);
+            }
+          }
+        } catch {}
         // reflow/refresh 시도: SDK마다 메소드명이 다르므로 여러 시도
         try {
           if (this.map && typeof (this.map as any).updateSize === 'function') {
@@ -235,6 +249,23 @@ const MapCache = {
 
   detach() {
     try {
+      // 지도 상태 저장 (중심/줌)
+      if (this.map) {
+        try {
+          const c = this.map.getCenter ? this.map.getCenter() : null;
+          const z = this.map.getZoom ? this.map.getZoom() : null;
+          if (c) {
+            const lat = c.getLat ? c.getLat() : (c.lat ?? c.y ?? null);
+            const lng = c.getLng ? c.getLng() : (c.lng ?? c.x ?? null);
+            if (lat !== null && lng !== null) {
+              this.lastCenter = { lat: Number(lat), lng: Number(lng) };
+            }
+          }
+          if (z !== null && z !== undefined) {
+            this.lastZoom = Number(z);
+          }
+        } catch {}
+      }
       // 제거 대신 영속 루트로 이동하여 SDK 인스턴스가 유지되도록 함
       if (this.div) {
         try {
@@ -265,6 +296,8 @@ const MapCache = {
     this.div = null;
     this.myMarker = null;
     this.lastIcon = null;
+    this.lastCenter = null;
+    this.lastZoom = null;
   },
 
   // 영속 루트 엘리먼트 반환(없으면 생성)

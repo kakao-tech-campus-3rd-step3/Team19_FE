@@ -187,9 +187,9 @@ const starRow = css`
 `;
 
 const filledStar = css`
-  color: #ffd600;
+  color: ${theme.colors.text.yellow};
   cursor: pointer;
-  text-shadow: 1px 1px 3px #bbb;
+  text-shadow: 1px 1px 3px ${theme.colors.text.gray200};
   user-select: none;
   outline: none;
   -webkit-tap-highlight-color: transparent;
@@ -204,7 +204,7 @@ const filledStar = css`
 `;
 
 const emptyStar = css`
-  color: #ccc;
+  color: ${theme.colors.text.gray150};
   cursor: pointer;
   user-select: none;
   outline: none;

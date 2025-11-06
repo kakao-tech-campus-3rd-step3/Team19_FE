@@ -377,7 +377,7 @@ const distanceStyle = css`
 const ratingRow = css`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   ${theme.typography.detail2};
   margin-bottom: 20px;
   white-space: nowrap; /* 한 줄로 고정 */
@@ -398,19 +398,37 @@ const starsWrapper = css`
 `;
 
 const filledStar = css`
-  color: ${theme.colors.text.yellow};
   ${theme.typography.detail2};
+  color: ${theme.colors.text.yellow};
+  /* 부드러운 어두운 외곽선: 여러 방향 text-shadow로 균일하게 처리 */
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.2),
+    -1px 1px 0 rgba(0, 0, 0, 0.2),
+    1px -1px 0 rgba(0, 0, 0, 0.2),
+    -1px -1px 0 rgba(0, 0, 0, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.06);
+  /* WebKit 기반 브라우저에서 약한 스트로크 보강(선명도) */
+  -webkit-text-stroke: 0.4px rgba(0, 0, 0, 0.14);
 `;
 
 const emptyStar = css`
-  color: ${theme.colors.text.gray200};
   ${theme.typography.detail2};
+  color: ${theme.colors.text.gray200};
+  /* 빈 별도 약한 외곽선으로 가독성 확보 */
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.2),
+    -1px 1px 0 rgba(0, 0, 0, 0.2),
+    1px -1px 0 rgba(0, 0, 0, 0.2),
+    -1px -1px 0 rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  -webkit-text-stroke: 0.3px rgba(0, 0, 0, 0.08);
 `;
 
 const infoBold = css`
   ${theme.typography.detail3};
   color: ${theme.colors.text.black};
-  font-weight: 700;
+  align-items: center;
+  justify-content: center;
 `;
 
 /* 냉방 장비 2열 레이아웃 */
@@ -507,11 +525,9 @@ const hoursDetailRow = css`
 const openStatus = css`
   color: #000000ff; /* 검은색: 운영중 */
   ${theme.typography.detail3};
-  font-weight: 800;
 `;
 
 const closedStatus = css`
   color: #6b7280; /* 회색: 운영종료 */
   ${theme.typography.detail3};
-  font-weight: 700;
 `;

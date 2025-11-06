@@ -23,9 +23,15 @@ const WishListPage = () => {
         if (!mounted) return;
         const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
         setWishList(items);
+        setError(null); // 오류 메시지 제거 — 빈 목록 화면으로 보이도록
       })
       .catch((e) => {
-        if (mounted) setError(e);
+        // 네트워크/권한 에러가 와도 빈 목록으로 처리
+        if (mounted) {
+          console.warn('[WishListPage] getWishList failed', e);
+          setWishList([]);
+          setError(null);
+        }
       })
       .finally(() => {
         if (mounted) setIsLoading(false);

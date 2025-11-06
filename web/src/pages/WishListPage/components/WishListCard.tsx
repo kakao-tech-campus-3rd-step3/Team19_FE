@@ -4,7 +4,7 @@ import { FaHeart } from 'react-icons/fa';
 import NoImage from '@/assets/images/NoImage.png';
 import theme from '@/styles/theme';
 import { useState, useEffect, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addWish, deleteWish } from '@/api/wishApi';
 import { createPortal } from 'react-dom';
 
@@ -99,19 +99,48 @@ const WishListCard = ({
     };
   }, [showModal]);
 
-  // 삭제 뮤테이션: 성공 시에도 즉시 부모 리패치하지 않음(애니메이션 후 한 번만 refetch)
+  const queryClient = useQueryClient();
+
+  // optimistic delete: 캐시에서 즉시 제거
   const deleteWishMutation = useMutation({
     mutationFn: () => deleteWish({ shelterId: item.shelterId }),
+    onMutate: async () => {
+      await queryClient.cancelQueries(['wishList', 'me']);
+      const prev = queryClient.getQueryData<any[]>(['wishList', 'me']);
+      queryClient.setQueryData(['wishList', 'me'], (old: any) =>
+        Array.isArray(old)
+          ? old.filter((it) => Number(it.shelterId) !== Number(item.shelterId))
+          : old,
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, context: any) => {
+      if (context?.prev) queryClient.setQueryData(['wishList', 'me'], context.prev);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['wishList', 'me']);
+    },
   });
 
+  // optimistic add: 캐시에 임시 추가
   const addWishMutation = useMutation({
     mutationFn: () => addWish({ shelterId: item.shelterId }),
+    onMutate: async () => {
+      await queryClient.cancelQueries(['wishList', 'me']);
+      const prev = queryClient.getQueryData<any[]>(['wishList', 'me']);
+      queryClient.setQueryData(['wishList', 'me'], (old: any) =>
+        Array.isArray(old) ? [...old, item] : old,
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, context: any) => {
+      if (context?.prev) queryClient.setQueryData(['wishList', 'me'], context.prev);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['wishList', 'me']);
+    },
     onSuccess: () => {
       setIsFavorite(true);
-      if (typeof refetchWishList === 'function') refetchWishList();
-    },
-    onError: () => {
-      if (typeof refetchWishList === 'function') refetchWishList();
     },
   });
 

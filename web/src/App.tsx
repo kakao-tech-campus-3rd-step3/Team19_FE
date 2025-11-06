@@ -6,7 +6,7 @@ import HomePage from './pages/HomePage';
 import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './components/NavBar';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import MyPage from './pages/MyPage';
 import WishListPage from './pages/WishListPage';
@@ -34,7 +34,6 @@ function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void
 
 const App = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   // 앱 시작/로그인 시 FCM 토큰 및 위치 등록
   usePushNotification();
 

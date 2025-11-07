@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getNearbyShelters, notifyShelterArrival } from '@/api/shelterApi';
+import { getMyProfile } from '@/api/userApi';
 import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
@@ -397,8 +398,16 @@ const GuidePage = () => {
     handleNavigationAttempt(() => navigate('/'));
   };
 
-  const handleNavUserClick = () => {
-    handleNavigationAttempt(() => navigate('/mypage'));
+  const handleNavUserClick = async () => {
+    // 로그인 상태 확인 후 적절한 페이지로 이동
+    try {
+      await getMyProfile();
+      // 로그인된 상태: 모달 띄우고 마이페이지로 이동
+      handleNavigationAttempt(() => navigate('/mypage'));
+    } catch {
+      // 로그인되지 않은 상태: 모달 띄우고 로그인 페이지로 이동
+      handleNavigationAttempt(() => navigate('/auth'));
+    }
   };
 
   // NOTE: guidancePoints를 훅에서 직접 꺼내지 못해, 임시로 window에 저장된 routeData를 확장하거나

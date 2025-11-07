@@ -20,7 +20,7 @@ const WriteReviewPage = () => {
     content,
     setContent,
     rating,
-    photoUrl,
+    previewUrl,
     showImage,
     showModal,
     modalText,
@@ -80,9 +80,9 @@ const WriteReviewPage = () => {
         />
         <div css={charCount}>{content.length}/100</div>
         <div css={imgRow}>
-          {showImage && photoUrl && (
+          {showImage && previewUrl && (
             <div css={imgWrapper}>
-              <img src={photoUrl} alt="리뷰" css={reviewImg} />
+              <img src={previewUrl} alt="리뷰" css={reviewImg} />
               <IoCloseCircleSharp css={imgRemoveBtn} onClick={handleRemoveImage} />
             </div>
           )}
@@ -137,8 +137,10 @@ const container = css`
   background: #ffffffff;
   padding: 0 0;
   font-family: 'Pretendard', sans-serif;
-  height: calc(100vh - ${theme.spacing.spacing16});
-  padding-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -161,10 +163,18 @@ const headerTitle = css`
 
 const shelterNameStyle = css`
   ${theme.typography.myr4};
+  /* 한 줄로 자르고 말줄임 표시, 반응형 폰트 크기 적용 */
+  display: block;
+  width: 90%;
+  margin: 8px auto 16px auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   text-align: center;
-  margin-bottom: 16px;
-  margin-top: 8px;
   font-weight: 700;
+  /* 화면 크기에 따라 폰트가 커지도록 clamp의 preferred와 max 값을 조정 */
+  font-size: clamp(1.5rem, 3vw + 1.25rem, 4rem);
 `;
 
 const starRow = css`
@@ -177,9 +187,9 @@ const starRow = css`
 `;
 
 const filledStar = css`
-  color: #ffd600;
+  color: ${theme.colors.text.yellow};
   cursor: pointer;
-  text-shadow: 1px 1px 3px #bbb;
+  text-shadow: 1px 1px 3px ${theme.colors.text.gray200};
   user-select: none;
   outline: none;
   -webkit-tap-highlight-color: transparent;
@@ -194,7 +204,7 @@ const filledStar = css`
 `;
 
 const emptyStar = css`
-  color: #ccc;
+  color: ${theme.colors.text.gray150};
   cursor: pointer;
   user-select: none;
   outline: none;
@@ -344,45 +354,45 @@ const saveBtn = css`
 
 const modalOverlay = css`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.18);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
 `;
 
 const modalBox = css`
   background: #fff;
-  border-radius: 18px;
-  padding: 38px 32px;
-  box-shadow: 0 2px 12px #2224;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
   display: flex;
+  max-width: 80%;
   flex-direction: column;
   align-items: center;
 `;
 
 const modalTextStyle = css`
-  font-size: 1.3rem;
-  font-weight: 700;
+  ${theme.typography.modal1};
+  color: #222;
   margin-bottom: 24px;
+  text-align: center;
+  white-space: pre-line; /* '\n'을 실제 줄바꿈으로 표시 */
 `;
 
 const modalBtnRow = css`
   display: flex;
-  gap: 24px;
+  gap: 18px;
 `;
 
 const modalBtn = css`
-  padding: 10px 38px;
-  border-radius: 8px;
-  border: none;
-  background: #222;
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
   color: #fff;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
   cursor: pointer;
+  transition: background 0.18s;
 `;

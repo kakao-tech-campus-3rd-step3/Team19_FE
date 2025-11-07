@@ -7,7 +7,6 @@ import GuidePage from './pages/GuidePage';
 import ShelterDetailPage from './pages/ShelterDetailPage';
 import NavBar from './components/NavBar';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import ScrollToTopButton from './components/ScrollToTopButton';
 import { useEffect } from 'react';
 import MyPage from './pages/MyPage';
 import WishListPage from './pages/WishListPage';
@@ -19,6 +18,7 @@ import ErrorPage from './pages/ErrorPage';
 import { ErrorBoundary } from 'react-error-boundary';
 import AuthPage from './pages/AuthPage';
 import ScrollToTop from './components/ScrollToTop';
+import { usePushNotification } from './hooks/usePushNotification';
 
 // 에러 발생 시 보여줄 fallback 컴포넌트
 function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void }) {
@@ -34,11 +34,16 @@ function ErrorFallback({ error }: { error: Error; resetErrorBoundary: () => void
 
 const App = () => {
   const location = useLocation();
+  // 앱 시작/로그인 시 FCM 토큰 및 위치 등록
+  usePushNotification();
 
   // 라우트 변경 시 스크롤 맨 위로 이동
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [location.pathname]);
+
+  // GuidePage에서는 NavBar를 자체적으로 렌더링하므로 여기서는 제외
+  const shouldShowNavBar = location.pathname !== '/guide';
 
   return (
     <>
@@ -90,9 +95,11 @@ const App = () => {
           }
         `}
       />
-      <NavBar />
+      {/* Persistent map container: 앱 전체에서 언마운트되지 않도록 최상단에 고정 */}
+      <div id="map-root" data-persistent-map-root />
+      {shouldShowNavBar && <NavBar />}
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <div css={appContainerStyle}>
+        <div css={appContainerStyle} data-scroll-container>
           <main>
             <Routes>
               {/* path="/": 기본 주소일 때 HomePage를 보여줌 */}
@@ -130,8 +137,8 @@ const App = () => {
               />
             </Routes>
           </main>
-          <ScrollToTopButton /> {/* 맨 위로 가기 버튼 */}
         </div>
+        {/* <ScrollToTopButton /> 맨 위로 가기 버튼 => 없는게 좋을 듯 합니다 */}
       </ErrorBoundary>
       <ScrollToTop />
     </>
@@ -143,4 +150,9 @@ export default App;
 const appContainerStyle = css`
   width: 100%;
   height: 100%;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 500px; // App.css의 루트(#root) 레이아웃 너비와 동일하게 설정하여 좌우가 튀어나가지 않도록 함
+  overflow: auto;
 `;

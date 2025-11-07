@@ -33,6 +33,46 @@ const MOCK_WISHES: WishItem[] = [
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
+/** 브라우저 위치 획득 유틸 (타임아웃 포함). 실패 시 null 반환 */
+const getCurrentLocation = async (
+  timeoutMs = 10000,
+): Promise<{ latitude: number; longitude: number } | null> => {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) return null;
+  // quick permission check (if supported) - 거부 상태면 바로 null 반환
+  try {
+    // navigator.permissions 타입 이슈 때문에 any 사용
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const perm: any = (navigator as any).permissions?.query
+      ? await (navigator as any).permissions.query({ name: 'geolocation' })
+      : null;
+    if (perm && perm.state === 'denied') return null;
+  } catch {}
+
+  return new Promise((resolve) => {
+    let done = false;
+    const onSuccess = (pos: GeolocationPosition) => {
+      if (done) return;
+      done = true;
+      resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+    };
+    const onError = () => {
+      if (done) return;
+      done = true;
+      resolve(null);
+    };
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+      timeout: timeoutMs,
+      enableHighAccuracy: true,
+    });
+    // safety timeout
+    setTimeout(() => {
+      if (done) return;
+      done = true;
+      resolve(null);
+    }, timeoutMs + 500);
+  });
+};
+
 /**
  * 찜 추가 (me 사용)
  */
@@ -51,13 +91,30 @@ export async function addWish({ shelterId }: { shelterId: number }) {
 
 /**
  * 위시 목록 조회 (me 사용)
+ * 현재 위치를 얻어 가능한 경우 쿼리 파라미터로 latitude/longitude 전송
  */
 export async function getWishList() {
   if (USE_MOCK) {
     return Promise.resolve(MOCK_WISHES);
   }
 
-  return apiClient.get(`/api/users/me/wishes`);
+  const coords = await getCurrentLocation(10000); // 타임아웃 늘림
+  const base = '/api/users/me/wishes';
+  const path = coords
+    ? `${base}?latitude=${encodeURIComponent(String(coords.latitude))}&longitude=${encodeURIComponent(
+        String(coords.longitude),
+      )}`
+    : base;
+
+  try {
+    const res = await apiClient.get(path);
+    return res && (res as any).data ? (res as any).data : res;
+  } catch (err) {
+    // 네트워크/권한 오류가 나면 빈 배열 반환 — 호출부에서 빈 목록으로 처리
+    // eslint-disable-next-line no-console
+    console.warn('[getWishList] failed, returning empty list', err);
+    return [];
+  }
 }
 
 /**
@@ -97,5 +154,23 @@ export async function toggleWish({
     // 추가
     await addWish({ shelterId: Number(shelterId) });
     return { success: true, message: '찜 목록에\n추가되었습니다' };
+  }
+}
+
+/**
+ * 사용자가 해당 쉼터를 찜했는지 여부 확인
+ */
+export async function checkIfShelterIsWished(shelterId: number): Promise<boolean> {
+  try {
+    const wishList = await getWishList();
+    // 응답 형태: {items: [...]} 또는 [...] 또는 {data: [...]}
+    const list = Array.isArray(wishList) ? wishList : (wishList?.items ?? wishList?.data ?? []);
+    return list.some((item: any) => Number(item.shelterId) === Number(shelterId));
+  } catch (err: any) {
+    // 비로그인/권한없음(401, 403) => false
+    if (err && (err.status === 401 || err.status === 403)) {
+      return false;
+    }
+    throw err;
   }
 }

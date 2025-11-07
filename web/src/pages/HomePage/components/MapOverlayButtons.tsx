@@ -38,7 +38,8 @@ const overlayButtonStyle = css`
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  z-index: 10;
+  z-index: 1300;
+  pointer-events: auto;
   width: 90%;
   max-width: 650px;
 `;

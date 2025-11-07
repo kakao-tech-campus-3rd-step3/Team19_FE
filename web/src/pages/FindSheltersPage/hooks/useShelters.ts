@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getNearbyShelters } from '@/api/shelterApi';
+import { getWishList } from '@/api/wishApi';
 
 export type Shelter = {
   shelterId: number;
@@ -16,30 +17,78 @@ export type Shelter = {
 
 export const useShelters = () => {
   const [shelters, setShelters] = useState<Shelter[]>([]);
+  // 화면에 실제로 표시할 개수 관리 (초기 4개, 스크롤마다 +3)
+  const INITIAL_VISIBLE = 4;
+  const LOAD_INCREMENT = 3;
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE);
+  const visibleShelters = shelters.slice(0, visibleCount);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isFetchingMore, setIsFetchingMore] = useState<boolean>(false);
   const [error, setError] = useState<any>(null);
   const [hasMoreItems, setHasMoreItems] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
 
-  const fetchNearby = useCallback(async (latitude: number, longitude: number) => {
-    setIsLoading(true);
-    setError(null);
+  const [, setPage] = useState<number>(1);
+  const PAGE_SIZE = 20; // 필요 시 API 페이지 크기에 맞게 변경
+
+  // 사용자의 찜 목록을 가져와서 favoriteIds에 설정
+  const fetchWishList = useCallback(async () => {
     try {
-      const data = await getNearbyShelters({ latitude, longitude });
-      // API가 배열을 반환한다고 가정
-      setShelters(Array.isArray(data) ? data : []);
-      // 단순히 더불어 사용할 플래그 (nearby는 페이징 없으므로 false)
-      setHasMoreItems(false);
-    } catch (err) {
-      console.error('[useShelters] fetchNearby error', err);
-      setError(err);
-      setShelters([]);
-      setHasMoreItems(false);
-    } finally {
-      setIsLoading(false);
+      const wishList = await getWishList();
+      // 응답 형태: {items: [...]} 또는 [...] 또는 {data: [...]}
+      const list = Array.isArray(wishList) ? wishList : (wishList?.items ?? wishList?.data ?? []);
+      const ids = list.map((item: any) => Number(item.shelterId));
+      setFavoriteIds(ids);
+    } catch (err: any) {
+      // 로그인하지 않은 경우(401, 403) 빈 배열로 설정
+      if (err && (err.status === 401 || err.status === 403)) {
+        setFavoriteIds([]);
+      } else {
+        console.error('[useShelters] fetchWishList error', err);
+        setFavoriteIds([]);
+      }
     }
   }, []);
+
+  const fetchNearby = useCallback(
+    async (latitude: number, longitude: number, pageParam = 1, append = false) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await (getNearbyShelters as any)({
+          latitude,
+          longitude,
+          page: pageParam,
+        });
+        const list = Array.isArray(data)
+          ? data
+          : (data?.items ?? data?.shelters ?? data?.data ?? []);
+        if (append) {
+          setShelters((prev) => [...prev, ...list]);
+        } else {
+          setShelters(list);
+          // 새로 받아올 때는 표시 개수 초기화
+          setVisibleCount(INITIAL_VISIBLE);
+        }
+        // 간단한 hasMore 판단: 반환 항목이 페이지 사이즈보다 작으면 끝
+        setHasMoreItems(Array.isArray(list) ? list.length >= PAGE_SIZE : false);
+        setPage(pageParam);
+
+        // 쉼터 목록을 가져온 후 찜 목록도 가져와서 동기화
+        await fetchWishList();
+      } catch (err) {
+        console.error('[useShelters] fetchNearby error', err);
+        setError(err);
+        setShelters([]);
+        setHasMoreItems(false);
+      } finally {
+        setIsLoading(false);
+        setIsFetchingMore(false);
+      }
+    },
+    [fetchWishList],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -53,7 +102,7 @@ export const useShelters = () => {
       (pos) => {
         if (!mounted) return;
         const { latitude, longitude } = pos.coords;
-        fetchNearby(latitude, longitude);
+        fetchNearby(latitude, longitude, 1, false);
       },
       (err) => {
         console.warn('[useShelters] geolocation error', err);
@@ -78,16 +127,26 @@ export const useShelters = () => {
   };
 
   const handleLoadMore = async () => {
-    // nearby API는 페이징이 없으므로 기본 noop
-    setToastMessage('더 불러올 항목이 없습니다.');
+    // 클라이언트에서 표시 개수만 늘림 (서버 페이징이 아닌 경우)
+    if (isLoading || isFetchingMore) return;
+    if (visibleCount >= shelters.length) return;
+    setIsFetchingMore(true);
+    // 약간의 딜레이(로딩 UX) 후 더 보여주기
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(shelters.length, prev + LOAD_INCREMENT));
+      setIsFetchingMore(false);
+    }, 300);
   };
 
   return {
+    // 전체 데이터와 화면에 보이는 데이터 둘다 반환
     shelters,
+    visibleShelters,
     favoriteIds,
     isLoading,
     error,
     hasMoreItems,
+    isFetchingMore,
     toastMessage,
     setToastMessage,
     handleToggleFavorite,
@@ -97,7 +156,7 @@ export const useShelters = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          fetchNearby(latitude, longitude);
+          fetchNearby(latitude, longitude, 1, false);
         },
         (err) => {
           console.warn('[useShelters] refresh geolocation error', err);

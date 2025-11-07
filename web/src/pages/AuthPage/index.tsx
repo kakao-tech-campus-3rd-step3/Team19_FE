@@ -67,15 +67,19 @@ export default AuthPage;
 const container = css`
   width: 100%;
   max-width: 500px; /* 페이지 레이아웃 단일화 */
-  height: calc(100vh - ${theme.spacing.spacing16});
-  padding-top: ${theme.spacing.spacing16};
-  margin: 0 auto; /* 중앙 정렬 */
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
+  margin: 0 auto auto auto; /* 중앙 정렬 */
+  padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   flex-direction: column;
   align-items: stretch; /* 자식이 부모 폭을 100% 사용 */
   justify-content: flex-start;
   background: #fff;
-  padding: 0 16px 0 16px; /* 좌우 여백을 상위 컨테이너에서 책임 */
+  padding-left: 16px; /* 좌우 여백을 상위 컨테이너에서 책임 */
+  padding-right: 16px;
   box-sizing: border-box;
 `;
 
@@ -89,7 +93,7 @@ const card = css`
 
 /* 스크롤이 생길 때만 적용할 하단 여유(24px) */
 const cardWithGap = css`
-  padding-bottom: 24px;
+  padding-bottom: env(safe-area-inset-bottom);
 `;
 
 const contentArea = css`
@@ -105,5 +109,5 @@ const tabsBar = css`
 
 const topSpacer = css`
   width: 100%;
-  flex: 0 0 20%; /* 컨테이너 높이의 20% */
+  flex: 0 0 15%; /* 컨테이너 높이의 15% */
 `;

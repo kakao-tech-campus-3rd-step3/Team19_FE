@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { nearbyShelters } from '@/mock/nearbyShelters';
+import { getNearbyShelters, notifyShelterArrival } from '@/api/shelterApi';
 import type { LocationState, Shelter } from './types/tmap';
 import { useTmapSDK } from './hooks/useTmapSDK';
 import { useCurrentLocation } from './hooks/useCurrentLocation';
@@ -10,7 +10,11 @@ import { useRouteCalculation } from './hooks/useRouteCalculation';
 import { useGuidanceLogic } from './hooks/useGuidanceLogic';
 import { GuideBar } from './components/GuideBar';
 import VoiceGuideModal from './components/VoiceGuideModal';
+import NavigationExitModal from './components/NavigationExitModal';
+import NavBar from '@/components/NavBar';
 import theme from '@/styles/theme';
+import arrivalMarker from '@/assets/images/arrival-marker.png'; // 추가: 도착지 이미지
+import startMarkerImg from '@/assets/images/start-marker.png'; // 추가: 출발지 이미지
 
 const GuidePage = () => {
   const location = useLocation();
@@ -48,24 +52,69 @@ const GuidePage = () => {
   // 타겟 대피소 정보 상태
   const [targetShelter, setTargetShelter] = useState<Shelter | null>(null);
   const [shelterMarker, setShelterMarker] = useState<any>(null);
+  const startMarkerRef = useRef<any | null>(null); // 출발지 마커 참조
+  const startMarkerInitializedRef = useRef<boolean>(false); // 최초 생성 여부
   const hasInitialRouteCalculatedRef = useRef<boolean>(false);
 
   // 음성 안내 활성화 여부
   const [ttsEnabled, setTtsEnabled] = useState<boolean | null>(null);
 
+  // 네비게이션 이탈 모달 상태
+  const [showExitModal, setShowExitModal] = useState<boolean>(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
   // 타겟 대피소 초기화
   useEffect(() => {
-    const routerState = location.state as { targetShelter?: Shelter } | null;
+    let mounted = true;
 
-    if (routerState?.targetShelter) {
-      console.log('전달받은 타겟 대피소:', routerState.targetShelter);
-      setTargetShelter(routerState.targetShelter);
-    } else {
-      const defaultShelter = nearbyShelters[0];
-      console.log('기본 타겟 대피소 설정:', defaultShelter);
-      setTargetShelter(defaultShelter);
-    }
-  }, [location.state]);
+    const initTargetShelter = async () => {
+      const routerState = location.state as { targetShelter?: Shelter } | null;
+      if (routerState?.targetShelter) {
+        setTargetShelter(routerState.targetShelter);
+        return;
+      }
+
+      // 우선 현재 페이지의 currentLocation이 있으면 사용, 없으면 getCurrentLocation 시도
+      try {
+        const loc =
+          currentLocation ??
+          (await (async () => {
+            try {
+              return await getCurrentLocation();
+            } catch {
+              return null;
+            }
+          })());
+
+        if (!mounted) return;
+        if (!loc) {
+          console.warn('현재 위치를 얻지 못해 기본 대피소를 설정하지 못했습니다.');
+          return;
+        }
+
+        const res = await getNearbyShelters({
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+        });
+        if (!mounted) return;
+
+        const list = Array.isArray(res) ? res : (res && (res.items || res.data)) || [];
+        if (list && list.length > 0) {
+          console.log('API로부터 기본 타겟 대피소 설정:', list[0]);
+          setTargetShelter(list[0]);
+        } else {
+          console.warn('근처 대피소가 없습니다.');
+        }
+      } catch (err) {
+        console.error('기본 대피소 조회 실패:', err);
+      }
+    };
+
+    initTargetShelter();
+    return () => {
+      mounted = false;
+    };
+  }, [location.state, currentLocation, getCurrentLocation]);
 
   // 음성 안내 모달 표시
   useEffect(() => {
@@ -96,8 +145,8 @@ const GuidePage = () => {
     try {
       const marker = new window.Tmapv3.Marker({
         position: new window.Tmapv3.LatLng(shelter.latitude, shelter.longitude),
-        iconSize: new window.Tmapv3.Size(40, 53.33),
-        icon: window.Tmapv3.asset.Icon.get('arrival'),
+        iconSize: new window.Tmapv3.Size(60, 60), // 필요 시 조정
+        icon: arrivalMarker, // 번들된 이미지(URL)를 아이콘으로 사용
         map: map,
       });
 
@@ -105,6 +154,45 @@ const GuidePage = () => {
       console.log('대피소 마커 업데이트 완료');
     } catch (err) {
       console.error('대피소 마커 생성 중 오류:', err);
+    }
+  };
+
+  // 출발지(시작 위치) 마커 생성/갱신 (start-marker.png 사용)
+  const updateStartMarker = (loc: LocationState) => {
+    if (!map || !window.Tmapv3) return;
+
+    if (!isMapFullyLoaded(map)) {
+      console.warn('지도가 아직 완전히 로드되지 않음, 출발지 마커 생성 500ms 후 재시도');
+      setTimeout(() => updateStartMarker(loc), 500);
+      return;
+    }
+
+    try {
+      const pos = new window.Tmapv3.LatLng(loc.latitude, loc.longitude);
+
+      // 이미 최초 출발지 마커가 생성되어 있으면 위치를 변경하지 않고,
+      // map이 재마운트 되었을 경우만 재부착해줍니다 (위치는 고정)
+      if (startMarkerInitializedRef.current && startMarkerRef.current) {
+        try {
+          if (typeof startMarkerRef.current.setMap === 'function') {
+            startMarkerRef.current.setMap(map);
+          }
+        } catch {}
+        return;
+      }
+
+      // 번들된 이미지(start-marker.png)를 아이콘으로 사용
+      startMarkerRef.current = new window.Tmapv3.Marker({
+        position: pos,
+        iconSize: new window.Tmapv3.Size(60, 60), // 필요에 따라 조정
+        icon: startMarkerImg,
+        map: map,
+      });
+
+      // 최초 생성 플래그 설정 (한 번만 고정)
+      startMarkerInitializedRef.current = true;
+    } catch (err) {
+      console.error('출발지 마커 생성 중 오류:', err);
     }
   };
 
@@ -179,6 +267,8 @@ const GuidePage = () => {
         // 현재 위치가 있으면 즉시 마커 표시
         if (currentLocationData) {
           updateCurrentLocationMarker(currentLocationData);
+          // 출발지 마커도 표시
+          updateStartMarker(currentLocationData);
         }
 
         // 실시간 위치 추적 시작 (마운트 동안 유지)
@@ -205,10 +295,21 @@ const GuidePage = () => {
     }
   }, [map, targetShelter]);
 
-  // 지도가 준비되거나 현재 위치가 바뀔 때 현재 위치 마커 표시
+  // 지도가 준비되거나 현재 위치가 바뀔 때 현재 위치 마커는 항상 갱신,
+  // 출발지 마커는 최초 1회만 생성(고정)
   useEffect(() => {
     if (map && currentLocation) {
       updateCurrentLocationMarker(currentLocation);
+      if (!startMarkerInitializedRef.current) {
+        updateStartMarker(currentLocation);
+      } else {
+        // map이 재부착된 경우 출발지 마커를 map에 다시 붙여줌 (위치는 변경하지 않음)
+        try {
+          if (startMarkerRef.current && typeof startMarkerRef.current.setMap === 'function') {
+            startMarkerRef.current.setMap(map);
+          }
+        } catch {}
+      }
     }
   }, [map, currentLocation]);
 
@@ -252,38 +353,98 @@ const GuidePage = () => {
   }, [currentLocation, guidancePoints, guidanceSteps, targetShelter]);
 
   // 도착 확인 버튼 클릭 핸들러
-  const handleArrivalConfirm = () => {
+  const handleArrivalConfirm = async () => {
+    // 도착 알림 API 호출 (리뷰 푸시 트리거)
+    const sid = targetShelter?.shelterId;
+    if (typeof sid === 'number') {
+      try {
+        await notifyShelterArrival(sid);
+        console.log('[GuidePage] 도착 알림 전송 완료:', sid);
+      } catch (err) {
+        console.warn('[GuidePage] 도착 알림 전송 실패(무시):', err);
+      }
+    } else {
+      console.warn('[GuidePage] targetShelter.shelterId가 유효하지 않습니다:', targetShelter);
+    }
     navigate('/');
+  };
+
+  // 네비게이션 이탈 경고 모달 핸들러
+  const handleNavigationAttempt = (navigationCallback: () => void) => {
+    setPendingNavigation(() => navigationCallback);
+    setShowExitModal(true);
+  };
+
+  const handleExitConfirm = () => {
+    setShowExitModal(false);
+    if (pendingNavigation) {
+      pendingNavigation();
+    }
+    setPendingNavigation(null);
+  };
+
+  const handleExitCancel = () => {
+    setShowExitModal(false);
+    setPendingNavigation(null);
+  };
+
+  // NavBar 커스텀 핸들러
+  const handleNavBackClick = () => {
+    handleNavigationAttempt(() => navigate(-1));
+  };
+
+  const handleNavLogoClick = () => {
+    handleNavigationAttempt(() => navigate('/'));
+  };
+
+  const handleNavUserClick = () => {
+    handleNavigationAttempt(() => navigate('/mypage'));
   };
 
   // NOTE: guidancePoints를 훅에서 직접 꺼내지 못해, 임시로 window에 저장된 routeData를 확장하거나
   // 별도 반환을 추가해야 한다. 여기서는 훅 내에 guidancePoints 상태를 노출했다고 가정.
 
   return (
-    <div css={containerStyle}>
-      <div css={mapContainerStyle}>
-        <div ref={mapRef} css={mapStyle} />
+    <>
+      {/* 커스텀 NavBar */}
+      <NavBar
+        onBackClick={handleNavBackClick}
+        onLogoClick={handleNavLogoClick}
+        onUserClick={handleNavUserClick}
+      />
 
-        {/* 음성 안내 사용 여부 모달 */}
-        {ttsEnabled === null && <VoiceGuideModal onSelect={setTtsEnabled} />}
+      <div css={containerStyle}>
+        <div css={mapContainerStyle}>
+          <div ref={mapRef} css={mapStyle} />
 
-        {(activeGuidance || guidanceSteps.length > 0) && (
-          <GuideBar
-            message={activeGuidance || guidanceSteps[0] || null}
-            hasArrived={hasArrived}
-            onArrivalConfirm={handleArrivalConfirm}
-            ttsEnabled={ttsEnabled === true}
-          />
-        )}
+          {/* 음성 안내 사용 여부 모달 */}
+          {ttsEnabled === null && <VoiceGuideModal onSelect={setTtsEnabled} />}
+
+          {/* 네비게이션 이탈 경고 모달 */}
+          {showExitModal && (
+            <NavigationExitModal onConfirm={handleExitConfirm} onCancel={handleExitCancel} />
+          )}
+
+          {(activeGuidance || guidanceSteps.length > 0) && (
+            <GuideBar
+              message={activeGuidance || guidanceSteps[0] || null}
+              hasArrived={hasArrived}
+              onArrivalConfirm={handleArrivalConfirm}
+              ttsEnabled={ttsEnabled === true}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
 const containerStyle = css`
   width: 100%;
-  height: calc(100vh - ${theme.spacing.spacing16});
-  padding-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   overflow: hidden;
   position: relative;
 `;

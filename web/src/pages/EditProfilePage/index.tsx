@@ -2,15 +2,16 @@
 import { css } from '@emotion/react';
 import { FaRegEdit } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
-import { useEditProfile } from './hooks/useEditProfile';
+import { useEditProfile, DEFAULT_PROFILE_URL } from './hooks/useEditProfile';
+import NoProfile from '@/assets/images/NoProfile.png';
 import { theme } from '@/styles/theme';
 
 const EditProfilePage = () => {
   // useEditProfile 훅 사용
   const {
-    mockUser,
     user,
     profileImageUrl,
+    profileCleared,
     imgError,
     setImgError,
     handleEditProfileImg,
@@ -34,10 +35,37 @@ const EditProfilePage = () => {
     setShowOldPassword,
     showNewPassword,
     setShowNewPassword,
+    selectedFile,
   } = useEditProfile();
 
-  // displayUser: user가 있으면 API 데이터, 없으면 mockUser 사용
-  const displayUser = (user as any) ?? mockUser;
+  const displayUser = (user as any) ?? {
+    userId: 0,
+    email: '',
+    nickname: '',
+    // 서버 기본값 없음을 명확히 하기 위해 null 사용
+    profileImageUrl: null,
+  };
+  // 현재 보여야 하는 이미지 우선순위:
+  // 1) selectedFile preview (profileImageUrl containing object URL)
+  // 2) 프로필을 명시적으로 '기본 이미지'로 변경한 경우 -> NoProfile
+  // 3) 서버에 저장된 user.profileImageUrl
+  // 4) 기본 NoProfile
+  const effectiveProfileImage =
+    selectedFile && typeof profileImageUrl === 'string'
+      ? profileImageUrl
+      : profileCleared
+        ? typeof NoProfile === 'string'
+          ? NoProfile
+          : ''
+        : ((user as any)?.profileImageUrl ??
+          profileImageUrl ??
+          (typeof NoProfile === 'string' ? NoProfile : ''));
+
+  // 기본이미지이거나 유효하지 않으면 '기본 프로필로 변경' 버튼 숨김
+  const isDefaultOrInvalid =
+    !effectiveProfileImage ||
+    effectiveProfileImage === DEFAULT_PROFILE_URL ||
+    effectiveProfileImage === (typeof NoProfile === 'string' ? NoProfile : '');
 
   return (
     <div css={container}>
@@ -47,10 +75,21 @@ const EditProfilePage = () => {
       </div>
       <div css={profileBox}>
         <img
-          src={imgError ? displayUser.profileImageUrl : profileImageUrl}
-          alt="프로필"
+          src={
+            imgError || !effectiveProfileImage
+              ? typeof NoProfile === 'string'
+                ? NoProfile
+                : ''
+              : effectiveProfileImage
+          }
+          alt="프로필 이미지"
           css={profileImg}
-          onError={() => setImgError(true)}
+          onError={(e) => {
+            // 에러 발생 시 NoProfile로 대체
+            setImgError(true);
+            (e.currentTarget as HTMLImageElement).src =
+              typeof NoProfile === 'string' ? NoProfile : '';
+          }}
         />
         <FaRegEdit css={editIcon} onClick={handleEditProfileImg} />
         {/* 프로필 이미지 편집 모달 */}
@@ -61,7 +100,8 @@ const EditProfilePage = () => {
               <button css={modalBtnS} onClick={handleProfileImgSelect}>
                 앨범에서 사진 선택
               </button>
-              {profileImageUrl !== displayUser.profileImageUrl && (
+              {/* 현재 보여지는 프로필이 기본 이미지거나 유효하지 않으면 버튼 숨김 */}
+              {!isDefaultOrInvalid && (
                 <button css={modalBtnS} onClick={handleSetDefaultProfile}>
                   기본 프로필로 변경
                 </button>
@@ -115,7 +155,7 @@ const EditProfilePage = () => {
             <button
               type="button"
               css={eyeBtn}
-              onClick={() => setShowOldPassword((prev) => !prev)}
+              onClick={() => setShowOldPassword((prev: boolean) => !prev)}
               tabIndex={-1}
             >
               {showOldPassword ? <IoEyeOff /> : <IoEye />}
@@ -135,7 +175,7 @@ const EditProfilePage = () => {
             <button
               type="button"
               css={eyeBtn}
-              onClick={() => setShowNewPassword((prev) => !prev)}
+              onClick={() => setShowNewPassword((prev: boolean) => !prev)}
               tabIndex={-1}
             >
               {showNewPassword ? <IoEyeOff /> : <IoEye />}
@@ -171,17 +211,20 @@ const container = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(100vh - ${theme.spacing.spacing16});
-  padding-top: ${theme.spacing.spacing16};
+  height: calc(
+    100vh - ${theme.spacing.spacing16} - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+  padding-top: calc(${theme.spacing.spacing16} + env(safe-area-inset-top));
   position: relative;
-  overflow: hidden;
+  overflow: auto;
 `;
 
 const titleRow = css`
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4% 5%;
+  margin-top: 16px;
+  padding-bottom: 24px;
 `;
 
 const emoji = css`
@@ -212,10 +255,9 @@ const profileImg = css`
 
 const editIcon = css`
   position: absolute;
-  right: 5%;
+  right: 2%;
   top: 95px;
   font-size: 2.2rem;
-  background: #fff;
   padding: 4px;
 `;
 
@@ -308,56 +350,46 @@ const saveBtn = css`
 
 const modalOverlay = css`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.18);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
 `;
 
 const modalBox = css`
   background: #fff;
-  border-radius: 18px;
-  padding: 24px 32px;
-  box-shadow: 0 2px 12px #2224;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
   display: flex;
+  max-width: 80%;
   flex-direction: column;
   align-items: center;
 `;
 
 const modalText = css`
-  ${theme.typography.edit2};
+  ${theme.typography.modal1};
+  color: #222;
   margin-bottom: 24px;
+  text-align: center;
 `;
 
 const modalBtn = css`
-  padding: 10px 38px;
-  margin-top: 24px;
-  bottom: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #222;
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
   color: #fff;
-  font-size: 1.3rem;
-  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 10px 28px;
   cursor: pointer;
+  transition: background 0.18s;
 `;
 
-const modalBtnS = css`
-  padding: 10px 28px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #818181ff;
-  color: #fff;
-  font-size: 1.3rem;
-  font-weight: 500;
-  cursor: pointer;
-`;
+// 보조 버튼도 동일 스타일로 유지 (필요 시 수정)
+const modalBtnS = modalBtn;
 
 const passwordInputWrapper = css`
   width: 100%;

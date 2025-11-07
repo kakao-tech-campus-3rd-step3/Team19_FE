@@ -4,11 +4,18 @@ import theme from '@/styles/theme';
 import { useState } from 'react';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { IoEye, IoEyeOff } from 'react-icons/io5';
+import { login } from '@/api/userApi';
+import { getPendingAction, clearPendingAction } from '@/utils/pendingAction';
+import { toggleWish } from '@/api/wishApi';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string>('');
+  const navigate = useNavigate();
   // TODO: 항상 로그인 상태 유지 정책: remember UI/state 제거했음.
 
   // 이메일 형식 및 비밀번호 기본 검증
@@ -19,8 +26,63 @@ const LoginForm = () => {
   // 제출 가능 여부: 이메일/비밀번호 조건 모두 만족해야 함
   const canSubmit = isEmailValid(email) && password.length >= 8;
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || submitting) return;
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      await login({ email, password });
+      // 로그인 성공: 보류된 동작이 있는지 확인 후 처리
+      try {
+        const action = getPendingAction();
+        if (action) {
+          if (action.type === 'toggle-wish') {
+            const shelterId = action.payload?.shelterId as any;
+            const isFavorite = Boolean(action.payload?.isFavorite);
+            try {
+              if (shelterId != null) {
+                await toggleWish({ shelterId, isFavorite });
+              }
+            } catch {
+              // 실패해도 흐름은 계속 진행 (토스트는 추후 필요 시 추가)
+            }
+            clearPendingAction();
+            navigate(action.returnUrl || '/');
+            return;
+          }
+          if (action.type === 'write-review') {
+            const shelterId = action.payload?.shelterId;
+            clearPendingAction();
+            if (shelterId != null) {
+              navigate(`/write-review/${shelterId}`, { state: action.payload?.state });
+              return;
+            }
+            navigate(action.returnUrl || '/');
+            return;
+          }
+          if (action.type === 'navigate') {
+            const path = action.payload?.path || '/';
+            const state = action.payload?.state;
+            clearPendingAction();
+            navigate(path, { state });
+            return;
+          }
+        }
+      } catch {
+        // pending action 파싱 문제 등은 무시하고 기본 이동
+      }
+      navigate('/');
+    } catch (err: any) {
+      const message = err?.message || '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <form css={form} onSubmit={(e) => e.preventDefault()} aria-label="로그인 폼">
+    <form css={form} onSubmit={handleSubmit} aria-label="로그인 폼">
       {/* 이메일 */}
       <label css={label} htmlFor="login-email">
         <FaUser size={18} color="#777" />
@@ -76,25 +138,20 @@ const LoginForm = () => {
         type="submit"
         css={submitBtn}
         aria-label="로그인"
-        disabled={!canSubmit}
-        aria-disabled={!canSubmit}
+        disabled={!canSubmit || submitting}
+        aria-disabled={!canSubmit || submitting}
         style={{
-          opacity: canSubmit ? 1 : 0.5,
-          cursor: canSubmit ? 'pointer' : 'not-allowed',
+          opacity: canSubmit && !submitting ? 1 : 0.5,
+          cursor: canSubmit && !submitting ? 'pointer' : 'not-allowed',
         }}
       >
-        로그인
+        {submitting ? '로그인 중...' : '로그인'}
       </button>
-
-      {/* 구분선 */}
-      <div css={dividerWrap}>
-        <span css={divider} />
-      </div>
-
-      {/* 비밀번호 찾기 */}
-      <button type="button" css={linkBtn}>
-        비밀번호를 잊으셨나요?
-      </button>
+      {submitError && (
+        <div css={errorMsg} role="alert" aria-live="polite">
+          {submitError}
+        </div>
+      )}
     </form>
   );
 };
@@ -175,32 +232,9 @@ const submitBtn = css`
   ${theme.typography.authButton};
 `;
 
-const dividerWrap = css`
-  display: flex;
-  align-items: center;
-  margin: 10px 0;
-`;
-
-const divider = css`
-  flex: 1;
-  height: 1px;
-  background: ${theme.colors.button.black};
-  opacity: 0.2;
-`;
-
 const errorMsg = css`
   margin-top: 0;
   text-align: left;
   color: #e03131;
   ${theme.typography.authHelper};
-`;
-
-const linkBtn = css`
-  margin-top: 8px;
-  background: none;
-  border: none;
-  color: #1c7ed6;
-  cursor: pointer;
-  text-decoration: underline;
-  ${theme.typography.authLink};
 `;

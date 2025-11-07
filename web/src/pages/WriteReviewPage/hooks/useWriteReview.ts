@@ -1,4 +1,4 @@
-import { postReview } from '@/api/reviewApi';
+import { postReview, uploadReviewPhoto } from '@/api/reviewApi';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -15,7 +15,9 @@ export const useWriteReview = () => {
 
   const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
-  const [photoUrl, setPhotoUrl] = useState<string>('');
+  // photoFile: 실제 업로드할 File. previewUrl: 로컬 미리보기용 URL
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [showImage, setShowImage] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
@@ -26,30 +28,40 @@ export const useWriteReview = () => {
 
   // postReview mutation
   const mutation = useMutation({
+    // payload: { shelterId, content, rating, photoFile? }
     mutationFn: async (payload: {
       shelterId: number;
       content: string;
       rating: number;
-      photoUrl?: string;
+      photoFile?: File | null;
     }) => {
-      return await postReview(payload.shelterId, {
+      // 1) 리뷰 본문 생성 (photoUrl 필드 서버측 요구가 없으면 null로 보냄)
+      const created = await postReview(payload.shelterId, {
         content: payload.content,
         rating: payload.rating,
-        photoUrl: payload.photoUrl,
+        photoUrl: null,
       });
+      // 서버 응답에서 reviewId를 얻어야 파일 업로드 수행
+      const reviewId = (created && (created as any).reviewId) || (created && (created as any).id);
+      if (payload.photoFile && reviewId) {
+        // 2) 사진 업로드 (multipart/form-data, 파일만 전송)
+        await uploadReviewPhoto(Number(reviewId), payload.photoFile);
+      }
+      return created;
     },
     onSuccess: (_res) => {
-      // 작성 후 쉼터 상세로 이동 (필요 시 변경)
+      // 작성 후 쉼터 상세로 이동
       if (shelterId) navigate(`/shelter-detail/${shelterId}`);
-      else navigate('/'); // fallback
+      else navigate('/');
     },
     onError: (err: any) => {
-      console.error('[useWriteReview] postReview error', err);
+      console.error('[useWriteReview] postReview/upload error', err);
       setToastMessage((err && err.message) || '리뷰 작성에 실패했습니다.');
     },
   });
 
-  const isPending = mutation.status === 'pending';
+  // React Query 타입 호환: status 문자열로 로딩 여부 판단
+  const isPending = mutation.status === null;
 
   // 별점 클릭 핸들러
   const handleStarClick = (idx: number) => {
@@ -59,7 +71,8 @@ export const useWriteReview = () => {
   // 저장 버튼 클릭
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setModalText('리뷰를 등록하시겠습니까?');
+    // 줄바꿈 포함
+    setModalText('리뷰를\n등록하시겠습니까?');
     setOnModalConfirm(() => handleSaveConfirm);
     setOnModalCancel(() => () => setShowModal(false));
     setShowModal(true);
@@ -76,31 +89,39 @@ export const useWriteReview = () => {
       shelterId,
       content,
       rating,
-      photoUrl: photoUrl || undefined,
+      // 없는 경우 null로 전달
+      photoFile: photoFile ? photoFile : null,
     });
   };
 
   // 사진 삭제 버튼 클릭
   const handleRemoveImage = () => {
     setShowImage(false);
-    setPhotoUrl('');
+    if (previewUrl) {
+      try {
+        URL.revokeObjectURL(previewUrl);
+      } catch {}
+    }
+    setPreviewUrl('');
+    setPhotoFile(null);
   };
 
   // 이미지 추가 핸들러
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0] ?? null;
     if (!file) return;
-    // 단순히 미리보기 URL 사용 (실제 업로드가 필요하면 별도 처리)
     const url = URL.createObjectURL(file);
-    setPhotoUrl(url);
+    setPhotoFile(file);
+    setPreviewUrl(url);
     setShowImage(true);
     e.currentTarget.value = '';
   };
 
   const handleAddImageClick = (e: React.MouseEvent<HTMLLabelElement>) => {
-    if (showImage && photoUrl) {
+    if (showImage && photoFile) {
       e.preventDefault();
-      setToastMessage('사진은 한 장만 첨부할 수 있습니다.');
+      // 줄바꿈 포함
+      setToastMessage('사진 첨부는 최대 1장만 가능합니다');
     }
   };
 
@@ -109,7 +130,8 @@ export const useWriteReview = () => {
     setContent,
     rating,
     setRating,
-    photoUrl,
+    previewUrl,
+    photoFile,
     showImage,
     showModal,
     modalText,

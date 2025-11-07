@@ -2,8 +2,13 @@
 import { css } from '@emotion/react';
 import theme from '@/styles/theme';
 import { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { checkLoginStatus, getMyProfile } from '@/api/userApi';
+import { deleteReview } from '@/api/reviewApi';
+import { setPendingAction } from '@/utils/pendingAction';
 import NoProfile from '@/assets/images/NoProfile.png';
+import { createPortal } from 'react-dom';
+import { FaTrash } from 'react-icons/fa';
 
 // Review 타입 정의
 interface Review {
@@ -26,6 +31,8 @@ interface ShelterReviewSectionProps {
   handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   shelterName: string; // props로 쉼터 이름 받기
   shelterId: number; // props로 쉼터 id 받기
+  // 삭제 성공 시 부모에 삭제된 reviewId 전달 -> 부모가 로컬 상태에서 제거
+  onReviewDeleted?: (reviewId: number) => void;
 }
 
 // 날짜 포맷팅 함수
@@ -45,6 +52,7 @@ const ShelterReviewSection = ({
   handleImageError,
   shelterName,
   shelterId,
+  onReviewDeleted,
 }: ShelterReviewSectionProps) => {
   const [expandedMap, setExpandedMap] = useState<{ [reviewId: number]: boolean }>({});
   const [showMoreMap, setShowMoreMap] = useState<{ [reviewId: number]: boolean }>({});
@@ -52,9 +60,49 @@ const ShelterReviewSection = ({
 
   const contentRefs = useRef<{ [reviewId: number]: HTMLDivElement | null }>({});
   const navigate = useNavigate();
+  const location = useLocation();
+  const bodyLockRef = useRef(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // 프로필 이미지 에러 핸들링용 state
   const [profileImgErrorMap, setProfileImgErrorMap] = useState<{ [reviewId: number]: boolean }>({});
+
+  // 내 닉네임 저장 (리뷰 작성자와 비교하여 삭제 버튼 표시)
+  const [myNickname, setMyNickname] = useState<string | null>(null);
+
+  // 삭제 확인 모달 state
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    open: boolean;
+    reviewId: number | null;
+  }>({ open: false, reviewId: null });
+
+  // 컴포넌트 마운트 시 내 프로필 정보 가져오기
+  useEffect(() => {
+    const fetchMyProfile = async () => {
+      try {
+        const isLoggedIn = await checkLoginStatus();
+        if (isLoggedIn) {
+          const profile = await getMyProfile();
+          setMyNickname(profile.nickname);
+        }
+      } catch (err) {
+        console.warn('[ShelterReviewSection] Failed to fetch my profile:', err);
+      }
+    };
+    fetchMyProfile();
+  }, []);
+
+  // 리뷰 삭제 핸들러
+  const handleDeleteReview = async (reviewId: number) => {
+    try {
+      await deleteReview(reviewId);
+      // 삭제 성공 시 부모에 id 전달하여 로컬에서 바로 제거하도록 함 (스크롤 유지)
+      onReviewDeleted?.(reviewId);
+    } catch (err) {
+      console.error('[ShelterReviewSection] Failed to delete review:', err);
+      alert('리뷰 삭제에 실패했습니다.');
+    }
+  };
 
   // 줄 수 감지 함수
   const checkLineClamp = (reviewId: number) => {
@@ -76,25 +124,87 @@ const ShelterReviewSection = ({
     }, 0);
   }, [reviews]);
 
+  // modal(open) 시 바디 스크롤 잠금 (ReviewListCard와 동일 동작)
+  useEffect(() => {
+    const modalOpen = !!modalImg;
+    const body = document.body;
+    if (modalOpen) {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      body.dataset.modalOpenCount = String(prev + 1);
+      if (prev === 0) {
+        body.dataset.prevOverflow = body.style.overflow || '';
+        body.dataset.prevScrollY = String(window.scrollY || 0);
+        body.style.overflow = 'hidden';
+      }
+      bodyLockRef.current = Number(body.dataset.modalOpenCount);
+    } else {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      const next = Math.max(0, prev - 1);
+      body.dataset.modalOpenCount = String(next);
+      if (next === 0) {
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+        bodyLockRef.current = 0;
+      } else {
+        bodyLockRef.current = next;
+      }
+    }
+    return () => {
+      const prev = Number(body.dataset.modalOpenCount ?? 0);
+      if (prev <= 1) {
+        const prevOverflow = body.dataset.prevOverflow ?? '';
+        const prevScrollY = Number(body.dataset.prevScrollY ?? 0);
+        body.style.overflow = prevOverflow;
+        window.scrollTo(0, prevScrollY);
+        delete body.dataset.prevOverflow;
+        delete body.dataset.prevScrollY;
+        delete body.dataset.modalOpenCount;
+      } else {
+        body.dataset.modalOpenCount = String(prev - 1);
+      }
+    };
+  }, [modalImg]);
+
   return (
     <section css={reviewSectionStyle}>
       <div css={reviewHeader}>
         <div css={reviewTitle}>리뷰({reviews ? reviews.length : 0})</div>
         <button
           css={reviewWriteButton}
-          onClick={() => navigate(`/write-review/${shelterId}`, { state: { shelterName } })}
+          onClick={async () => {
+            const isLoggedIn = await checkLoginStatus();
+            if (!isLoggedIn) {
+              setShowLoginModal(true);
+              return;
+            }
+            navigate(`/write-review/${shelterId}`, { state: { shelterName } });
+          }}
         >
           리뷰 작성
         </button>
       </div>
 
-      {loading ? (
-        <div css={loadingStyle}>로딩 중...</div>
-      ) : reviews && reviews.length > 0 ? (
+      {loading ? null : reviews && reviews.length > 0 ? (
         <div css={reviewListStyle}>
           {reviews.slice(0, visibleCount).map((r) => (
             <article css={reviewCardStyle} key={r.reviewId}>
               <div css={reviewLeft}>
+                {/* 내 리뷰인 경우 삭제 버튼 표시 (리뷰 콘텐츠 박스 우측 상단에 배치) */}
+                {myNickname && myNickname === r.nickname && (
+                  <button
+                    type="button"
+                    css={deleteButtonStyle}
+                    onClick={() => setDeleteConfirmModal({ open: true, reviewId: r.reviewId })}
+                    aria-label="리뷰 삭제"
+                  >
+                    <FaTrash size={30} />
+                  </button>
+                )}
                 <div css={avatarRow}>
                   {r.profileImageUrl &&
                   r.profileImageUrl !== '' &&
@@ -182,22 +292,97 @@ const ShelterReviewSection = ({
         </div>
       )}
 
-      {/* 이미지 확대 모달 */}
-      {modalImg && (
-        <div css={modalOverlay}>
-          <div css={modalContent}>
-            <img
-              src={modalImg}
-              alt="리뷰 이미지 확대"
-              css={modalImgStyle}
-              onError={handleImageError}
-            />
-            <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 이미지 확대 모달 (createPortal, ReviewListCard와 동일 동작) */}
+      {modalImg &&
+        createPortal(
+          <div css={modalOverlay} onClick={() => setModalImg(null)}>
+            <div css={modalContent} onClick={(e) => e.stopPropagation()}>
+              <img
+                src={modalImg}
+                alt="리뷰 이미지 확대"
+                css={modalImgStyle}
+                onError={handleImageError}
+              />
+              <button css={modalCloseBtn} onClick={() => setModalImg(null)}>
+                닫기
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* 삭제 확인 모달 */}
+      {deleteConfirmModal.open &&
+        createPortal(
+          <div
+            css={deleteModalOverlay}
+            onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
+          >
+            <div css={deleteModalBox} onClick={(e) => e.stopPropagation()}>
+              <div css={deleteModalText}>
+                리뷰를
+                <br />
+                삭제하시겠습니까?
+              </div>
+              <div css={deleteModalButtons}>
+                <button
+                  css={deleteModalBtn}
+                  onClick={() => {
+                    const id = deleteConfirmModal.reviewId;
+                    setDeleteConfirmModal({ open: false, reviewId: null });
+                    if (id) {
+                      // 모달 닫고 삭제 API 호출 및 부모에 id 전달
+                      handleDeleteReview(id);
+                    }
+                  }}
+                >
+                  예
+                </button>
+                <button
+                  css={deleteModalBtn}
+                  onClick={() => setDeleteConfirmModal({ open: false, reviewId: null })}
+                >
+                  아니요
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* 로그인 필요 모달 */}
+      {showLoginModal &&
+        createPortal(
+          <div css={loginModalOverlay} onClick={() => setShowLoginModal(false)}>
+            <div css={loginModalBox} onClick={(e) => e.stopPropagation()}>
+              <div css={loginModalText}>
+                로그인이 필요한
+                <br />
+                기능입니다
+              </div>
+              <div css={loginModalButtons}>
+                <button
+                  css={loginModalBtn}
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    setPendingAction({
+                      type: 'write-review',
+                      payload: { shelterId, state: { shelterName } },
+                      returnUrl: location.pathname,
+                    });
+                    navigate('/auth');
+                  }}
+                >
+                  로그인
+                </button>
+                <button css={loginModalBtn} onClick={() => setShowLoginModal(false)}>
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </section>
   );
 };
@@ -217,9 +402,12 @@ const emptyStar = css`
 
 /* 리뷰 섹션 스타일 */
 const reviewSectionStyle = css`
-  margin-top: 32px;
+  margin: 32px auto 0; /* 상단 마진은 유지, 가운데 정렬 */
   padding: 16px;
   border-top: 1px solid ${theme.colors.text.gray500};
+  width: 90%; /* 화면의 90% 사용 */
+  max-width: 1100px; /* 필요 시 최대 너비 제한 (선택) */
+  box-sizing: border-box;
 `;
 
 const reviewHeader = css`
@@ -227,6 +415,7 @@ const reviewHeader = css`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  width: 100%; /* 부모(90%) 안에서 꽉 채움 */
 `;
 
 const reviewTitle = css`
@@ -245,16 +434,11 @@ const reviewWriteButton = css`
   ${theme.typography.detail3};
 `;
 
-const loadingStyle = css`
-  text-align: center;
-  padding: 16px;
-  color: ${theme.colors.text.gray500};
-`;
-
 const reviewListStyle = css`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%; /* 부모(90%) 안에서 꽉 채움 */
 `;
 
 const reviewCardStyle = css`
@@ -264,6 +448,9 @@ const reviewCardStyle = css`
   background: ${theme.colors.text.white};
   align-items: flex-start;
   text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap; /* 내용이 너무 길면 다음 줄로 내려가도록 허용 */
 `;
 
 const reviewLeft = css`
@@ -271,6 +458,7 @@ const reviewLeft = css`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 `;
 
 const avatarRow = css`
@@ -284,6 +472,25 @@ const avatarInfoCol = css`
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+`;
+
+const deleteButtonStyle = css`
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #d76464;
+  }
 `;
 
 const avatarImgStyle = css`
@@ -316,11 +523,17 @@ const reviewContentBox = css`
   margin-top: 4px;
   padding: 8px;
   background: ${theme.colors.text.gray50};
+  width: 100%; /* 내용 영역이 가용 너비를 차지하도록 */
+  box-sizing: border-box;
 `;
 
 const reviewText = css`
   ${theme.typography.review3};
   color: ${theme.colors.text.black};
+  white-space: pre-wrap; /* 줄바꿈/공백 유지하며 자동 줄바꿈 허용 */
+  overflow-wrap: anywhere; /* 긴 단어도 적절히 줄바꿈 */
+  word-break: break-word; /* 긴 단어가 박스를 넘지 않게 처리 */
+  hyphens: auto;
 `;
 
 const reviewMeta = css`
@@ -342,6 +555,7 @@ const reviewPhoto = css`
   align-self: flex-start;
   margin-top: 8px;
   background: ${theme.colors.text.white};
+  flex-shrink: 0;
 `;
 
 const noReviewStyle = css`
@@ -430,4 +644,99 @@ const modalCloseBtn = css`
   font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
+`;
+
+// 삭제 확인 모달 스타일
+const deleteModalOverlay = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const deleteModalBox = css`
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  max-width: 80%;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const deleteModalText = css`
+  ${theme.typography.modal1};
+  color: #222;
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+const deleteModalButtons = css`
+  display: flex;
+  gap: 18px;
+`;
+
+const deleteModalBtn = css`
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: background 0.18s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+// 로그인 모달 스타일
+const loginModalOverlay = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const loginModalBox = css`
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  max-width: 80%;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const loginModalText = css`
+  ${theme.typography.modal1};
+  color: #222;
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+const loginModalButtons = css`
+  display: flex;
+  gap: 18px;
+`;
+
+const loginModalBtn = css`
+  ${theme.typography.modal2};
+  background: ${theme.colors.button.black};
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: background 0.18s;
 `;

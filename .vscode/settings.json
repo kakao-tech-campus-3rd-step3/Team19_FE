@@ -6,5 +6,6 @@
 
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.fontLigatures": false
+  "editor.fontLigatures": false,
+  "java.configuration.updateBuildConfiguration": "interactive"
 }
